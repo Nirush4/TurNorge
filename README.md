@@ -1,32 +1,53 @@
-# React + TypeScript + Vite
+# NordicTrail AI
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A privacy-focused Norwegian hiking utility featuring a matte Scandinavian forest aesthetic, local-first state persistence, and interactive trip planning.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Framework:** React with TypeScript
+- **Build Tool:** Vite
+- **UI Library:** Mantine UI (v7)
+- **Icons:** Lucide React
+- **Routing:** React Router
+- **State Management:** React Context (`AppStateProvider`) with Mantine `useLocalStorage`
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Interactive Trip Planner:** Generate customized hiking itineraries tailored to safety preferences and route constraints.
+- **Trail Explorer:** Discover Norwegian trails with localized regional data and route details.
+- **Local Favorites:** Instantly bookmark and manage favorite trails directly in browser storage without requiring an account.
+- **Allemannsretten Guide:** Comprehensive guide on Norway's traditional Right to Roam laws and outdoor etiquette.
+- **Matte Scandinavian Aesthetic:** Carefully crafted forest-themed dark and light UI modes.
 
-## Expanding the Oxlint configuration
+## ⚙️ Getting Started
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+### 1. Clone the Repository
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+git clone [https://github.com/Nirush4/NordicTrail-AI)
+cd NordicTrail-AI
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+```bash
+npm install
+```
+
+```bash
+npm run dev
+```
+
+```bash
+npm run build
+```
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## Author 👨‍💻​
+
+• Nirushan Rajamanoharan (@Nirush4)
+
+**Happy coding!**
