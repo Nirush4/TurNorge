@@ -1,5 +1,5 @@
-import { getMockMetForecast, summarizeForecast } from '@/api/metNo';
-import { getKartverketPlaceByRegion } from '@/api/kartverket';
+import { fetchMetForecast } from '@/api/metNo';
+import { searchKartverketPlace, REGION_COORDINATES } from '@/api/kartverket';
 import type { GeneratedPlan, ItineraryDay } from '@/types';
 import type { PlannerFormValues } from '@/types/schemas';
 
@@ -67,12 +67,19 @@ function packingList(values: PlannerFormValues): string[] {
   return summer;
 }
 
-function buildDays(values: PlannerFormValues, weatherNote: string): ItineraryDay[] {
-  const place = getKartverketPlaceByRegion(values.destination);
+function buildDays(
+  values: PlannerFormValues,
+  placeName: string,
+  weatherNote: string,
+): ItineraryDay[] {
   const baseDistance =
     values.experienceLevel === 'beginner' ? 8 : values.experienceLevel === 'intermediate' ? 12 : 16;
   const baseGain =
-    values.experienceLevel === 'beginner' ? 250 : values.experienceLevel === 'intermediate' ? 500 : 850;
+    values.experienceLevel === 'beginner'
+      ? 250
+      : values.experienceLevel === 'intermediate'
+        ? 500
+        : 850;
 
   return Array.from({ length: values.durationDays }, (_, index) => {
     const day = index + 1;
@@ -80,11 +87,11 @@ function buildDays(values: PlannerFormValues, weatherNote: string): ItineraryDay
     const isLast = day === values.durationDays;
     const winter = values.season === 'winter';
 
-    let title = `Traverse near ${place.name}`;
+    let title = `Traverse near ${placeName}`;
     let summary = `Follow marked DNT routes around ${values.destination}. Stay on cairns in poor visibility.`;
 
     if (isFirst) {
-      title = winter ? `Ski approach to ${place.name}` : `Arrive and shake-down near ${place.name}`;
+      title = winter ? `Ski approach to ${placeName}` : `Arrive and shake-down near ${placeName}`;
       summary = winter
         ? `Check avalanche varsom.no, freeze-thaw crust, and daylight. Keep the first ski day short.`
         : `Register intentions, refill treated water, and walk an easy loop to calibrate pace and weather.`;
@@ -113,14 +120,31 @@ export async function generatePlan(
   values: PlannerFormValues,
   options: { concise: boolean; emphasizeSafety: boolean },
 ): Promise<GeneratedPlan> {
-  const forecast = getMockMetForecast(values.destination);
-  const summary = summarizeForecast(forecast);
-  const weatherNote = `${summary.temperatureC.toFixed(1)}°C, wind ${summary.windMs.toFixed(1)} m/s, precip ${summary.precipitationMm.toFixed(1)} mm (MET.no schema mock).`;
-  const place = getKartverketPlaceByRegion(values.destination);
+  // Fetch real coordinates and live weather using your existing API services
+  const coords = REGION_COORDINATES[values.destination] ?? { lat: 61.4933, lon: 8.3597 };
+  const forecast = await fetchMetForecast(coords.lat, coords.lon);
+
+  // Extract latest instant metrics from the real MET.no forecast payload
+  const currentInstant = forecast.properties.timeseries[0]?.data.instant.details;
+  const temp = currentInstant?.air_temperature ?? 0;
+  const wind = currentInstant?.wind_speed ?? 0;
+  const precip =
+    forecast.properties.timeseries[0]?.data.next_6_hours?.details?.precipitation_amount ?? 0;
+
+  const weatherNote = `${temp.toFixed(1)}°C, wind ${wind.toFixed(1)} m/s, precip ${precip.toFixed(1)} mm (MET.no live data).`;
+
+  // Fetch real place reference using Kartverket
+  const places = await searchKartverketPlace(values.destination);
+  const place = places[0] ?? {
+    name: values.destination,
+    municipality: 'Norway',
+    county: 'Region',
+    mapSheet: 'N50',
+  };
 
   const overview = options.concise
     ? `${values.durationDays}-day ${values.destination} plan from ${place.name} (${place.mapSheet}). ${weatherNote}`
-    : `Local-first plan for ${values.destination} using Kartverket place ${place.name} (${place.municipality}, ${place.county}, ${place.mapSheet}) and a MET Norway-style locationforecast. ${weatherNote} Experience: ${values.experienceLevel}. This is decision support, not a mountain guide.`;
+    : `Local-first plan for ${values.destination} using Kartverket place ${place.name} (${place.municipality}, ${place.county}, ${place.mapSheet}) and live MET Norway data. ${weatherNote} Experience: ${values.experienceLevel}. This is decision support, not a mountain guide.`;
 
   const safetyDisclaimers = [
     'NordicTrail AI is a free public utility simulation. Conditions change; verify MET Norway, Kartverket, DNT, and varsom.no before you go.',
@@ -148,7 +172,7 @@ export async function generatePlan(
     durationDays: values.durationDays,
     includeCabinStay: values.includeCabinStay,
     overview,
-    days: buildDays(values, weatherNote),
+    days: buildDays(values, place.name, weatherNote),
     packingList: packingList(values),
     safetyDisclaimers,
     allemannsrettenNotes: [

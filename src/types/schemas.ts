@@ -11,6 +11,20 @@ export const NORWEGIAN_REGIONS = [
   'Lysefjorden',
 ] as const;
 
+export const REGION_COORDINATES: Record<
+  (typeof NORWEGIAN_REGIONS)[number],
+  { lat: number; lon: number; altitude: number }
+> = {
+  Jotunheimen: { lat: 61.4933, lon: 8.3597, altitude: 1060 },
+  Nordmarka: { lat: 60.0333, lon: 10.6667, altitude: 350 },
+  Hardangervidda: { lat: 60.2833, lon: 7.4167, altitude: 1200 },
+  Lofoten: { lat: 68.3285, lon: 14.5656, altitude: 20 },
+  Rondane: { lat: 61.85, lon: 9.7167, altitude: 1000 },
+  Lyngsalpene: { lat: 69.5833, lon: 20.2167, altitude: 140 },
+  Trollheimen: { lat: 62.8, lon: 9.25, altitude: 700 },
+  Lysefjorden: { lat: 58.9333, lon: 6.2667, altitude: 50 },
+};
+
 export const EXPERIENCE_LEVELS = ['beginner', 'intermediate', 'expert'] as const;
 export const SEASONS = ['summer_autumn', 'winter'] as const;
 export const TRAIL_DIFFICULTIES = ['easy', 'moderate', 'demanding', 'expert'] as const;
@@ -75,7 +89,7 @@ export const metLocationForecastSchema = z.object({
   type: z.literal('Feature'),
   geometry: z.object({
     type: z.literal('Point'),
-    coordinates: z.tuple([z.number(), z.number(), z.number()]),
+    coordinates: z.array(z.number()).min(2).max(3),
   }),
   properties: z.object({
     meta: z.object({
