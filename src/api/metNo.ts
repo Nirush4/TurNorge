@@ -1,137 +1,103 @@
-import type { NorwegianRegion } from '@/types';
-import type { MetLocationForecast } from '@/types/schemas';
-import { getKartverketPlaceByRegion } from '@/api/kartverket';
+import { z } from 'zod';
 
-interface ClimateProfile {
-  temperatureC: number;
-  windMs: number;
-  humidity: number;
-  precipitationMm: number;
-  symbol: string;
+export const metInstantDetailsSchema = z.object({
+  air_temperature: z.number(),
+  wind_speed: z.number(),
+  relative_humidity: z.number(),
+  wind_from_direction: z.number().optional(),
+  cloud_area_fraction: z.number().optional(),
+});
+
+export const metTimeseriesSchema = z.object({
+  time: z.string(),
+  data: z.object({
+    instant: z.object({
+      details: metInstantDetailsSchema,
+    }),
+    next_6_hours: z
+      .object({
+        summary: z.object({
+          symbol_code: z.string(),
+        }),
+        details: z
+          .object({
+            precipitation_amount: z.number(),
+          })
+          .optional(),
+      })
+      .optional(),
+  }),
+});
+
+export const metLocationForecastSchema = z.object({
+  type: z.literal('Feature'),
+  geometry: z.object({
+    type: z.literal('Point'),
+    coordinates: z.array(z.number()).min(2).max(3),
+  }),
+  properties: z.object({
+    meta: z.object({
+      updated_at: z.string(),
+      units: z.record(z.string()),
+    }),
+    timeseries: z.array(metTimeseriesSchema),
+  }),
+});
+
+export type MetLocationForecast = z.infer<typeof metLocationForecastSchema>;
+
+export async function fetchMetForecast(lat: number, lon: number): Promise<MetLocationForecast> {
+  const url = `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lon}`;
+
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'NorwegianTrailPlanner/1.0 (contact@yourdomain.com)',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch weather data: ${response.statusText}`);
+  }
+
+  const json = await response.json();
+  return metLocationForecastSchema.parse(json);
 }
 
-const REGION_CLIMATE: Record<NorwegianRegion, ClimateProfile> = {
-  Jotunheimen: {
-    temperatureC: 6,
-    windMs: 7,
-    humidity: 78,
-    precipitationMm: 1.2,
-    symbol: 'partlycloudy_day',
-  },
-  Nordmarka: {
-    temperatureC: 12,
-    windMs: 3,
-    humidity: 70,
-    precipitationMm: 0.4,
-    symbol: 'fair_day',
-  },
-  Hardangervidda: {
-    temperatureC: 4,
-    windMs: 9,
-    humidity: 82,
-    precipitationMm: 2.1,
-    symbol: 'lightrain',
-  },
-  Lofoten: {
-    temperatureC: 9,
-    windMs: 8,
-    humidity: 84,
-    precipitationMm: 1.8,
-    symbol: 'rainshowers_day',
-  },
-  Rondane: {
-    temperatureC: 5,
-    windMs: 6,
-    humidity: 72,
-    precipitationMm: 0.6,
-    symbol: 'fair_day',
-  },
-  Lyngsalpene: {
-    temperatureC: 3,
-    windMs: 10,
-    humidity: 80,
-    precipitationMm: 1.4,
-    symbol: 'cloudy',
-  },
-  Trollheimen: {
-    temperatureC: 7,
-    windMs: 5,
-    humidity: 76,
-    precipitationMm: 1.0,
-    symbol: 'partlycloudy_day',
-  },
-  Lysefjorden: {
-    temperatureC: 11,
-    windMs: 4,
-    humidity: 74,
-    precipitationMm: 2.4,
-    symbol: 'rainshowers_day',
-  },
-};
-
-function hoursFromNow(hours: number): string {
-  const date = new Date();
-  date.setHours(date.getHours() + hours, 0, 0, 0);
-  return date.toISOString();
-}
-
-export function getMockMetForecast(region: NorwegianRegion): MetLocationForecast {
-  const climate = REGION_CLIMATE[region];
-  const place = getKartverketPlaceByRegion(region);
-
+export function getMockMetForecast(_region: string): MetLocationForecast {
   return {
     type: 'Feature',
-    geometry: {
-      type: 'Point',
-      coordinates: [place.longitude, place.latitude, 0],
-    },
+    geometry: { type: 'Point', coordinates: [8.3597, 61.4933, 1000] },
     properties: {
-      meta: {
-        updated_at: new Date().toISOString(),
-        units: {
-          air_temperature: 'celsius',
-          wind_speed: 'm/s',
-          precipitation_amount: 'mm',
-          relative_humidity: 'percent',
-        },
-      },
-      timeseries: [0, 6, 12, 18, 24, 30].map((hourOffset, index) => ({
-        time: hoursFromNow(hourOffset),
-        data: {
-          instant: {
-            details: {
-              air_temperature: climate.temperatureC + Math.sin(index) * 1.6,
-              wind_speed: Math.max(1, climate.windMs - index * 0.3),
-              relative_humidity: Math.min(95, climate.humidity + index),
-              wind_from_direction: 220 + index * 8,
-              cloud_area_fraction: 45 + index * 6,
+      meta: { updated_at: new Date().toISOString(), units: {} },
+      timeseries: [
+        {
+          time: new Date().toISOString(),
+          data: {
+            instant: {
+              details: {
+                air_temperature: 12.5,
+                wind_speed: 4.2,
+                relative_humidity: 75,
+              },
             },
-          },
-          next_6_hours: {
-            summary: { symbol_code: climate.symbol },
-            details: {
-              precipitation_amount: Math.max(0, climate.precipitationMm - index * 0.15),
+            next_6_hours: {
+              summary: { symbol_code: 'fair_day' },
+              details: { precipitation_amount: 0.0 },
             },
           },
         },
-      })),
+      ],
     },
   };
 }
 
-export function summarizeForecast(forecast: MetLocationForecast): {
-  temperatureC: number;
-  windMs: number;
-  precipitationMm: number;
-  symbol: string;
-  updatedAt: string;
-} {
-  const first = forecast.properties.timeseries[0];
+export function summarizeForecast(forecast: MetLocationForecast) {
+  const instant = forecast.properties.timeseries[0]?.data.instant.details;
+  const next6 = forecast.properties.timeseries[0]?.data.next_6_hours;
   return {
-    temperatureC: first.data.instant.details.air_temperature,
-    windMs: first.data.instant.details.wind_speed,
-    precipitationMm: first.data.next_6_hours?.details?.precipitation_amount ?? 0,
-    symbol: first.data.next_6_hours?.summary.symbol_code ?? 'cloudy',
-    updatedAt: forecast.properties.meta.updated_at,
+    temperatureC: instant?.air_temperature ?? 10,
+    windMs: instant?.wind_speed ?? 3,
+    precipitationMm: next6?.details?.precipitation_amount ?? 0,
+    symbol: next6?.summary?.symbol_code ?? 'clearsky_day',
   };
 }

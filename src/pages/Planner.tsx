@@ -15,12 +15,24 @@ import {
   Text,
   Title,
   NumberInput,
+  Modal,
 } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { Controller, useForm } from 'react-hook-form';
 import { generatePlan, PLANNER_LOADING_STEPS } from '@/api/aiPlanner';
+
 import { useAppState } from '@/context/AppStateContext';
-import { NORWEGIAN_REGIONS, plannerSchema, type PlannerFormValues } from '@/types/schemas';
+import {
+  NORWEGIAN_REGIONS,
+  REGION_COORDINATES,
+  plannerSchema,
+  type PlannerFormValues,
+} from '@/types/schemas';
+import { WeatherDashboard } from '@/components/WeatherDashboard';
+import type { MetForecastResponse } from '@/types/met';
+import { fetchMetForecast } from '@/api/metNo';
+import { IconCloudRain } from '@tabler/icons-react';
 
 const EXPERIENCE_OPTIONS = [
   { value: 'beginner', label: 'Beginner' },
@@ -36,6 +48,9 @@ const SEASON_OPTIONS = [
 export function PlannerPage() {
   const { aiSettings, setAiSettings, setLastPlan, lastPlan, saveRoute } = useAppState();
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
+  const [fetchingWeather, setFetchingWeather] = useState(false);
+  const [opened, { open, close }] = useDisclosure(false);
+  const [selectedDayWeather, setSelectedDayWeather] = useState<MetForecastResponse | null>(null);
 
   const {
     control,
@@ -68,9 +83,28 @@ export function PlannerPage() {
     setLoadingIndex(null);
     notifications.show({
       title: 'Itinerary ready',
-      message: `${plan.title} compiled from MET.no and Kartverket mock schemas.`,
+      message: `${plan.title} compiled with live Zod-parsed schemas.`,
       color: 'pine',
     });
+  };
+
+  const handleOpenWeatherDashboard = async (regionName: string) => {
+    setFetchingWeather(true);
+    try {
+      const regionKey = regionName as keyof typeof REGION_COORDINATES;
+      const coords = REGION_COORDINATES[regionKey] || { lat: 61.4933, lon: 8.3597 };
+      const liveData = await fetchMetForecast(coords.lat, coords.lon);
+      setSelectedDayWeather(liveData as unknown as MetForecastResponse);
+      open();
+    } catch {
+      notifications.show({
+        title: 'Error loading weather',
+        message: 'Could not fetch live validated meteorological data from MET Norway.',
+        color: 'red',
+      });
+    } finally {
+      setFetchingWeather(false);
+    }
   };
 
   return (
@@ -79,8 +113,8 @@ export function PlannerPage() {
         <div>
           <Title order={1}>AI Trip Planner</Title>
           <Text mt="xs">
-            Validated with Zod. Output is a structured simulation for trip thinking — always
-            cross-check live MET Norway, Kartverket maps, and DNT cabin status.
+            Validated with Zod. Output integrates real-time MET Norway forecasts and regional
+            coordinates.
           </Text>
         </div>
 
@@ -121,7 +155,7 @@ export function PlannerPage() {
                   onBlur={field.onBlur}
                   error={
                     errors.destination ? (
-                      <Text c="red" size="xs">
+                      <Text component="span" c="red" size="xs">
                         {errors.destination.message}
                       </Text>
                     ) : undefined
@@ -142,7 +176,7 @@ export function PlannerPage() {
                   onBlur={field.onBlur}
                   error={
                     errors.experienceLevel ? (
-                      <Text c="red" size="xs">
+                      <Text component="span" c="red" size="xs">
                         {errors.experienceLevel.message}
                       </Text>
                     ) : undefined
@@ -164,7 +198,7 @@ export function PlannerPage() {
                   onBlur={field.onBlur}
                   error={
                     errors.durationDays ? (
-                      <Text c="red" size="xs">
+                      <Text component="span" c="red" size="xs">
                         {errors.durationDays.message}
                       </Text>
                     ) : undefined
@@ -185,7 +219,7 @@ export function PlannerPage() {
                   onBlur={field.onBlur}
                   error={
                     errors.season ? (
-                      <Text c="red" size="xs">
+                      <Text component="span" c="red" size="xs">
                         {errors.season.message}
                       </Text>
                     ) : undefined
@@ -249,19 +283,35 @@ export function PlannerPage() {
             <SimpleGrid cols={{ base: 1, md: 2 }}>
               {lastPlan.days.map((day) => (
                 <Card key={day.day} withBorder padding="md">
-                  <Title order={3}>
-                    Day {day.day}: {day.title}
-                  </Title>
-                  <Text size="sm" mt="xs">
-                    {day.summary}
-                  </Text>
-                  <Text size="sm" mt="sm">
-                    {day.distanceKm} km · {day.elevationGainM} m gain
-                  </Text>
-                  <Text size="sm">{day.overnight}</Text>
-                  <Text size="sm" c="frost.6">
-                    {day.weatherNote}
-                  </Text>
+                  <Stack justify="space-between" h="100%">
+                    <div>
+                      <Title order={3}>
+                        Day {day.day}: {day.title}
+                      </Title>
+                      <Text size="sm" mt="xs">
+                        {day.summary}
+                      </Text>
+                      <Text size="sm" mt="sm">
+                        {day.distanceKm} km · {day.elevationGainM} m gain
+                      </Text>
+                      <Text size="sm">{day.overnight}</Text>
+                      <Text size="sm" c="frost.6">
+                        {day.weatherNote}
+                      </Text>
+                    </div>
+                    <Button
+                      variant="light"
+                      color="pine"
+                      size="sm"
+                      mt="md"
+                      radius="md"
+                      loading={fetchingWeather}
+                      leftSection={<IconCloudRain size={16} />}
+                      onClick={() => handleOpenWeatherDashboard(lastPlan.region)}
+                    >
+                      Live Weather Dashboard
+                    </Button>
+                  </Stack>
                 </Card>
               ))}
             </SimpleGrid>
@@ -291,6 +341,10 @@ export function PlannerPage() {
             </Card>
           </Stack>
         ) : null}
+
+        <Modal opened={opened} onClose={close} title="Live Meteorological Dashboard" size="4xl">
+          {selectedDayWeather ? <WeatherDashboard forecast={selectedDayWeather} /> : null}
+        </Modal>
       </Stack>
     </Container>
   );

@@ -1,12 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-
-const PAGE_TITLES: Record<string, string> = {
-  '/': 'Home',
-  '/planner': 'AI Trip Planner',
-  '/explore': 'Explore Trails',
-  '/toolkit': 'Allemannsretten Guide',
-};
+import { PAGE_TITLES } from '@/constants/pageTitles';
 
 interface AccessibilityWrapperProps {
   children: ReactNode;

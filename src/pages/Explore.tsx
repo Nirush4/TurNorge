@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Badge,
   Button,
@@ -15,7 +15,7 @@ import {
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { filterTrails } from '@/api/trails';
-import { getMockMetForecast, summarizeForecast } from '@/api/metNo';
+import { type MetLocationForecast, fetchMetForecast } from '@/api/metNo';
 import { useAppState } from '@/context/AppStateContext';
 import type { Trail, TrailDifficulty } from '@/types';
 import { NORWEGIAN_REGIONS } from '@/types/schemas';
@@ -35,12 +35,65 @@ export function ExplorePage() {
   const [duration, setDuration] = useState<'all' | 'half' | 'full' | 'long'>('all');
   const [selected, setSelected] = useState<Trail | null>(null);
 
-  const trails = useMemo(
-    () => filterTrails({ region, difficulty, duration }),
-    [difficulty, duration, region],
-  );
+  const [trails, setTrails] = useState<Trail[]>([]);
+  const [loadingTrails, setLoadingTrails] = useState(true);
 
-  const weather = selected ? summarizeForecast(getMockMetForecast(selected.region)) : null;
+  const [forecast, setForecast] = useState<MetLocationForecast | null>(null);
+  const [loadingWeather, setLoadingWeather] = useState(false);
+
+  // Fetch trails asynchronously whenever filters change
+  useEffect(() => {
+    let isMounted = true;
+    setLoadingTrails(true);
+
+    filterTrails({ region, difficulty, duration })
+      .then((data) => {
+        if (isMounted) {
+          setTrails(data);
+          setLoadingTrails(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setLoadingTrails(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [region, difficulty, duration]);
+
+  // Fetch real MET.no forecast whenever a trail is selected
+  useEffect(() => {
+    if (!selected) {
+      setForecast(null);
+      return;
+    }
+
+    let isMounted = true;
+    setLoadingWeather(true);
+
+    fetchMetForecast(selected.latitude, selected.longitude)
+      .then((data) => {
+        if (isMounted) {
+          setForecast(data);
+          setLoadingWeather(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setLoadingWeather(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selected]);
+
+  const currentDetails = forecast?.properties.timeseries[0]?.data.instant.details;
+  const nextSixHours = forecast?.properties.timeseries[0]?.data.next_6_hours;
 
   return (
     <Container size="lg" py="xl">
@@ -48,8 +101,8 @@ export function ExplorePage() {
         <div>
           <Title order={1}>Explore Trails</Title>
           <Text mt="xs">
-            Filter popular Norwegian routes. Open a trail for elevation, mocked MET.no conditions,
-            and drinking-water guidance.
+            Filter popular Norwegian routes. Open a trail for elevation, live MET.no conditions, and
+            drinking-water guidance.
           </Text>
         </div>
 
@@ -90,30 +143,34 @@ export function ExplorePage() {
           </Stack>
         </Card>
 
-        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-          {trails.map((trail) => (
-            <Card key={trail.id} withBorder padding="lg">
-              <Group justify="space-between">
-                <Badge color="pine">{trail.region}</Badge>
-                <Badge variant="light">{trail.difficulty}</Badge>
-              </Group>
-              <Title order={3} mt="sm">
-                {trail.name}
-              </Title>
-              <Text size="sm" mt="xs">
-                {trail.description}
-              </Text>
-              <Text size="sm" mt="md">
-                {trail.distanceKm} km · {trail.durationLabel} · {trail.elevationGainM} m gain
-              </Text>
-              <Button mt="md" onClick={() => setSelected(trail)}>
-                Trail details
-              </Button>
-            </Card>
-          ))}
-        </SimpleGrid>
+        {loadingTrails ? (
+          <Text>Loading trails...</Text>
+        ) : (
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+            {trails.map((trail) => (
+              <Card key={trail.id} withBorder padding="lg">
+                <Group justify="space-between">
+                  <Badge color="pine">{trail.region}</Badge>
+                  <Badge variant="light">{trail.difficulty}</Badge>
+                </Group>
+                <Title order={3} mt="sm">
+                  {trail.name}
+                </Title>
+                <Text size="sm" mt="xs">
+                  {trail.description}
+                </Text>
+                <Text size="sm" mt="md">
+                  {trail.distanceKm} km · {trail.durationLabel} · {trail.elevationGainM} m gain
+                </Text>
+                <Button mt="md" onClick={() => setSelected(trail)}>
+                  Trail details
+                </Button>
+              </Card>
+            ))}
+          </SimpleGrid>
+        )}
 
-        {trails.length === 0 ? (
+        {!loadingTrails && trails.length === 0 ? (
           <Text>No trails match these filters. Try a wider region or duration.</Text>
         ) : null}
       </Stack>
@@ -125,20 +182,34 @@ export function ExplorePage() {
         size="lg"
         title={selected?.name ?? 'Trail'}
       >
-        {selected && weather ? (
+        {selected ? (
           <Stack gap="md">
             <div className="mock-map" aria-label={`Mock map of ${selected.name}`}>
               <div className="mock-map__contour" />
               <div className="mock-map__pin" style={{ left: '58%', top: '42%' }} />
             </div>
             <Text size="sm">{selected.description}</Text>
+
             <Card withBorder>
-              <Title order={4}>MET.no conditions (mock schema)</Title>
-              <Text size="sm" mt="xs">
-                {weather.temperatureC.toFixed(1)}°C · wind {weather.windMs.toFixed(1)} m/s · precip{' '}
-                {weather.precipitationMm.toFixed(1)} mm · {weather.symbol.replaceAll('_', ' ')}
-              </Text>
+              <Title order={4}>MET.no live conditions</Title>
+              {loadingWeather ? (
+                <Text size="sm" mt="xs" c="dimmed">
+                  Fetching live weather data...
+                </Text>
+              ) : currentDetails ? (
+                <Text size="sm" mt="xs">
+                  {currentDetails.air_temperature.toFixed(1)}°C · wind{' '}
+                  {currentDetails.wind_speed.toFixed(1)} m/s · precip{' '}
+                  {nextSixHours?.details?.precipitation_amount ?? 0} mm ·{' '}
+                  {nextSixHours?.summary?.symbol_code?.replaceAll('_', ' ') ?? 'Clear'}
+                </Text>
+              ) : (
+                <Text size="sm" mt="xs" c="dimmed">
+                  Weather data unavailable.
+                </Text>
+              )}
             </Card>
+
             <Card withBorder>
               <Title order={4}>Elevation profile</Title>
               <svg
@@ -168,6 +239,7 @@ export function ExplorePage() {
                 {selected.longitude.toFixed(3)}
               </Text>
             </Card>
+
             <Card withBorder>
               <Title order={4}>Water sources</Title>
               {selected.waterSources.map((source) => (
@@ -176,6 +248,7 @@ export function ExplorePage() {
                 </Text>
               ))}
             </Card>
+
             <Button
               type="button"
               onClick={(e) => {
