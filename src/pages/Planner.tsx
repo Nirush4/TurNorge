@@ -342,7 +342,7 @@ export function PlannerPage() {
           </Stack>
         ) : null}
 
-        <Modal opened={opened} onClose={close} title="Live Meteorological Dashboard" size="xl">
+        <Modal opened={opened} onClose={close} title="Live Meteorological Dashboard" size="4xl">
           {selectedDayWeather ? <WeatherDashboard forecast={selectedDayWeather} /> : null}
         </Modal>
       </Stack>
