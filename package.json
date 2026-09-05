@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
-    "@mantine/charts": "^9.6.0",
+    "@mantine/charts": "^7.17.8",
     "@mantine/core": "^7.17.8",
     "@mantine/hooks": "^7.17.8",
     "@mantine/notifications": "^7.17.8",
