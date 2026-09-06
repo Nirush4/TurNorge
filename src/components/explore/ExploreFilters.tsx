@@ -1,6 +1,7 @@
 import { Card, SegmentedControl, Select, Stack } from '@mantine/core';
 
 import type { KartverketPlace } from '@/types/schemas';
+import { NORWEGIAN_DESTINATIONS } from '@/types/schemas';
 import type { TrailDifficulty } from '@/types';
 
 interface ExploreFiltersProps {
@@ -14,93 +15,51 @@ interface ExploreFiltersProps {
 }
 
 /**
- * These are always available in the dropdown.
- * Kartverket results are added on top of these.
+ * Mantine expects mutable arrays for SegmentedControl data.
+ *
+ * Do not use `as const` here.
  */
-const NORWEGIAN_DESTINATIONS = [
-  'Jotunheimen',
-  'Hardangervidda',
-  'Rondane',
-  'Dovrefjell',
-  'Trollheimen',
-  'Lyngsalpene',
-  'Lofoten',
-  'Nordmarka',
-  'Østmarka',
-  'Finnemarka',
-  'Kjekstadmarka',
-  'Krokskogen',
-  'Vestmarka',
-  'Maridalsmarka',
-  'Sørmarka',
-  'Follomarka',
-  'Bærumsmarka',
-  'Romeriksåsene',
-  'Nittedalsmarka',
-  'Ringkollen',
-  'Breheimen',
-  'Reinheimen',
-  'Jostedalsbreen',
-  'Hallingskarvet',
-  'Setesdal',
-  'Ryfylke',
-  'Lysefjorden',
-  'Haukelifjell',
-  'Romsdalen',
-  'Romsdal',
-  'Sunnmørsalpene',
-  'Hurrungane',
-  'Narvikfjellet',
-  'Senja',
-  'Vesterålen',
-  'Helgeland',
-  'Saltfjellet',
-  'Børgefjell',
-  'Rago',
-  'Femundsmarka',
-  'Sylan',
-  'Forollhogna',
-  'Skarvheimen',
-  'Breheimen',
-  'Tafjordfjella',
-  'Sunndalsfjella',
-  'Dovrefjell',
-  'Romsdal',
-  'Eikesdalen',
-  'Innerdalen',
-  'Geiranger',
-  'Stryn',
-  'Loen',
-  'Olden',
-  'Aurlandsdalen',
-  'Flåmsdalen',
-  'Nærøyfjorden',
-  'Sognefjorden',
-  'Hardangerfjorden',
-  'Trolltunga',
-  'Preikestolen',
-  'Kjerag',
-  'Lysebotn',
-  'Kvitfjell',
-  'Sjusjøen',
-  'Venabygdsfjellet',
-  'Beitostølen',
-  'Valdres',
-  'Gålå',
-  'Rjukan',
-  'Gaustatoppen',
-  'Telemark',
-  'Jomfruland',
-  'Femundsmarka',
-  'Engerdal',
-  'Trysil',
-  'Hamar',
-  'Lillehammer',
-  'Oslo',
-  'Bergen',
-  'Trondheim',
-  'Tromsø',
-] as const;
+const DIFFICULTY_OPTIONS = [
+  {
+    value: 'all',
+    label: 'All grades',
+  },
+  {
+    value: 'easy',
+    label: 'Easy',
+  },
+  {
+    value: 'moderate',
+    label: 'Moderate',
+  },
+  {
+    value: 'demanding',
+    label: 'Demanding',
+  },
+  {
+    value: 'expert',
+    label: 'Expert',
+  },
+];
+
+const DURATION_OPTIONS = [
+  {
+    value: 'all',
+    label: 'Any length',
+  },
+  {
+    value: 'half',
+    label: 'Half day',
+  },
+  {
+    value: 'full',
+    label: 'Full day',
+  },
+  {
+    value: 'long',
+    label: 'Long day',
+  },
+];
 
 export function ExploreFilters({
   destinations,
@@ -111,27 +70,19 @@ export function ExploreFilters({
   duration,
   setDuration,
 }: ExploreFiltersProps) {
-  /**
-   * Create options from the built-in destination list.
-   */
   const staticOptions = NORWEGIAN_DESTINATIONS.map((name) => ({
     value: name,
     label: name,
   }));
 
-  /**
-   * Add Kartverket places.
-   *
-   * We only add a place if it isn't already represented
-   * by the static destination list.
-   */
   const kartverketOptions = destinations
-    .filter(
-      (destination) =>
-        !NORWEGIAN_DESTINATIONS.some(
-          (name) => name.toLocaleLowerCase('nb') === destination.name.toLocaleLowerCase('nb'),
-        ),
-    )
+    .filter((destination) => {
+      const destinationName = destination.name.toLocaleLowerCase('nb');
+
+      return !NORWEGIAN_DESTINATIONS.some(
+        (name) => name.toLocaleLowerCase('nb') === destinationName,
+      );
+    })
     .map((destination) => ({
       value: destination.name,
       label: destination.municipality
@@ -139,9 +90,6 @@ export function ExploreFilters({
         : destination.name,
     }));
 
-  /**
-   * Remove duplicate option values.
-   */
   const destinationOptions = Array.from(
     new Map(
       [...staticOptions, ...kartverketOptions].map((option) => [
@@ -183,28 +131,7 @@ export function ExploreFilters({
           onChange={(value) => {
             setDifficulty(value as TrailDifficulty | 'all');
           }}
-          data={[
-            {
-              value: 'all',
-              label: 'All grades',
-            },
-            {
-              value: 'easy',
-              label: 'Easy',
-            },
-            {
-              value: 'moderate',
-              label: 'Moderate',
-            },
-            {
-              value: 'demanding',
-              label: 'Demanding',
-            },
-            {
-              value: 'expert',
-              label: 'Expert',
-            },
-          ]}
+          data={DIFFICULTY_OPTIONS}
         />
 
         <SegmentedControl
@@ -214,24 +141,7 @@ export function ExploreFilters({
           onChange={(value) => {
             setDuration(value as 'all' | 'half' | 'full' | 'long');
           }}
-          data={[
-            {
-              value: 'all',
-              label: 'Any length',
-            },
-            {
-              value: 'half',
-              label: 'Half day',
-            },
-            {
-              value: 'full',
-              label: 'Full day',
-            },
-            {
-              value: 'long',
-              label: 'Long day',
-            },
-          ]}
+          data={DURATION_OPTIONS}
         />
       </Stack>
     </Card>

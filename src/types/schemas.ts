@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /* -------------------------------------------------------------------------- */
-/* Planner                                                                    */
+/* Planner                                                                     */
 /* -------------------------------------------------------------------------- */
 
 export const EXPERIENCE_LEVELS = ['beginner', 'intermediate', 'expert'] as const;
@@ -12,12 +12,6 @@ export const TRAIL_DIFFICULTIES = ['easy', 'moderate', 'demanding', 'expert'] as
 
 export const WATER_SAFETY = ['treated', 'filter', 'boil', 'avoid'] as const;
 
-/**
- * Main destination list shown in the planner.
- *
- * Keep destination names unique.
- * These values are also used when searching Kartverket.
- */
 export const NORWEGIAN_DESTINATIONS = [
   'Jotunheimen',
   'Hardangervidda',
@@ -40,6 +34,7 @@ export const NORWEGIAN_DESTINATIONS = [
   'Setesdal',
   'Ryfylke',
   'Haukelifjell',
+  'Romsdal',
   'Narvikfjellet',
   'Senja',
   'Vesterålen',
@@ -48,9 +43,6 @@ export const NORWEGIAN_DESTINATIONS = [
   'Børgefjell',
   'Rago',
   'Oslo Marka',
-  'Bergen',
-  'Tromsø',
-  'Romsdal',
 ] as const;
 
 export const norwegianRegionSchema = z.string().min(1, 'Choose a Norwegian destination.');
@@ -70,7 +62,7 @@ export const plannerSchema = z.object({
     })
     .int('Use whole days only.')
     .min(1, 'Trips must be at least 1 day.')
-    .max(14, 'Keep public-utility plans to 14 days or fewer.'),
+    .max(14, 'Keep plans to 14 days or fewer.'),
 
   season: z.enum(SEASONS, {
     required_error: 'Select a season.',
@@ -83,7 +75,7 @@ export const plannerSchema = z.object({
 export type PlannerFormValues = z.infer<typeof plannerSchema>;
 
 /* -------------------------------------------------------------------------- */
-/* MET.no                                                                     */
+/* MET.no                                                                      */
 /* -------------------------------------------------------------------------- */
 
 export const metInstantDetailsSchema = z.object({
@@ -154,22 +146,16 @@ export const metLocationForecastSchema = z.object({
 export type MetLocationForecast = z.infer<typeof metLocationForecastSchema>;
 
 /* -------------------------------------------------------------------------- */
-/* Kartverket                                                                 */
+/* Kartverket                                                                  */
 /* -------------------------------------------------------------------------- */
 
 export const kartverketPlaceSchema = z.object({
   ssrId: z.string(),
-
   name: z.string().min(1),
-
   municipality: z.string(),
-
   county: z.string(),
-
   latitude: z.number().min(-90).max(90),
-
   longitude: z.number().min(-180).max(180),
-
   mapSheet: z.string(),
 });
 

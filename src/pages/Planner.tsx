@@ -70,26 +70,21 @@ export function PlannerPage() {
   const { aiSettings, setAiSettings, setLastPlan, lastPlan, saveRoute } = useAppState();
 
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
-
   const [fetchingWeather, setFetchingWeather] = useState(false);
 
   const [opened, { open, close }] = useDisclosure(false);
 
   const [selectedDayWeather, setSelectedDayWeather] = useState<MetForecastResponse | null>(null);
 
-  /**
-   * Always start with popular Norwegian destinations.
-   * This means the dropdown has options immediately.
-   */
   const [destinations, setDestinations] = useState<KartverketPlace[]>(() =>
     getPopularNorwegianDestinations(),
   );
 
   const [searchingDestinations, setSearchingDestinations] = useState(false);
-
   const [destinationSearch, setDestinationSearch] = useState('');
-
   const [selectedPlace, setSelectedPlace] = useState<KartverketPlace | null>(null);
+
+  const [isFavorite, setIsFavorite] = useState(false);
 
   const {
     control,
@@ -107,19 +102,15 @@ export function PlannerPage() {
     },
   });
 
-  /**
+  /*
    * Search Kartverket when the user types.
-   *
-   * With an empty search box we show the full popular list.
    */
   useEffect(() => {
     const query = destinationSearch.trim();
 
     if (query.length < 2) {
       setDestinations(getPopularNorwegianDestinations());
-
       setSearchingDestinations(false);
-
       return;
     }
 
@@ -156,9 +147,7 @@ export function PlannerPage() {
 
           setDestinations(
             getPopularNorwegianDestinations().filter((place) =>
-              `${place.name} ${place.municipality} ${place.county}`
-                .toLocaleLowerCase('nb')
-                .includes(lowerQuery),
+              place.name.toLocaleLowerCase('nb').includes(lowerQuery),
             ),
           );
         }
@@ -175,11 +164,14 @@ export function PlannerPage() {
     };
   }, [destinationSearch]);
 
-  /**
+  /*
    * Generate itinerary.
    */
   const onSubmit = async (values: PlannerFormValues): Promise<void> => {
     setLastPlan(null);
+
+    // Reset favorite status for the new itinerary.
+    setIsFavorite(false);
 
     try {
       for (let index = 0; index < PLANNER_LOADING_STEPS.length; index += 1) {
@@ -192,7 +184,6 @@ export function PlannerPage() {
 
       const plan = await generatePlan(values, {
         concise: aiSettings.conciseItineraries,
-
         emphasizeSafety: aiSettings.emphasizeSafety,
       });
 
@@ -216,8 +207,8 @@ export function PlannerPage() {
     }
   };
 
-  /**
-   * Open live weather for the selected destination.
+  /*
+   * Open live weather dashboard.
    */
   const handleOpenWeatherDashboard = async (regionName: string) => {
     setFetchingWeather(true);
@@ -225,7 +216,7 @@ export function PlannerPage() {
     try {
       let place = selectedPlace;
 
-      if (!place || place.name.toLocaleLowerCase('nb') !== regionName.toLocaleLowerCase('nb')) {
+      if (!place || place.name.toLowerCase() !== regionName.toLowerCase()) {
         place = await resolveKartverketPlace(regionName);
       }
 
@@ -251,9 +242,6 @@ export function PlannerPage() {
     }
   };
 
-  /**
-   * Convert destinations into Mantine Select options.
-   */
   const destinationOptions = destinations.map((place) => ({
     value: place.name,
     label: `${place.name} — ${place.municipality}, ${place.county}`,
@@ -262,33 +250,31 @@ export function PlannerPage() {
   return (
     <Container size="lg" py="xl">
       <Stack gap="lg">
-        {/* Header */}
         <div>
           <Title order={1}>AI Trip Planner</Title>
 
           <Text mt="xs">
             Choose a Norwegian hiking destination, select your experience level and trip length,
-            then generate your itinerary using live weather data.
+            then generate an itinerary using live weather data.
           </Text>
         </div>
 
-        {/* Assistant settings */}
         <Card withBorder padding="lg">
           <Title order={2} mb="md">
-            Assistant settings
+            Planner settings
           </Title>
 
-          <Stack>
+          <Stack gap="md">
             <Switch
               checked={aiSettings.emphasizeSafety}
               onChange={(event) =>
                 setAiSettings({
                   ...aiSettings,
-
                   emphasizeSafety: event.currentTarget.checked,
                 })
               }
-              label="Emphasize safety turnaround rules"
+              label="Emphasize safety turnaround guidance"
+              description="Adds stronger weather, visibility and turnaround warnings to the generated plan."
             />
 
             <Switch
@@ -296,79 +282,64 @@ export function PlannerPage() {
               onChange={(event) =>
                 setAiSettings({
                   ...aiSettings,
-
                   conciseItineraries: event.currentTarget.checked,
                 })
               }
-              label="Prefer concise overviews"
+              label="Prefer concise itineraries"
+              description="Shortens the generated overview."
             />
           </Stack>
         </Card>
 
-        {/* Planner form */}
         <Card withBorder padding="lg" component="form" onSubmit={handleSubmit(onSubmit)}>
           <Stack gap="md">
-            {/* Destination */}
             <Controller
               name="destination"
               control={control}
               render={({ field }) => (
                 <Select
                   label="Destination"
-                  description="Choose a Norwegian hiking destination or search for another place."
-                  placeholder="Search Norwegian areas..."
+                  description="Choose a popular destination or search Kartverket for another Norwegian place."
+                  placeholder="Choose a Norwegian destination"
                   searchable
                   clearable
-                  required
-
                   data={destinationOptions}
-
                   value={field.value || null}
-
                   searchValue={destinationSearch}
-
                   onSearchChange={setDestinationSearch}
-
                   onChange={(value) => {
-                    const destination = value ?? '';
+                    field.onChange(value ?? '');
 
-                    field.onChange(destination);
-
-                    if (!destination) {
+                    if (!value) {
                       setSelectedPlace(null);
                       return;
                     }
 
-                    const place = destinations.find((item) => item.name === destination);
+                    const place = destinations.find((item) => item.name === value);
 
                     if (place) {
                       setSelectedPlace(place);
-                      return;
+                    } else {
+                      void resolveKartverketPlace(value).then((resolved) => {
+                        if (resolved) {
+                          setSelectedPlace(resolved);
+                        }
+                      });
                     }
-
-                    void resolveKartverketPlace(destination).then((resolved) => {
-                      if (resolved) {
-                        setSelectedPlace(resolved);
-                      }
-                    });
                   }}
-
                   onBlur={field.onBlur}
-
                   rightSection={searchingDestinations ? <Loader size="xs" /> : undefined}
-
                   nothingFoundMessage={
                     destinationSearch.trim().length < 2
-                      ? 'No destination found'
+                      ? 'No matching destination'
                       : 'No Norwegian place found'
                   }
-
                   error={errors.destination?.message}
+                  required
                 />
               )}
             />
 
-            {/* Selected destination */}
             {selectedPlace ? (
               <Card withBorder padding="sm">
                 <Text size="sm" fw={600}>
@@ -387,7 +358,6 @@ export function PlannerPage() {
               </Card>
             ) : null}
 
-            {/* Experience */}
             <Controller
               name="experienceLevel"
               control={control}
@@ -404,7 +374,6 @@ export function PlannerPage() {
               )}
             />
 
-            {/* Duration */}
             <Controller
               name="durationDays"
               control={control}
@@ -422,7 +391,6 @@ export function PlannerPage() {
               )}
             />
 
-            {/* Season */}
             <Controller
               name="season"
               control={control}
@@ -439,23 +407,22 @@ export function PlannerPage() {
               )}
             />
 
-            {/* Cabin */}
             <Controller
               name="includeCabinStay"
               control={control}
               render={({ field }) => (
                 <Checkbox
-                  label="Looking for DNT / self-service cabins"
+                  label="Include DNT / self-service cabin options"
+                  description="The planner will prefer cabin-based overnight stages when suitable."
                   checked={field.value}
                   onChange={(event) => field.onChange(event.currentTarget.checked)}
                 />
               )}
             />
 
-            {/* Generate */}
             <Button
               type="submit"
-              loading={isSubmitting}
+              loading={isSubmitting || loadingIndex !== null}
               disabled={!selectedPlace || searchingDestinations}
               color="pine"
             >
@@ -464,7 +431,6 @@ export function PlannerPage() {
           </Stack>
         </Card>
 
-        {/* Loading */}
         {loadingIndex !== null ? (
           <Card withBorder padding="lg" aria-live="polite">
             <Group>
@@ -475,7 +441,6 @@ export function PlannerPage() {
           </Card>
         ) : null}
 
-        {/* Generated plan */}
         {lastPlan ? (
           <Stack gap="md">
             <Card withBorder padding="lg">
@@ -487,7 +452,11 @@ export function PlannerPage() {
                 </div>
 
                 <Button
-                  variant="light"
+                  variant="filled"
+                  radius="md"
+                  color="blue.5"
+                  size="sm"
+                  disabled={isFavorite}
                   onClick={() => {
                     saveRoute({
                       title: lastPlan.title,
@@ -495,18 +464,30 @@ export function PlannerPage() {
                       notes: lastPlan.overview,
                     });
 
+                    setIsFavorite(true);
+
                     notifications.show({
                       message: 'Saved in your favorites.',
                       color: 'frost',
                     });
                   }}
                 >
-                  Save locally
+                  {isFavorite ? 'Saved' : 'Save to Favorites'}
                 </Button>
               </Group>
             </Card>
 
-            {/* Days */}
+            {lastPlan.includeCabinStay ? (
+              <Card withBorder padding="md">
+                <Text fw={600}>🏠 Cabin-based itinerary</Text>
+
+                <Text size="sm" c="dimmed" mt={4}>
+                  This itinerary requested DNT / self-service cabin options. Verify current opening
+                  status, access and availability before departure.
+                </Text>
+              </Card>
+            ) : null}
+
             <SimpleGrid
               cols={{
                 base: 1,
@@ -553,7 +534,6 @@ export function PlannerPage() {
               ))}
             </SimpleGrid>
 
-            {/* Packing */}
             <Card withBorder padding="lg">
               <Title order={3}>Packing list</Title>
 
@@ -564,7 +544,6 @@ export function PlannerPage() {
               </List>
             </Card>
 
-            {/* Safety */}
             <Card withBorder padding="lg">
               <Title order={3}>Safety disclaimers</Title>
 
@@ -587,7 +566,6 @@ export function PlannerPage() {
           </Stack>
         ) : null}
 
-        {/* Weather modal */}
         <Modal opened={opened} onClose={close} title="Live Meteorological Dashboard" size="4xl">
           {selectedDayWeather ? <WeatherDashboard forecast={selectedDayWeather} /> : null}
         </Modal>
