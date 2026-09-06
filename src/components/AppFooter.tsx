@@ -8,10 +8,10 @@ export function AppFooter() {
       </Text>
       <Group gap="md">
         <Anchor href="https://www.met.no/" target="_blank" rel="noreferrer" size="sm">
-          MET.no
+          Weather data: MET.no
         </Anchor>
         <Anchor href="https://www.kartverket.no/" target="_blank" rel="noreferrer" size="sm">
-          Kartverket
+          Map data: Kartverket
         </Anchor>
         <Anchor href="https://www.dnt.no/" target="_blank" rel="noreferrer" size="sm">
           DNT

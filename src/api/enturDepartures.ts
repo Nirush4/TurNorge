@@ -27,13 +27,13 @@ export async function fetchStationDepartures(stopPlaceId: string) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'ET-Client-Name': 'norwegian-trail-planner-app',
+      'ET-Client-Name': 'nordictrail-app',
     },
     body: JSON.stringify({ query }),
   });
 
   if (!response.ok) {
-    throw new Error('Failed to fetch departure board from Entur');
+    throw new Error('Failed to fetch departure board from Entur/Ruter network');
   }
 
   const json = await response.json();
