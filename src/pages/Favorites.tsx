@@ -45,7 +45,7 @@ export function Favorites(): JSX.Element {
             Your locally stored Norwegian hiking routes and plans.
           </Text>
         </div>
-        <Badge variant="light" color="forest" size="lg" leftSection={<BookmarkCheck size={14} />}>
+        <Badge variant="defalt" size="lg" leftSection={<BookmarkCheck size={14} />}>
           {savedRoutes.length} Saved
         </Badge>
       </Group>
@@ -88,7 +88,7 @@ export function Favorites(): JSX.Element {
                   )}
                 </div>
                 <Button
-                  variant="subtle"
+                  variant="outline"
                   color="red"
                   size="xs"
                   leftSection={<Trash2 size={14} />}
