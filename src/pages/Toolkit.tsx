@@ -40,12 +40,13 @@ export function ToolkitPage() {
   };
 
   return (
-    <Container size="lg" py="xl" px="0" component="main">
+    <Container size="lg" py="md" px="0" component="main" mih="100dvh">
       <Stack gap="lg">
         <section aria-labelledby="toolkit-heading">
-          <Title order={1} id="toolkit-heading">
+          <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={isDark ? '#eef4f1' : 'dark.7'}>
             Allemannsretten & Safety Toolkit
           </Title>
+
           <Text mt="xs" c={isDark ? '#c3d1c9' : 'dimmed'}>
             Norway’s Right to Roam gives you open access to nature, balanced by strict
             responsibilities to protect fragile wilderness, prevent wildfires, and ensure personal
@@ -56,7 +57,7 @@ export function ToolkitPage() {
         <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
           <Card withBorder padding="md" radius="md">
             <Group gap="xs" mb="xs">
-              <Compass size={18} color="#2d6a4f" aria-hidden="true" />
+              <Compass size={18} color="#2d7a4f" aria-hidden="true" />
               <Text fw={600} size="sm" c={isDark ? '#eef4f1' : 'dark.8'}>
                 Utmark vs. Innmark
               </Text>
@@ -96,7 +97,7 @@ export function ToolkitPage() {
 
         <Accordion variant="separated" defaultValue="roam">
           <Accordion.Item value="roam">
-            <Accordion.Control icon={<Compass size={16} color="#2d6a4f" aria-hidden="true" />}>
+            <Accordion.Control icon={<Compass size={16} color="#2d7a4f" aria-hidden="true" />}>
               <Text fw={600} c={isDark ? '#eef4f1' : 'dark.8'}>
                 The Right to Roam (Allemannsretten)
               </Text>
@@ -112,7 +113,7 @@ export function ToolkitPage() {
           </Accordion.Item>
 
           <Accordion.Item value="camp">
-            <Accordion.Control icon={<Backpack size={16} color="#2d6a4f" aria-hidden="true" />}>
+            <Accordion.Control icon={<Backpack size={16} color="#2d7a4f" aria-hidden="true" />}>
               <Text fw={600} c={isDark ? '#eef4f1' : 'dark.8'}>
                 Wild Camping Rules & Distance Limits
               </Text>
@@ -129,7 +130,7 @@ export function ToolkitPage() {
           </Accordion.Item>
 
           <Accordion.Item value="fire">
-            <Accordion.Control icon={<Flame size={16} color="#2d6a4f" aria-hidden="true" />}>
+            <Accordion.Control icon={<Flame size={16} color="#2d7a4f" aria-hidden="true" />}>
               <Text fw={600} c={isDark ? '#eef4f1' : 'dark.8'}>
                 Campfires & Outdoor Cooking Regulations
               </Text>
@@ -148,7 +149,7 @@ export function ToolkitPage() {
           </Accordion.Item>
 
           <Accordion.Item value="waste">
-            <Accordion.Control icon={<Droplets size={16} color="#2d6a4f" aria-hidden="true" />}>
+            <Accordion.Control icon={<Droplets size={16} color="#2d7a4f" aria-hidden="true" />}>
               <Text fw={600} c={isDark ? '#eef4f1' : 'dark.8'}>
                 Water Safety & Leave No Trace Waste
               </Text>
@@ -164,7 +165,7 @@ export function ToolkitPage() {
           </Accordion.Item>
 
           <Accordion.Item value="emergency">
-            <Accordion.Control icon={<PhoneCall size={16} color="#2d6a4f" aria-hidden="true" />}>
+            <Accordion.Control icon={<PhoneCall size={16} color="#2d7a4f" aria-hidden="true" />}>
               <Text fw={600} c={isDark ? '#eef4f1' : 'dark.8'}>
                 Emergency Contacts & Mountain Rescue
               </Text>
@@ -228,7 +229,7 @@ export function ToolkitPage() {
                 }
                 checked={checked.includes(item.id)}
                 onChange={() => toggle(item.id)}
-                color="green"
+                color="#2d7a4f"
                 aria-label={item.label}
               />
             ))}

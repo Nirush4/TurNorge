@@ -67,13 +67,11 @@ body {
   border-radius: 12px;
   background:
     linear-gradient(180deg, rgba(78, 168, 222, 0.25), transparent 40%),
-    repeating-linear-gradient(
-      45deg,
+    repeating-linear-gradient(45deg,
       #143328,
       #143328 12px,
       #1b4332 12px,
-      #1b4332 24px
-    );
+      #1b4332 24px);
 }
 
 .mock-map__contour {
@@ -90,4 +88,20 @@ body {
   border-radius: 50%;
   background: #4ea8de;
   box-shadow: 0 0 0 6px rgba(78, 168, 222, 0.28);
+}
+
+
+body {
+  font-family: 'Outfit', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Playfair Display', Georgia, serif;
 }

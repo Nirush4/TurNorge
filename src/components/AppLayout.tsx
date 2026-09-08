@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AppShell, Burger, Group, NavLink, Stack, Container } from '@mantine/core';
+import { AppShell, Burger, Group, NavLink, Stack, Container, Box } from '@mantine/core';
 import { Compass, Home, Shield, Sparkles, BookmarkCheck } from 'lucide-react';
 import { NavLink as RouterNavLink, Outlet } from 'react-router-dom';
 import { AccessibilityWrapper } from '@/components/AccessibilityWrapper';
@@ -32,7 +32,6 @@ export function AppLayout() {
     <AccessibilityWrapper>
       <AppShell
         header={{ height: { base: 62, sm: 72 } }}
-        footer={{ height: { base: 'auto', sm: 56 } }}
         navbar={{
           width: 280,
           breakpoint: 'md',
@@ -41,7 +40,7 @@ export function AppLayout() {
         padding="md"
       >
         <AppShell.Header>
-          <Container size="lg" h="100%" px="md">
+          <Container size="lg" h="100%" px={{ base: 'md', lg: '0' }}>
             <Group h="100%" justify="space-between" wrap="nowrap">
               <Group gap="sm" wrap="nowrap">
                 <Burger
@@ -97,16 +96,39 @@ export function AppLayout() {
         </AppShell.Navbar>
 
         <AppShell.Main id="main-content" tabIndex={-1}>
-          <Container size="lg" p={0}>
-            <Outlet />
+          <Container
+            size="lg"
+            p={0}
+            style={{
+              minHeight: 'calc(100vh - 200px)',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              overflowX: 'hidden',
+            }}
+          >
+            <div>
+              <Outlet />
+            </div>
+            <Box
+              component="footer"
+              style={{
+                width: '100vw',
+                position: 'relative',
+                left: '50%',
+                right: '50%',
+                marginLeft: '-50vw',
+                marginRight: '-50vw',
+                borderTop: '1px solid var(--mantine-color-default-border)',
+                overflowX: 'hidden',
+              }}
+            >
+              <Container size="lg" px="md">
+                <AppFooter />
+              </Container>
+            </Box>
           </Container>
         </AppShell.Main>
-
-        <AppShell.Footer>
-          <Container size="lg" h="100%" px="md" style={{ display: 'flex', alignItems: 'center' }}>
-            <AppFooter />
-          </Container>
-        </AppShell.Footer>
       </AppShell>
     </AccessibilityWrapper>
   );

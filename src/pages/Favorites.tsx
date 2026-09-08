@@ -21,10 +21,11 @@ export function Favorites(): JSX.Element {
 
   if (savedRoutes.length === 0) {
     return (
-      <Container size="md" py="xl" px="0">
-        <Title order={2} mb="xs" c={isDark ? '#eef4f1' : 'dark.7'}>
+      <Container size="lg" py="md" px="0" component="main" mih="100dvh">
+        <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={isDark ? '#eef4f1' : 'dark.7'}>
           Saved Favorites
         </Title>
+
         <Text c="dimmed">
           No saved routes found in your browser storage yet. Explore trails or use the Trip Planner
           to save your favorites!
@@ -34,17 +35,17 @@ export function Favorites(): JSX.Element {
   }
 
   return (
-    <Container size="md" py="xl" px="0">
+    <Container size="lg" py="md" px="0" component="main" mih="100dvh">
       <Group justify="space-between" mb="lg">
         <div>
-          <Title order={2} c={isDark ? '#eef4f1' : 'dark.7'}>
+          <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={isDark ? '#eef4f1' : 'dark.7'}>
             Saved Favorites
           </Title>
           <Text size="sm" c="dimmed">
             Your locally stored Norwegian hiking routes and plans.
           </Text>
         </div>
-        <Badge variant="light" color="forest" size="lg" leftSection={<BookmarkCheck size={14} />}>
+        <Badge variant="defalt" size="lg" leftSection={<BookmarkCheck size={14} />}>
           {savedRoutes.length} Saved
         </Badge>
       </Group>
@@ -87,7 +88,7 @@ export function Favorites(): JSX.Element {
                   )}
                 </div>
                 <Button
-                  variant="subtle"
+                  variant="outline"
                   color="red"
                   size="xs"
                   leftSection={<Trash2 size={14} />}

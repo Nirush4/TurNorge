@@ -38,7 +38,7 @@ export function HomePage() {
   const isDark = colorScheme === 'dark';
 
   return (
-    <Container size="lg" py="xl" px="0" component="main">
+    <Container size="lg" py="md" px="0" component="main" mih="100dvh">
       <Stack gap="xl">
         <Card
           padding="xl"
@@ -116,7 +116,7 @@ export function HomePage() {
                 border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
               }}
             >
-              <feature.icon size={22} color="#2d6a4f" aria-hidden="true" />
+              <feature.icon size={22} color="#2d7a2f" aria-hidden="true" />
 
               <Title order={3} mt="sm" size="h4" c={isDark ? '#eef4f1' : 'dark.8'}>
                 {feature.title}

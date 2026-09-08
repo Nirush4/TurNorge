@@ -2,11 +2,19 @@ import { Anchor, Group, Text } from '@mantine/core';
 
 export function AppFooter() {
   return (
-    <Group h="100%" px="0" py="md" justify="space-between" wrap="wrap" gap="0">
+    <Group
+      h="100%"
+      px="md"
+      py="md"
+      justify="space-between"
+      wrap="wrap"
+      gap="0"
+      style={{ overflowX: 'hidden' }}
+    >
       <Text size="sm">
         Free public utility. Not an official MET Norway, Kartverket, or DNT service.
       </Text>
-      <Group gap="sm" pr="md">
+      <Group gap="sm">
         <Anchor href="https://www.met.no/" target="_blank" rel="noreferrer" size="sm">
           Weather data: MET.no
         </Anchor>

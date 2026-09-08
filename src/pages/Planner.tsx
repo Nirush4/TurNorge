@@ -336,10 +336,10 @@ export function PlannerPage() {
   }));
 
   return (
-    <Container size="lg" py="xl" px="0" component="main">
+    <Container size="lg" pt="md" pb="xl" px="0" component="main" mih="100dvh">
       <Stack gap="lg">
         <header>
-          <Title order={1} tabIndex={-1}>
+          <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }}>
             Dynamic Route Planner
           </Title>
           <Text mt="xs" c="dimmed">
@@ -553,7 +553,17 @@ export function PlannerPage() {
                     setIsFavorite(true);
                     notifications.show({
                       message: `${lastPlan.title} saved in your favorites.`,
-                      color: 'frost',
+                      styles: {
+                        root: {
+                          backgroundColor: '#28726B',
+                        },
+                        description: {
+                          color: '#FFFFFF',
+                        },
+                        closeButton: {
+                          color: '#FFFFFF',
+                        },
+                      },
                     });
                   }}
                   aria-label={isFavorite ? 'Route saved to favorites' : 'Save route to favorites'}
