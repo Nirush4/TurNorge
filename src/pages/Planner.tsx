@@ -336,7 +336,7 @@ export function PlannerPage() {
   }));
 
   return (
-    <Container size="lg" py="xl" px="0" component="main">
+    <Container size="lg" pt="md" pb="xl" px="0" component="main" mih="100dvh">
       <Stack gap="lg">
         <header>
           <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }}>

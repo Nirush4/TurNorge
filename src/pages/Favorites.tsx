@@ -21,7 +21,7 @@ export function Favorites(): JSX.Element {
 
   if (savedRoutes.length === 0) {
     return (
-      <Container size="md" py="xl" px="0">
+      <Container size="lg" py="md" px="0" component="main" mih="100dvh">
         <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={isDark ? '#eef4f1' : 'dark.7'}>
           Saved Favorites
         </Title>
@@ -35,7 +35,7 @@ export function Favorites(): JSX.Element {
   }
 
   return (
-    <Container size="md" py="xl" px="0">
+    <Container size="lg" py="md" px="0" component="main" mih="100dvh">
       <Group justify="space-between" mb="lg">
         <div>
           <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={isDark ? '#eef4f1' : 'dark.7'}>

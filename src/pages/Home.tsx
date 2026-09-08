@@ -38,7 +38,7 @@ export function HomePage() {
   const isDark = colorScheme === 'dark';
 
   return (
-    <Container size="lg" py="xl" px="0" component="main">
+    <Container size="lg" py="md" px="0" component="main" mih="100dvh">
       <Stack gap="xl">
         <Card
           padding="xl"

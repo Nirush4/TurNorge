@@ -271,7 +271,7 @@ export function ExplorePage() {
   };
 
   return (
-    <Container size="lg" py="xl" px="0">
+    <Container size="lg" py="md" px="0" component="main" mih="100dvh">
       <Stack gap="lg">
         <div>
           <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={isDark ? '#eef4f1' : 'dark.7'}>
