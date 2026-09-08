@@ -5,7 +5,7 @@ import type { GeneratedPlan, ItineraryDay } from '@/types';
 import type { PlannerFormValues } from '@/types/schemas';
 
 /* -------------------------------------------------------------------------- */
-/* Planner settings                                                            */
+/* Types & Interfaces                                                         */
 /* -------------------------------------------------------------------------- */
 
 export interface GeneratePlanSettings {
@@ -13,366 +13,254 @@ export interface GeneratePlanSettings {
   emphasizeSafety?: boolean;
 }
 
+export interface LiveWeatherConditions {
+  elevationMeters: number;
+  temperature: number;
+  windSpeed: number;
+  windDirection: number;
+  humidity: number;
+  precipitation6h: number;
+  symbolCode: string;
+}
+
 /* -------------------------------------------------------------------------- */
-/* Loading steps                                                               */
+/* Loading steps for ARIA live announcements                                  */
 /* -------------------------------------------------------------------------- */
 
 export const PLANNER_LOADING_STEPS: string[] = [
-  'Finding the destination...',
-  'Checking live MET.no weather...',
-  'Checking cabin and camping considerations...',
-  'Building your day-by-day itinerary...',
+  'Querying Kartverket for precise destination coordinates...',
+  'Fetching live MET.no meteorological telemetry and elevation profile...',
+  'Evaluating real-time weather risks and altitude thresholds...',
+  'Synthesizing fully dynamic WCAG-compliant itinerary structure...',
 ];
 
 /* -------------------------------------------------------------------------- */
-/* Constants                                                                   */
+/* Live Weather Parser                                                        */
 /* -------------------------------------------------------------------------- */
 
-const DEFAULT_COORDINATES = {
-  lat: 61.4933,
-  lon: 8.3597,
-};
+export function parseLiveWeather(metApiResponse: any): LiveWeatherConditions {
+  const coordinates = metApiResponse.geometry?.coordinates || [0, 0, 0];
+  const elevationMeters = coordinates[2] ?? 0;
 
-const CABIN_HINTS: Record<string, string> = {
-  Jotunheimen: 'Consider the Gjendebu, Memurubu, Glitterheim and surrounding DNT network.',
+  const currentSeries = metApiResponse.properties?.timeseries?.[0]?.data;
+  const instantDetails = currentSeries?.instant?.details || {};
+  const next6Hours = currentSeries?.next_6_hours?.details || {};
+  const symbol = currentSeries?.next_1_hours?.summary?.symbol_code || 'clearsky';
 
-  Nordmarka:
-    'Consider Kikutstua or Ullevålseter for day stops; overnight cabin availability is limited.',
-
-  Hardangervidda: 'Consider the Krækkja, Sandhaug and Litlos self-service/staffed cabin network.',
-
-  Lofoten: 'DNT cabin options are limited. Consider legal camping or suitable local accommodation.',
-
-  Rondane: 'Rondvassbu and Dørålseter are important options depending on season and opening dates.',
-
-  Lyngsalpene:
-    'Cabin availability is limited. Carry suitable backup equipment for independent travel.',
-
-  Trollheimen: 'Consider the Gjevilvasshytta, Jøldalshytta and Trollheimshytta network.',
-
-  Lysefjorden:
-    'Preikestolen is heavily day-use oriented. Consider staying farther from the main trailhead.',
-};
-
-/* -------------------------------------------------------------------------- */
-/* Overnight                                                                   */
-/* -------------------------------------------------------------------------- */
-
-function overnightFor(values: PlannerFormValues): string {
-  if (values.includeCabinStay) {
-    const cabinHint =
-      CABIN_HINTS[values.destination] ??
-      'Check nearby DNT or self-service cabins and confirm opening dates and availability before departure.';
-
-    return `Cabin option: ${cabinHint}`;
-  }
-
-  if (values.season === 'winter') {
-    return (
-      'Winter overnight: use a suitable mountain cabin or winter-capable shelter. ' +
-      'Check weather and avalanche conditions before choosing a camping location.'
-    );
-  }
-
-  return (
-    'Camping option: camp responsibly and follow current Norwegian outdoor-access ' +
-    'and local restrictions. Keep well away from inhabited houses and avoid sensitive areas.'
-  );
+  return {
+    elevationMeters,
+    temperature: instantDetails.air_temperature ?? 0,
+    windSpeed: instantDetails.wind_speed ?? 0,
+    windDirection: instantDetails.wind_from_direction ?? 0,
+    humidity: instantDetails.relative_humidity ?? 0,
+    precipitation6h: next6Hours.precipitation_amount ?? 0,
+    symbolCode: symbol,
+  };
 }
 
 /* -------------------------------------------------------------------------- */
-/* Packing list                                                                */
+/* Dynamic Overnight Rule Engine                                              */
 /* -------------------------------------------------------------------------- */
 
-function packingList(values: PlannerFormValues): string[] {
-  const shared = [
-    'Paper map plus offline map/GPX backup',
-    'Headlamp',
-    'First-aid kit',
-    'Emergency bivy or emergency shelter',
-    'Windproof and waterproof outer layer',
-    'Enough food and drinking water for the planned section',
-    'Charged phone and power bank',
-  ];
-
-  if (values.season === 'winter') {
-    return [
-      ...shared,
-      'Winter-capable clothing and spare insulation',
-      'Suitable skis or snowshoes for the route',
-      'Goggles and face protection',
-      'Cold-weather stove and fuel if camping',
-      'Avalanche equipment and appropriate training if entering avalanche terrain',
-    ];
+function resolveDynamicOvernight(
+  values: PlannerFormValues,
+  weather: LiveWeatherConditions,
+): string {
+  if (values.includeCabinStay) {
+    return `DNT staffed or self-service cabin network. Note: Active elevation is ${weather.elevationMeters}m; verify seasonal opening schedules and online booking portals before departure.`;
   }
 
-  const warmSeason = [
-    ...shared,
-    'Sun protection',
-    'Insect protection where appropriate',
-    'Trekking poles if useful for the terrain',
+  if (values.season === 'winter' || weather.temperature <= 0) {
+    return `Winter-rated tent or snow shelter required. Current ambient temperature is ${weather.temperature}°C with winds at ${weather.windSpeed} m/s. Confirm local avalanche bulletins.`;
+  }
+
+  return `Wild camping compliant with Allemannsretten. Maintain mandatory 150-meter distance from inhabited infrastructure and protect fragile alpine flora.`;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Dynamic Packing List Engine                                                */
+/* -------------------------------------------------------------------------- */
+
+function resolveDynamicPackingList(
+  values: PlannerFormValues,
+  weather: LiveWeatherConditions,
+): string[] {
+  const list = [
+    'Paper topographical map and offline GPX route dataset',
+    'Certified high-lumen headlamp with backup power cells',
+    'Comprehensive wilderness first-aid kit',
+    'Thermal emergency bivy sack or bivouac shelter',
   ];
 
-  if (values.includeCabinStay) {
-    warmSeason.push(
-      'DNT key if required',
-      'Cabin sleeping liner',
-      'Small towel and cabin footwear',
+  if (weather.temperature <= 5 || values.season === 'winter') {
+    list.push(
+      'Sub-zero rated thermal base layers and heavy insulating mid-layers',
+      'Windproof and waterproof hardshell jacket and rain trousers',
+      'Insulated winter gloves, balaclava, and windproof goggles',
     );
   } else {
-    warmSeason.push(
-      'Three-season tent suitable for expected conditions',
-      'Sleeping bag and sleeping mat',
-      'Stove and fuel',
+    list.push(
+      'Moisture-wicking base layers and versatile wind shell',
+      'UV-blocking sunglasses and broad-spectrum sunscreen',
     );
   }
 
-  if (values.experienceLevel === 'beginner') {
-    warmSeason.push('Allow additional time for navigation and weather changes');
+  if (weather.precipitation6h > 0) {
+    list.push(
+      `Waterproof pack cover and dry bags (Precipitation forecast: ${weather.precipitation6h} mm / 6h)`,
+    );
   }
 
-  return warmSeason;
+  if (values.includeCabinStay) {
+    list.push(
+      'Official DNT cabin key',
+      'Lightweight indoor cabin footwear',
+      'Hygienic sleeping bag liner',
+    );
+  } else {
+    list.push(
+      '3-season structural tent',
+      'Insulated sleeping pad with high R-value rating',
+      'Backpacking cooking stove and fuel canister',
+    );
+  }
+
+  return list;
 }
 
 /* -------------------------------------------------------------------------- */
-/* Days                                                                        */
+/* Dynamic Itinerary Day Builder                                              */
 /* -------------------------------------------------------------------------- */
 
-function buildDays(
+function buildDynamicDays(
   values: PlannerFormValues,
   placeName: string,
-  weatherNote: string,
+  weather: LiveWeatherConditions,
   concise: boolean,
 ): ItineraryDay[] {
   const baseDistance =
-    values.experienceLevel === 'beginner' ? 8 : values.experienceLevel === 'intermediate' ? 12 : 16;
-
-  const baseGain =
-    values.experienceLevel === 'beginner'
-      ? 250
-      : values.experienceLevel === 'intermediate'
-        ? 500
-        : 850;
+    values.experienceLevel === 'beginner' ? 7 : values.experienceLevel === 'intermediate' ? 12 : 16;
+  const baseGain = Math.round(
+    weather.elevationMeters * 0.25 + (values.experienceLevel === 'expert' ? 700 : 400),
+  );
 
   return Array.from({ length: values.durationDays }, (_, index) => {
     const day = index + 1;
     const isFirst = day === 1;
     const isLast = day === values.durationDays;
-    const winter = values.season === 'winter';
 
-    let title = `Explore ${placeName}`;
-
-    let summary = `Follow suitable marked routes around ${placeName}. Check the forecast and route conditions before setting out.`;
+    let title = `Stage ${day}: Traversing ${placeName}`;
+    let summary = `Altitude reference: ${weather.elevationMeters}m. Ambient air temperature is ${weather.temperature}°C with wind speeds recorded at ${weather.windSpeed} m/s.`;
 
     if (isFirst) {
-      title = winter
-        ? `Winter approach near ${placeName}`
-        : `Arrival and introductory hike near ${placeName}`;
-
-      summary = winter
-        ? 'Start conservatively. Check avalanche forecasts, daylight, snow conditions and the weather window before committing to longer terrain.'
-        : 'Use the first day to establish a comfortable pace, check navigation and adapt the plan to current conditions.';
+      title = `Arrival and Initial Ascent near ${placeName}`;
+      summary = `Establish baseline rhythm at ${weather.elevationMeters}m altitude. Current weather condition symbol: ${weather.symbolCode}. Monitor physical exertion closely.`;
     } else if (isLast) {
-      title = `Return and travel buffer from ${placeName}`;
-
-      summary =
-        'Keep enough time for the return journey. Allow for slower travel, weather changes and transport delays.';
-    } else if (values.includeCabinStay) {
-      title = `Cabin-to-cabin stage ${day - 1}`;
-
-      summary =
-        'Travel between suitable DNT or self-service cabin areas where available. Confirm opening status, access and booking requirements before departure.';
-    } else {
-      title = `Full hiking day near ${placeName}`;
-
-      summary =
-        'Choose a route appropriate for your experience and current conditions. Keep a conservative turnaround time and maintain a navigation backup.';
+      title = `Final Descent and Return Buffer`;
+      summary = `Maintain structural timing for return transit. Factor in cumulative fatigue and changing meteorological horizons.`;
     }
 
-    const distanceAdjustment = isFirst || isLast ? -2 : 1;
+    if (weather.windSpeed > 10) {
+      summary += ` ⚠️ High Wind Hazard: Winds at ${weather.windSpeed} m/s require avoiding exposed ridgelines.`;
+    }
 
-    const normalSummary = concise ? summary.split('. ')[0] + '.' : summary;
+    if (weather.precipitation6h > 1.0) {
+      summary += ` 🌧️ Precipitation Alert: Expected rainfall/snowfall of ${weather.precipitation6h} mm over the next 6 hours.`;
+    }
+
+    const finalSummary = concise ? summary.split('. ')[0] + '.' : summary;
 
     return {
       day,
       title,
-      summary: normalSummary,
-      distanceKm: Math.round((baseDistance + distanceAdjustment) * 10) / 10,
-      elevationGainM: isFirst ? Math.round(baseGain * 0.6) : baseGain,
-      overnight: overnightFor(values),
-      weatherNote,
+      summary: finalSummary,
+      distanceKm: Math.round((baseDistance + (isFirst || isLast ? -2 : 0)) * 10) / 10,
+      elevationGainM: baseGain,
+      overnight: resolveDynamicOvernight(values, weather),
+      weatherNote: `${weather.temperature.toFixed(1)}°C, Wind: ${weather.windSpeed.toFixed(1)} m/s, Precip: ${weather.precipitation6h.toFixed(1)} mm (MET.no)`,
     };
   });
 }
 
 /* -------------------------------------------------------------------------- */
-/* Generate plan                                                               */
+/* Main Generation Function                                                   */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Generate a hiking itinerary from the planner form.
- *
- * `settings` is optional so existing calls such as:
- *
- *   generatePlan(values)
- *
- * continue to work.
- *
- * The PlannerPage can also use:
- *
- *   generatePlan(values, {
- *     concise: true,
- *     emphasizeSafety: true,
- *   })
- */
 export async function generatePlan(
   values: PlannerFormValues,
   settings: GeneratePlanSettings = {},
 ): Promise<GeneratedPlan> {
   const { concise = false, emphasizeSafety = true } = settings;
 
-  /* ------------------------------------------------------------------------ */
-  /* Resolve destination                                                       */
-  /* ------------------------------------------------------------------------ */
-
   const places = await searchKartverketPlace(values.destination);
-
   const place = places[0];
 
-  const latitude = place?.latitude ?? DEFAULT_COORDINATES.lat;
-
-  const longitude = place?.longitude ?? DEFAULT_COORDINATES.lon;
-
-  /* ------------------------------------------------------------------------ */
-  /* Fetch live weather                                                        */
-  /* ------------------------------------------------------------------------ */
+  const latitude = place?.latitude ?? 61.4933;
+  const longitude = place?.longitude ?? 8.3597;
 
   const forecast = await fetchMetForecast(latitude, longitude);
-
-  const currentInstant = forecast.properties.timeseries[0]?.data.instant.details;
-
-  const temp = currentInstant?.air_temperature ?? 0;
-
-  const wind = currentInstant?.wind_speed ?? 0;
-
-  const precip =
-    forecast.properties.timeseries[0]?.data.next_6_hours?.details?.precipitation_amount ?? 0;
-
-  const weatherNote =
-    `${temp.toFixed(1)}°C, wind ${wind.toFixed(1)} m/s, ` +
-    `precipitation ${precip.toFixed(1)} mm over the next 6 hours (MET.no).`;
-
-  /* ------------------------------------------------------------------------ */
-  /* Destination information                                                   */
-  /* ------------------------------------------------------------------------ */
+  const weather = parseLiveWeather(forecast);
 
   const placeName = place?.name ?? values.destination;
-
   const municipality = place?.municipality ?? 'Norway';
-
   const county = place?.county ?? 'Norway';
 
-  /* ------------------------------------------------------------------------ */
-  /* Overview                                                                  */
-  /* ------------------------------------------------------------------------ */
-
   const overviewParts = [
-    `${values.durationDays}-day hiking plan for ${placeName} (${municipality}, ${county}).`,
-    `Experience level: ${values.experienceLevel}.`,
-    `Season: ${values.season === 'winter' ? 'winter' : 'summer/autumn'}.`,
-    values.includeCabinStay ? 'Cabin options included.' : 'Independent camping considered.',
-    weatherNote,
+    `Dynamic ${values.durationDays}-day route for ${placeName} (${municipality}, ${county}) at ${weather.elevationMeters}m elevation.`,
+    `Experience level: ${values.experienceLevel}. Season: ${values.season}.`,
+    values.includeCabinStay
+      ? 'DNT cabin network integrated.'
+      : 'Independent wilderness camping selected.',
+    `Live telemetry: ${weather.temperature}°C, ${weather.windSpeed} m/s wind.`,
   ];
 
   const overview = concise
-    ? [overviewParts[0], overviewParts[3], overviewParts[4]].join(' ')
+    ? [overviewParts[0], overviewParts[3]].join(' ')
     : overviewParts.join(' ');
 
-  /* ------------------------------------------------------------------------ */
-  /* Safety                                                                    */
-  /* ------------------------------------------------------------------------ */
-
-  const safetyDisclaimers: string[] = [];
+  const safetyDisclaimers: string[] = [
+    `Observation point telemetry: Coordinates [${longitude.toFixed(2)}, ${latitude.toFixed(2)}] at ${weather.elevationMeters} meters elevation.`,
+    'This system provides algorithmic routing assistance, not certified professional mountain-guiding services.',
+    'Weather metrics fluctuate rapidly in alpine terrain. Verify live MET.no updates immediately prior to step-off.',
+    'Emergency Contact Numbers: Call 112 for police/rescue services and 113 for medical emergencies.',
+  ];
 
   if (emphasizeSafety) {
-    safetyDisclaimers.push(
-      'This itinerary is planning assistance, not professional mountain-guiding advice.',
-
-      'Weather, snow, river crossings, trail conditions and transport can change quickly. Check current conditions immediately before departure.',
-
-      'Check MET.no and relevant Norwegian mountain/weather warnings before travelling.',
-
-      'Turn around when visibility, weather, timing or physical conditions make continuing unsafe.',
-
-      'Carry offline navigation and do not rely on mobile coverage in remote areas.',
-
-      'Call 112 for emergencies requiring police or rescue assistance and 113 for medical emergencies.',
-    );
-
-    if (values.season === 'winter') {
+    if (weather.windSpeed > 8) {
       safetyDisclaimers.push(
-        'For winter trips, check avalanche conditions before entering avalanche terrain and only travel there with appropriate knowledge and equipment.',
-
-        'Winter travel requires appropriate clothing, navigation, daylight planning and equipment for the actual snow and weather conditions.',
+        `🚨 Active Wind Advisory: Wind speed is ${weather.windSpeed} m/s. Exercise extreme caution on exposed alpine passes.`,
       );
     }
-
-    if (values.experienceLevel === 'beginner') {
+    if (weather.temperature <= 2) {
       safetyDisclaimers.push(
-        'As a beginner, choose conservative routes, allow extra time and establish a clear turnaround time before starting.',
+        `❄️ Thermal Alert: Ambient temperature is ${weather.temperature}°C. Risk of hypothermia and windchill is elevated.`,
       );
     }
-  } else {
     safetyDisclaimers.push(
-      'Check current weather, route conditions and local restrictions before departure.',
-      'Turn around if conditions become unsafe.',
+      'Enforce strict turnaround thresholds if visibility drops or physical exhaustion manifests.',
     );
   }
 
-  /* ------------------------------------------------------------------------ */
-  /* Allemannsretten                                                           */
-  /* ------------------------------------------------------------------------ */
-
   const allemannsrettenNotes = [
-    'Respect the Norwegian right of access and the duties that come with it.',
-    'Keep your distance from homes and cabins and respect local restrictions and cultivated land.',
-    'Follow local fire restrictions and seasonal campfire rules.',
-    'Do not leave litter or toilet waste where it can affect people, animals or water sources.',
-    'Avoid disturbing wildlife, nesting birds and grazing animals.',
-    'Use established paths and campsites where appropriate in sensitive or heavily visited areas.',
+    'Comply fully with the Norwegian Outdoor Recreation Act (Allemannsretten).',
+    'Preserve absolute respect for private property: maintain minimum 150m clearance from houses and cabins.',
+    'Pack out all waste items completely; never discard organic waste near water sources.',
+    'Exercise strict adherence to regional fire bans and seasonal campfire legislation.',
   ];
 
-  /* ------------------------------------------------------------------------ */
-  /* Return generated plan                                                     */
-  /* ------------------------------------------------------------------------ */
-
   return {
-    id: `plan-${values.destination}-${values.durationDays}-${Date.now()}`,
-
-    title:
-      `${values.destination} · ${values.durationDays} day` +
-      `${values.durationDays === 1 ? '' : 's'}`,
-
+    id: `dynamic-plan-${values.destination}-${Date.now()}`,
+    title: `${values.destination} · ${values.durationDays} Day Live Itinerary`,
     region: values.destination,
-
     season: values.season,
-
     experienceLevel: values.experienceLevel,
-
     durationDays: values.durationDays,
-
     includeCabinStay: values.includeCabinStay,
-
     overview,
-
-    days: buildDays(values, placeName, weatherNote, concise),
-
-    packingList: packingList(values),
-
+    days: buildDynamicDays(values, placeName, weather, concise),
+    packingList: resolveDynamicPackingList(values, weather),
     safetyDisclaimers,
-
     allemannsrettenNotes,
-
     generatedAt: new Date().toISOString(),
   };
 }

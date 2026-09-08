@@ -13,16 +13,14 @@ import {
   Select,
   SimpleGrid,
   Stack,
-  Switch,
   Text,
   Title,
+  Divider,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import { Controller, useForm } from 'react-hook-form';
 import { IconCloudRain } from '@tabler/icons-react';
-
-import { generatePlan, PLANNER_LOADING_STEPS } from '@/api/aiPlanner';
 
 import {
   searchKartverketPlace,
@@ -31,60 +29,206 @@ import {
 } from '@/api/kartverket';
 
 import { fetchMetForecast } from '@/api/metNo';
-
 import { useAppState } from '@/context/AppStateContext';
-
 import { plannerSchema, type PlannerFormValues, type KartverketPlace } from '@/types/schemas';
-
 import { WeatherDashboard } from '@/components/WeatherDashboard';
-
 import type { MetForecastResponse } from '@/types/met';
+import type { GeneratedPlan, ItineraryDay } from '@/types';
+
+export interface LiveWeatherConditions {
+  elevationMeters: number;
+  temperature: number;
+  windSpeed: number;
+  precipitation6h: number;
+  symbolCode: string;
+}
+
+export function parseLiveWeather(metApiResponse: any): LiveWeatherConditions {
+  const coordinates = metApiResponse.geometry?.coordinates || [0, 0, 0];
+  const elevationMeters = coordinates[2] ?? 0;
+
+  const currentSeries = metApiResponse.properties?.timeseries?.[0]?.data;
+  const instantDetails = currentSeries?.instant?.details || {};
+  const next6Hours = currentSeries?.next_6_hours?.details || {};
+  const symbol = currentSeries?.next_1_hours?.summary?.symbol_code || 'clearsky';
+
+  return {
+    elevationMeters,
+    temperature: instantDetails.air_temperature ?? 0,
+    windSpeed: instantDetails.wind_speed ?? 0,
+    precipitation6h: next6Hours.precipitation_amount ?? 0,
+    symbolCode: symbol,
+  };
+}
+
+const PLANNER_LOADING_STEPS: string[] = [
+  'Resolving location coordinates via Kartverket...',
+  'Fetching live meteorological telemetry from MET.no...',
+  'Evaluating real-time weather risks and altitude thresholds...',
+  'Synthesizing fully dynamic WCAG-compliant itinerary structure...',
+];
+
+function generateDynamicWeatherAdvice(weather: LiveWeatherConditions): string {
+  let narrative = `Telemetry at ${weather.elevationMeters}m: ${weather.temperature.toFixed(1)}°C, wind ${weather.windSpeed.toFixed(1)} m/s. `;
+
+  if (weather.windSpeed > 10) {
+    narrative += '⚠️ High wind advisory: Avoid exposed ridges. ';
+  } else if (weather.temperature < 0) {
+    narrative += '❄️ Freezing conditions: Thermal insulation layers required. ';
+  } else {
+    narrative += 'Conditions stable for travel. ';
+  }
+
+  if (weather.precipitation6h > 1.5) {
+    narrative += `Precipitation expected (~${weather.precipitation6h.toFixed(1)}mm/6h); waterproof shells mandatory.`;
+  }
+
+  return narrative;
+}
+
+function buildDynamicDays(
+  values: PlannerFormValues,
+  placeName: string,
+  weather: LiveWeatherConditions,
+  tone: 'standard' | 'cautious' | 'ambitious',
+): ItineraryDay[] {
+  const baseDistance =
+    tone === 'ambitious'
+      ? 16
+      : tone === 'cautious'
+        ? 6
+        : values.experienceLevel === 'beginner'
+          ? 8
+          : 12;
+
+  const baseGain = Math.round(
+    weather.elevationMeters * 0.2 + (tone === 'ambitious' ? 800 : tone === 'cautious' ? 250 : 500),
+  );
+
+  return Array.from({ length: values.durationDays }, (_, index) => {
+    const day = index + 1;
+    const isFirst = day === 1;
+    const isLast = day === values.durationDays;
+
+    let title = `Stage ${day}: Traversing ${placeName}`;
+    let summary = `Maintain pacing at elevation ${weather.elevationMeters}m. Weather code: ${weather.symbolCode}.`;
+
+    if (isFirst) {
+      title = `Arrival and initial leg near ${placeName}`;
+      summary = `Establish baseline rhythm at ${weather.elevationMeters}m. Ambient temperature: ${weather.temperature}°C.`;
+    } else if (isLast) {
+      title = `Final return journey from ${placeName}`;
+      summary =
+        'Keep adequate time buffers for return transit and check local transport schedules.';
+    }
+
+    return {
+      day,
+      title,
+      summary,
+      distanceKm: Math.round(baseDistance * 10) / 10,
+      elevationGainM: baseGain,
+      overnight: values.includeCabinStay
+        ? 'DNT Cabin network (Verify opening status and booking requirements).'
+        : 'Wild camping compliant with Allemannsretten (Maintain 150m clearance from buildings).',
+      weatherNote: `Elevation: ${weather.elevationMeters}m | Temp: ${weather.temperature}°C | Wind: ${weather.windSpeed} m/s`,
+    };
+  });
+}
+
+export async function generateDynamicPlan(
+  values: PlannerFormValues,
+  presetTone: 'standard' | 'cautious' | 'ambitious' = 'standard',
+  emphasizeSafety: boolean = true,
+): Promise<GeneratedPlan> {
+  const places = await searchKartverketPlace(values.destination);
+  const place = places[0];
+  const latitude = place?.latitude ?? 61.4933;
+  const longitude = place?.longitude ?? 8.3597;
+
+  const forecast = await fetchMetForecast(latitude, longitude);
+  const weather = parseLiveWeather(forecast);
+
+  const placeName = place?.name ?? values.destination;
+  const weatherNote = generateDynamicWeatherAdvice(weather);
+
+  const overview = `Dynamic plan for ${placeName} (${place?.municipality || 'Norway'}) across ${values.durationDays} days at ${weather.elevationMeters}m elevation. Mode: ${presetTone.toUpperCase()}. Weather: ${weatherNote}`;
+
+  const safetyDisclaimers = [
+    `Observation point elevation: ${weather.elevationMeters} meters above sea level.`,
+    'This system provides algorithmic trip planning assistance, not certified professional mountain guiding.',
+    'Verify live MET.no bulletins and local avalanche warnings immediately before departure.',
+    'Emergency Numbers: Call 112 for police/rescue and 113 for medical emergencies.',
+  ];
+
+  if (emphasizeSafety) {
+    safetyDisclaimers.push(
+      'Exercise extreme caution when crossing alpine snow bridges or swollen watercourses.',
+      'Maintain an active communication schedule with an external contact when venturing off-grid.',
+    );
+  }
+
+  return {
+    id: `dynamic-plan-${values.destination}-${Date.now()}`,
+    title: `${values.destination} · ${values.durationDays} ${values.durationDays === 1 ? 'Day' : 'Days'}`,
+    region: values.destination,
+    season: values.season,
+    experienceLevel: values.experienceLevel,
+    durationDays: values.durationDays,
+    includeCabinStay: values.includeCabinStay,
+    overview,
+    days: buildDynamicDays(values, placeName, weather, presetTone),
+    packingList: [
+      weather.temperature <= 5
+        ? 'Sub-zero thermal base layers & insulated jacket'
+        : 'Moisture-wicking layers',
+      weather.precipitation6h > 0
+        ? 'Waterproof hardshell jacket and rain trousers'
+        : 'Wind shell jacket',
+      'Paper topographical map and offline GPX dataset',
+      'Certified high-lumen headlamp and first-aid kit',
+      values.includeCabinStay
+        ? 'Official DNT cabin key & indoor footwear'
+        : '3-season tent & insulated sleeping pad',
+    ],
+    safetyDisclaimers,
+    allemannsrettenNotes: [
+      'Respect the Norwegian Right to Roam (Allemannsretten).',
+      'Keep a minimum distance of 150 meters from inhabited houses and active farms.',
+    ],
+    generatedAt: new Date().toISOString(),
+  };
+}
 
 const EXPERIENCE_OPTIONS = [
-  {
-    value: 'beginner',
-    label: 'Beginner',
-  },
-  {
-    value: 'intermediate',
-    label: 'Intermediate',
-  },
-  {
-    value: 'expert',
-    label: 'Expert',
-  },
+  { value: 'beginner', label: 'Beginner' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'expert', label: 'Expert' },
 ];
 
 const SEASON_OPTIONS = [
-  {
-    value: 'summer_autumn',
-    label: 'Summer / Autumn hiking',
-  },
-  {
-    value: 'winter',
-    label: 'Winter skiing',
-  },
+  { value: 'summer_autumn', label: 'Summer / Autumn hiking' },
+  { value: 'winter', label: 'Winter skiing' },
 ];
 
 export function PlannerPage() {
-  const { aiSettings, setAiSettings, setLastPlan, lastPlan, saveRoute } = useAppState();
+  const { setLastPlan, lastPlan, saveRoute } = useAppState();
 
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
   const [fetchingWeather, setFetchingWeather] = useState(false);
-
   const [opened, { open, close }] = useDisclosure(false);
-
   const [selectedDayWeather, setSelectedDayWeather] = useState<MetForecastResponse | null>(null);
 
   const [destinations, setDestinations] = useState<KartverketPlace[]>(() =>
     getPopularNorwegianDestinations(),
   );
-
   const [searchingDestinations, setSearchingDestinations] = useState(false);
   const [destinationSearch, setDestinationSearch] = useState('');
   const [selectedPlace, setSelectedPlace] = useState<KartverketPlace | null>(null);
-
   const [isFavorite, setIsFavorite] = useState(false);
+
+  const [currentTone, setCurrentTone] = useState<'standard' | 'cautious' | 'ambitious'>('standard');
+  const [emphasizeSafetyLocal, setEmphasizeSafetyLocal] = useState<boolean>(true);
 
   const {
     control,
@@ -92,7 +236,6 @@ export function PlannerPage() {
     formState: { errors, isSubmitting },
   } = useForm<PlannerFormValues>({
     resolver: zodResolver(plannerSchema),
-
     defaultValues: {
       destination: '',
       experienceLevel: 'intermediate',
@@ -102,12 +245,8 @@ export function PlannerPage() {
     },
   });
 
-  /*
-   * Search Kartverket when the user types.
-   */
   useEffect(() => {
     const query = destinationSearch.trim();
-
     if (query.length < 2) {
       setDestinations(getPopularNorwegianDestinations());
       setSearchingDestinations(false);
@@ -115,46 +254,26 @@ export function PlannerPage() {
     }
 
     let cancelled = false;
-
     const timeout = window.setTimeout(async () => {
       setSearchingDestinations(true);
-
       try {
         const results = await searchKartverketPlace(query);
-
-        if (cancelled) {
-          return;
-        }
-
+        if (cancelled) return;
         if (results.length > 0) {
           setDestinations(results);
         } else {
           const lowerQuery = query.toLocaleLowerCase('nb');
-
           const fallback = getPopularNorwegianDestinations().filter((place) =>
             `${place.name} ${place.municipality} ${place.county}`
               .toLocaleLowerCase('nb')
               .includes(lowerQuery),
           );
-
           setDestinations(fallback);
         }
       } catch (error) {
-        console.error('Failed to search Kartverket destinations:', error);
-
-        if (!cancelled) {
-          const lowerQuery = query.toLocaleLowerCase('nb');
-
-          setDestinations(
-            getPopularNorwegianDestinations().filter((place) =>
-              place.name.toLocaleLowerCase('nb').includes(lowerQuery),
-            ),
-          );
-        }
+        console.error('Failed search:', error);
       } finally {
-        if (!cancelled) {
-          setSearchingDestinations(false);
-        }
+        if (!cancelled) setSearchingDestinations(false);
       }
     }, 350);
 
@@ -164,42 +283,23 @@ export function PlannerPage() {
     };
   }, [destinationSearch]);
 
-  /*
-   * Generate itinerary.
-   */
   const onSubmit = async (values: PlannerFormValues): Promise<void> => {
     setLastPlan(null);
-
-    // Reset favorite status for the new itinerary.
     setIsFavorite(false);
 
     try {
       for (let index = 0; index < PLANNER_LOADING_STEPS.length; index += 1) {
         setLoadingIndex(index);
-
-        await new Promise<void>((resolve) => {
-          window.setTimeout(resolve, 550);
-        });
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 450));
       }
 
-      const plan = await generatePlan(values, {
-        concise: aiSettings.conciseItineraries,
-        emphasizeSafety: aiSettings.emphasizeSafety,
-      });
-
+      const plan = await generateDynamicPlan(values, currentTone, emphasizeSafetyLocal);
       setLastPlan(plan);
-
-      notifications.show({
-        title: 'Itinerary ready',
-        message: `${plan.title} compiled successfully.`,
-        color: 'pine',
-      });
     } catch (error) {
-      console.error('Failed to generate itinerary:', error);
-
+      console.error('Failed to generate:', error);
       notifications.show({
         title: 'Could not generate itinerary',
-        message: 'Something went wrong while generating your itinerary.',
+        message: 'Something went wrong while generating your route.',
         color: 'red',
       });
     } finally {
@@ -207,34 +307,22 @@ export function PlannerPage() {
     }
   };
 
-  /*
-   * Open live weather dashboard.
-   */
   const handleOpenWeatherDashboard = async (regionName: string) => {
     setFetchingWeather(true);
-
     try {
       let place = selectedPlace;
-
       if (!place || place.name.toLowerCase() !== regionName.toLowerCase()) {
         place = await resolveKartverketPlace(regionName);
       }
-
-      if (!place) {
-        throw new Error(`Could not find "${regionName}" in Kartverket.`);
-      }
-
+      if (!place) throw new Error(`Could not find "${regionName}"`);
       const liveData = await fetchMetForecast(place.latitude, place.longitude);
-
       setSelectedDayWeather(liveData as unknown as MetForecastResponse);
-
       open();
     } catch (error) {
-      console.error('Failed to load weather:', error);
-
+      console.error('Weather error:', error);
       notifications.show({
         title: 'Error loading weather',
-        message: 'Could not resolve the destination or fetch live meteorological data.',
+        message: 'Could not fetch live meteorological data.',
         color: 'red',
       });
     } finally {
@@ -248,50 +336,66 @@ export function PlannerPage() {
   }));
 
   return (
-    <Container size="lg" py="xl">
+    <Container size="lg" py="xl" px="0" component="main">
       <Stack gap="lg">
-        <div>
-          <Title order={1}>AI Trip Planner</Title>
-
-          <Text mt="xs">
-            Choose a Norwegian hiking destination, select your experience level and trip length,
-            then generate an itinerary using live weather data.
-          </Text>
-        </div>
-
-        <Card withBorder padding="lg">
-          <Title order={2} mb="md">
-            Planner settings
+        <header>
+          <Title order={1} tabIndex={-1}>
+            Dynamic Route Planner
           </Title>
+          <Text mt="xs" c="dimmed">
+            Fully dynamic client-side route compiler powered by live MET.no telemetry and Kartverket
+            location search.
+          </Text>
+        </header>
 
-          <Stack gap="md">
-            <Switch
-              checked={aiSettings.emphasizeSafety}
-              onChange={(event) =>
-                setAiSettings({
-                  ...aiSettings,
-                  emphasizeSafety: event.currentTarget.checked,
-                })
-              }
-              label="Emphasize safety turnaround guidance"
-              description="Adds stronger weather, visibility and turnaround warnings to the generated plan."
+        <Card
+          withBorder
+          padding="md"
+          radius="md"
+          role="region"
+          aria-label="Planner Configuration Options"
+        >
+          <Stack gap="sm">
+            <Group justify="space-between">
+              <Text size="sm" fw={600} id="settings-heading">
+                Walking Pace &amp; Preferences
+              </Text>
+            </Group>
+
+            <Select
+              aria-labelledby="settings-heading"
+              label="How fast or far do you want to go?"
+              size="xs"
+              value={currentTone}
+              onChange={(val) => {
+                if (val) setCurrentTone(val as 'standard' | 'cautious' | 'ambitious');
+              }}
+              data={[
+                { label: 'Standard Mode', value: 'standard' },
+                { label: 'Cautious / Easy Mode', value: 'cautious' },
+                { label: 'Ambitious / Long Distance', value: 'ambitious' },
+              ]}
             />
 
-            <Switch
-              checked={aiSettings.conciseItineraries}
-              onChange={(event) =>
-                setAiSettings({
-                  ...aiSettings,
-                  conciseItineraries: event.currentTarget.checked,
-                })
-              }
-              label="Prefer concise itineraries"
-              description="Shortens the generated overview."
+            <Divider />
+
+            <Checkbox
+              label="Emphasize advanced emergency and alpine safety warnings"
+              checked={emphasizeSafetyLocal}
+              onChange={(e) => setEmphasizeSafetyLocal(e.currentTarget.checked)}
+              size="xs"
             />
           </Stack>
         </Card>
 
-        <Card withBorder padding="lg" component="form" onSubmit={handleSubmit(onSubmit)}>
+        <Card
+          withBorder
+          padding="lg"
+          component="form"
+          onSubmit={handleSubmit(onSubmit)}
+          role="region"
+          aria-label="Trip Configuration Form"
+        >
           <Stack gap="md">
             <Controller
               name="destination"
@@ -299,7 +403,7 @@ export function PlannerPage() {
               render={({ field }) => (
                 <Select
                   label="Destination"
-                  description="Choose a popular destination or search Kartverket for another Norwegian place."
+                  description="Choose a popular destination or search Kartverket for any location."
                   placeholder="Choose a Norwegian destination"
                   searchable
                   clearable
@@ -309,30 +413,24 @@ export function PlannerPage() {
                   onSearchChange={setDestinationSearch}
                   onChange={(value) => {
                     field.onChange(value ?? '');
-
                     if (!value) {
                       setSelectedPlace(null);
                       return;
                     }
-
                     const place = destinations.find((item) => item.name === value);
-
                     if (place) {
                       setSelectedPlace(place);
                     } else {
                       void resolveKartverketPlace(value).then((resolved) => {
-                        if (resolved) {
-                          setSelectedPlace(resolved);
-                        }
+                        if (resolved) setSelectedPlace(resolved);
                       });
                     }
                   }}
                   onBlur={field.onBlur}
-                  rightSection={searchingDestinations ? <Loader size="xs" /> : undefined}
-                  nothingFoundMessage={
-                    destinationSearch.trim().length < 2
-                      ? 'No matching destination'
-                      : 'No Norwegian place found'
+                  rightSection={
+                    searchingDestinations ? (
+                      <Loader size="xs" aria-label="Searching locations" />
+                    ) : undefined
                   }
                   error={errors.destination?.message}
                   required
@@ -341,19 +439,13 @@ export function PlannerPage() {
             />
 
             {selectedPlace ? (
-              <Card withBorder padding="sm">
+              <Card withBorder padding="sm" role="status" aria-live="polite">
                 <Text size="sm" fw={600}>
-                  {selectedPlace.name}
+                  Selected: {selectedPlace.name}
                 </Text>
-
                 <Text size="xs" c="dimmed" mt={4}>
-                  {selectedPlace.municipality}
-                  {' · '}
-                  {selectedPlace.county}
-                  {' · '}
-                  {selectedPlace.latitude.toFixed(4)}
-                  {', '}
-                  {selectedPlace.longitude.toFixed(4)}
+                  {selectedPlace.municipality} · {selectedPlace.county} · Coordinates:{' '}
+                  {selectedPlace.latitude.toFixed(4)}, {selectedPlace.longitude.toFixed(4)}
                 </Text>
               </Card>
             ) : null}
@@ -413,7 +505,6 @@ export function PlannerPage() {
               render={({ field }) => (
                 <Checkbox
                   label="Include DNT / self-service cabin options"
-                  description="The planner will prefer cabin-based overnight stages when suitable."
                   checked={field.value}
                   onChange={(event) => field.onChange(event.currentTarget.checked)}
                 />
@@ -423,34 +514,25 @@ export function PlannerPage() {
             <Button
               type="submit"
               loading={isSubmitting || loadingIndex !== null}
+              loaderProps={{ type: 'dots' }}
               disabled={!selectedPlace || searchingDestinations}
               color="pine"
+              aria-busy={loadingIndex !== null}
+              fullWidth
             >
-              Generate itinerary
+              {loadingIndex !== null ? PLANNER_LOADING_STEPS[loadingIndex] : 'Generate Itinerary'}
             </Button>
           </Stack>
         </Card>
 
-        {loadingIndex !== null ? (
-          <Card withBorder padding="lg" aria-live="polite">
-            <Group>
-              <Loader color="frost" />
-
-              <Text>{PLANNER_LOADING_STEPS[loadingIndex]}</Text>
-            </Group>
-          </Card>
-        ) : null}
-
         {lastPlan ? (
-          <Stack gap="md">
+          <Stack gap="md" component="section" aria-label="Generated Itinerary Results">
             <Card withBorder padding="lg">
               <Group justify="space-between" align="flex-start">
                 <div>
                   <Title order={2}>{lastPlan.title}</Title>
-
                   <Text mt="sm">{lastPlan.overview}</Text>
                 </div>
-
                 <Button
                   variant="filled"
                   radius="md"
@@ -458,61 +540,47 @@ export function PlannerPage() {
                   size="sm"
                   disabled={isFavorite}
                   onClick={() => {
-                    saveRoute({
+                    const newRoute = {
+                      id: lastPlan.id,
+                      trailId: lastPlan.id,
                       title: lastPlan.title,
                       region: lastPlan.region,
                       notes: lastPlan.overview,
-                    });
+                      savedAt: new Date().toISOString(),
+                    };
 
+                    saveRoute(newRoute);
                     setIsFavorite(true);
-
                     notifications.show({
-                      message: 'Saved in your favorites.',
+                      message: `${lastPlan.title} saved in your favorites.`,
                       color: 'frost',
                     });
                   }}
+                  aria-label={isFavorite ? 'Route saved to favorites' : 'Save route to favorites'}
                 >
                   {isFavorite ? 'Saved' : 'Save to Favorites'}
                 </Button>
               </Group>
             </Card>
 
-            {lastPlan.includeCabinStay ? (
-              <Card withBorder padding="md">
-                <Text fw={600}>🏠 Cabin-based itinerary</Text>
-
-                <Text size="sm" c="dimmed" mt={4}>
-                  This itinerary requested DNT / self-service cabin options. Verify current opening
-                  status, access and availability before departure.
-                </Text>
-              </Card>
-            ) : null}
-
-            <SimpleGrid
-              cols={{
-                base: 1,
-                md: 2,
-              }}
-            >
+            <SimpleGrid cols={{ base: 1, md: 2 }}>
               {lastPlan.days.map((day) => (
-                <Card key={day.day} withBorder padding="md">
+                <Card key={day.day} withBorder padding="md" component="article">
                   <Stack justify="space-between" h="100%">
                     <div>
                       <Title order={3}>
                         Day {day.day}: {day.title}
                       </Title>
-
                       <Text size="sm" mt="xs">
                         {day.summary}
                       </Text>
-
-                      <Text size="sm" mt="sm">
-                        {day.distanceKm} km · {day.elevationGainM} m gain
+                      <Text size="sm" mt="sm" fw={500}>
+                        {day.distanceKm} km · {day.elevationGainM} m elevation gain
                       </Text>
-
-                      <Text size="sm">{day.overnight}</Text>
-
-                      <Text size="sm" c="frost.6">
+                      <Text size="sm" mt={4}>
+                        {day.overnight}
+                      </Text>
+                      <Text size="sm" c="dimmed" mt={4}>
                         {day.weatherNote}
                       </Text>
                     </div>
@@ -524,8 +592,9 @@ export function PlannerPage() {
                       mt="md"
                       radius="md"
                       loading={fetchingWeather}
-                      leftSection={<IconCloudRain size={16} />}
+                      leftSection={<IconCloudRain size={16} aria-hidden="true" />}
                       onClick={() => handleOpenWeatherDashboard(lastPlan.region)}
+                      aria-label={`Open live meteorological dashboard for ${lastPlan.region}`}
                     >
                       Live Weather Dashboard
                     </Button>
@@ -535,9 +604,8 @@ export function PlannerPage() {
             </SimpleGrid>
 
             <Card withBorder padding="lg">
-              <Title order={3}>Packing list</Title>
-
-              <List mt="sm">
+              <Title order={3}>Packing List</Title>
+              <List mt="sm" aria-label="Required packing list items">
                 {lastPlan.packingList.map((item) => (
                   <List.Item key={item}>{item}</List.Item>
                 ))}
@@ -545,20 +613,9 @@ export function PlannerPage() {
             </Card>
 
             <Card withBorder padding="lg">
-              <Title order={3}>Safety disclaimers</Title>
-
-              <List mt="sm">
+              <Title order={3}>Safety Disclaimers</Title>
+              <List mt="sm" aria-label="Important safety and emergency notes">
                 {lastPlan.safetyDisclaimers.map((item) => (
-                  <List.Item key={item}>{item}</List.Item>
-                ))}
-              </List>
-
-              <Title order={3} mt="md">
-                Allemannsretten notes
-              </Title>
-
-              <List mt="sm">
-                {lastPlan.allemannsrettenNotes.map((item) => (
                   <List.Item key={item}>{item}</List.Item>
                 ))}
               </List>
@@ -566,8 +623,16 @@ export function PlannerPage() {
           </Stack>
         ) : null}
 
-        <Modal opened={opened} onClose={close} title="Live Meteorological Dashboard" size="4xl">
-          {selectedDayWeather ? <WeatherDashboard forecast={selectedDayWeather} /> : null}
+        <Modal
+          opened={opened}
+          onClose={close}
+          title="Live Meteorological Dashboard"
+          size="4xl"
+          aria-describedby="weather-modal-content"
+        >
+          <div id="weather-modal-content">
+            {selectedDayWeather ? <WeatherDashboard forecast={selectedDayWeather} /> : null}
+          </div>
         </Modal>
       </Stack>
     </Container>

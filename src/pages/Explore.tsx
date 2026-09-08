@@ -271,10 +271,10 @@ export function ExplorePage() {
   };
 
   return (
-    <Container size="lg" py="xl">
+    <Container size="lg" py="xl" px="0">
       <Stack gap="lg">
         <div>
-          <Title order={1}>Explore Trails</Title>
+          <Title order={1}>Explore Transport</Title>
 
           <Text mt="xs">
             Discover Norwegian hiking areas from live Kartverket data. Open a trail for elevation,
@@ -465,7 +465,7 @@ export function ExplorePage() {
                 });
 
                 notifications.show({
-                  message: 'Trail saved in your favorites.',
+                  message: `${selected.name} saved in your favorites.`,
                   color: 'frost',
                 });
               }}
