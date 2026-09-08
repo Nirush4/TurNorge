@@ -43,9 +43,10 @@ export function ToolkitPage() {
     <Container size="lg" py="xl" px="0" component="main">
       <Stack gap="lg">
         <section aria-labelledby="toolkit-heading">
-          <Title order={1} id="toolkit-heading">
+          <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={isDark ? '#eef4f1' : 'dark.7'}>
             Allemannsretten & Safety Toolkit
           </Title>
+
           <Text mt="xs" c={isDark ? '#c3d1c9' : 'dimmed'}>
             Norway’s Right to Roam gives you open access to nature, balanced by strict
             responsibilities to protect fragile wilderness, prevent wildfires, and ensure personal

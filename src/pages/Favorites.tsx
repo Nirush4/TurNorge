@@ -22,9 +22,10 @@ export function Favorites(): JSX.Element {
   if (savedRoutes.length === 0) {
     return (
       <Container size="md" py="xl" px="0">
-        <Title order={2} mb="xs" c={isDark ? '#eef4f1' : 'dark.7'}>
+        <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={isDark ? '#eef4f1' : 'dark.7'}>
           Saved Favorites
         </Title>
+
         <Text c="dimmed">
           No saved routes found in your browser storage yet. Explore trails or use the Trip Planner
           to save your favorites!
@@ -37,7 +38,7 @@ export function Favorites(): JSX.Element {
     <Container size="md" py="xl" px="0">
       <Group justify="space-between" mb="lg">
         <div>
-          <Title order={2} c={isDark ? '#eef4f1' : 'dark.7'}>
+          <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={isDark ? '#eef4f1' : 'dark.7'}>
             Saved Favorites
           </Title>
           <Text size="sm" c="dimmed">

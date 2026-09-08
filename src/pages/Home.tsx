@@ -116,7 +116,7 @@ export function HomePage() {
                 border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
               }}
             >
-              <feature.icon size={22} color="#2d6a4f" aria-hidden="true" />
+              <feature.icon size={22} color="#2d7a2f" aria-hidden="true" />
 
               <Title order={3} mt="sm" size="h4" c={isDark ? '#eef4f1' : 'dark.8'}>
                 {feature.title}
