@@ -31,8 +31,8 @@ export function AppLayout() {
   return (
     <AccessibilityWrapper>
       <AppShell
-        header={{ height: 72 }}
-        footer={{ height: { base: 88, sm: 56 } }}
+        header={{ height: { base: 62, sm: 72 } }}
+        footer={{ height: { base: 'auto', sm: 56 } }}
         navbar={{
           width: 280,
           breakpoint: 'md',

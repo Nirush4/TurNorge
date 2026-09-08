@@ -8,17 +8,17 @@ export function BrandLogo(): JSX.Element {
     <Box
       component={Link}
       to="/"
-      aria-label="NordicTrail AI home"
+      aria-label="NordicTrail home"
       style={{ textDecoration: 'none', color: 'inherit', display: 'inline-block' }}
     >
       <Group gap="xs" wrap="nowrap">
         <Trees size={26} color="var(--mantine-color-moss-4)" aria-hidden="true" />
         <div>
           <Text fw={700} lh={1.1} c="pine.4" size="xl">
-            NordicTrail AI
+            TurNorge
           </Text>
           <Text size="xs" c="dimmed" lh={1.2}>
-            TurGPT · public hiking utility
+            Norway hiking guide
           </Text>
         </div>
       </Group>

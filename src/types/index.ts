@@ -1,15 +1,13 @@
-import type {
-  EXPERIENCE_LEVELS,
-  NORWEGIAN_REGIONS,
-  SEASONS,
-  TRAIL_DIFFICULTIES,
-  WATER_SAFETY,
-} from './schemas';
+import type { EXPERIENCE_LEVELS, SEASONS, TRAIL_DIFFICULTIES, WATER_SAFETY } from './schemas';
 
-export type NorwegianRegion = (typeof NORWEGIAN_REGIONS)[number];
+export type NorwegianRegion = string;
+
 export type ExperienceLevel = (typeof EXPERIENCE_LEVELS)[number];
+
 export type Season = (typeof SEASONS)[number];
+
 export type TrailDifficulty = (typeof TRAIL_DIFFICULTIES)[number];
+
 export type WaterSafety = (typeof WATER_SAFETY)[number];
 
 export interface ElevationPoint {

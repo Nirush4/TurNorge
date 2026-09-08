@@ -2,24 +2,24 @@ import { Anchor, Group, Text } from '@mantine/core';
 
 export function AppFooter() {
   return (
-    <Group h="100%" px="md" justify="space-between" wrap="wrap" gap="xs">
+    <Group h="100%" px="0" py="md" justify="space-between" wrap="wrap" gap="0">
       <Text size="sm">
         Free public utility. Not an official MET Norway, Kartverket, or DNT service.
       </Text>
-      <Group gap="md">
+      <Group gap="sm" pr="md">
         <Anchor href="https://www.met.no/" target="_blank" rel="noreferrer" size="sm">
-          MET.no
+          Weather data: MET.no
         </Anchor>
         <Anchor href="https://www.kartverket.no/" target="_blank" rel="noreferrer" size="sm">
-          Kartverket
+          Map data: Kartverket
         </Anchor>
         <Anchor href="https://www.dnt.no/" target="_blank" rel="noreferrer" size="sm">
           DNT
         </Anchor>
-        <Text size="sm" fw={600}>
-          Emergency 112 / 113
-        </Text>
       </Group>
+      <Text size="sm" fw={600}>
+        Emergency 112 / 113
+      </Text>
     </Group>
   );
 }

@@ -8,9 +8,10 @@ import {
   Button,
   Stack,
   Badge,
+  SimpleGrid,
   useMantineColorScheme,
 } from '@mantine/core';
-import { BookmarkCheck, Trash2, MapPin, Calendar } from 'lucide-react';
+import { BookmarkCheck, Trash2, MapPin, Calendar, Compass, Footprints } from 'lucide-react';
 import { useAppState } from '@/context/AppStateContext';
 
 export function Favorites(): JSX.Element {
@@ -20,7 +21,7 @@ export function Favorites(): JSX.Element {
 
   if (savedRoutes.length === 0) {
     return (
-      <Container size="md" py="xl">
+      <Container size="md" py="xl" px="0">
         <Title order={2} mb="xs" c={isDark ? '#eef4f1' : 'dark.7'}>
           Saved Favorites
         </Title>
@@ -33,7 +34,7 @@ export function Favorites(): JSX.Element {
   }
 
   return (
-    <Container size="md" py="xl">
+    <Container size="md" py="xl" px="0">
       <Group justify="space-between" mb="lg">
         <div>
           <Title order={2} c={isDark ? '#eef4f1' : 'dark.7'}>
@@ -49,54 +50,98 @@ export function Favorites(): JSX.Element {
       </Group>
 
       <Stack gap="md">
-        {savedRoutes.map((route) => (
-          <Card
-            key={route.id || route.trailId}
-            padding="lg"
-            radius="md"
-            style={{
-              backgroundColor: isDark ? '#182c23' : '#f4f8f5',
-              border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
-            }}
-          >
-            <Group justify="space-between" mb="xs">
-              <Title order={4} c={isDark ? '#eef4f1' : 'dark.7'}>
-                {route.title}
-              </Title>
-              <Button
-                variant="subtle"
-                color="red"
-                size="xs"
-                leftSection={<Trash2 size={14} />}
-                onClick={() => {
-                  const targetId = route.id ?? route.trailId;
-                  if (targetId) {
-                    removeRoute(targetId);
-                  }
-                }}
-              >
-                Remove
-              </Button>
-            </Group>
-            <Group gap="md" mb="sm">
-              <Group gap={4}>
-                <MapPin size={14} color="#82aca0" />
-                <Text size="xs" c={isDark ? 'forest.3' : 'forest.7'}>
-                  {route.region}
-                </Text>
+        {savedRoutes.map((item) => {
+          const route = item as Record<string, any>;
+          const targetId = route.id ?? route.trailId;
+
+          return (
+            <Card
+              key={targetId}
+              padding="lg"
+              radius="md"
+              style={{
+                backgroundColor: isDark ? '#182c23' : '#f4f8f5',
+                border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
+              }}
+            >
+              <Group justify="space-between" mb="xs" align="flex-start">
+                <div>
+                  <Title order={4} c={isDark ? '#eef4f1' : 'dark.7'}>
+                    {route.title}
+                  </Title>
+                  {route.difficulty && (
+                    <Badge size="xs" variant="outline" mt={4} color="forest">
+                      {route.difficulty}
+                    </Badge>
+                  )}
+                  {route.experienceLevel && (
+                    <Badge
+                      size="xs"
+                      variant="outline"
+                      mt={4}
+                      color="forest"
+                      ml={route.difficulty ? 6 : 0}
+                    >
+                      {route.experienceLevel}
+                    </Badge>
+                  )}
+                </div>
+                <Button
+                  variant="subtle"
+                  color="red"
+                  size="xs"
+                  leftSection={<Trash2 size={14} />}
+                  onClick={() => {
+                    if (targetId) {
+                      removeRoute(targetId);
+                    }
+                  }}
+                >
+                  Remove
+                </Button>
               </Group>
-              <Group gap={4}>
-                <Calendar size={14} color="#82aca0" />
-                <Text size="xs" c="dimmed">
-                  {route.savedAt ? new Date(route.savedAt).toLocaleDateString() : 'Recent'}
+
+              <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="xs" mb="sm">
+                {route.region && (
+                  <Group gap={4}>
+                    <MapPin size={14} color="#82aca0" />
+                    <Text size="xs" c={isDark ? 'forest.3' : 'forest.7'}>
+                      {route.region}
+                    </Text>
+                  </Group>
+                )}
+                {route.durationDays && (
+                  <Group gap={4}>
+                    <Compass size={14} color="#82aca0" />
+                    <Text size="xs" c={isDark ? 'forest.3' : 'forest.7'}>
+                      {route.durationDays} Days
+                    </Text>
+                  </Group>
+                )}
+                {route.season && (
+                  <Group gap={4}>
+                    <Footprints size={14} color="#82aca0" />
+                    <Text size="xs" c={isDark ? 'forest.3' : 'forest.7'}>
+                      {route.season}
+                    </Text>
+                  </Group>
+                )}
+                <Group gap={4}>
+                  <Calendar size={14} color="#82aca0" />
+                  <Text size="xs" c="dimmed">
+                    {route.savedAt ? new Date(route.savedAt).toLocaleDateString() : 'Recent'}
+                  </Text>
+                </Group>
+              </SimpleGrid>
+
+              {route.notes && (
+                <Text size="sm" c={isDark ? '#c3d1c9' : 'dark.6'} style={{ lineHeight: 1.5 }}>
+                  {route.notes}
                 </Text>
-              </Group>
-            </Group>
-            <Text size="sm" c={isDark ? '#c3d1c9' : 'dark.6'} style={{ lineHeight: 1.5 }}>
-              {route.notes}
-            </Text>
-          </Card>
-        ))}
+              )}
+            </Card>
+          );
+        })}
       </Stack>
     </Container>
   );

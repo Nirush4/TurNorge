@@ -8,6 +8,7 @@ import {
   Stack,
   Text,
   Title,
+  useMantineColorScheme,
 } from '@mantine/core';
 import { Database, Landmark, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -33,48 +34,116 @@ const FEATURES = [
 
 export function HomePage() {
   const { savedRoutes } = useAppState();
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
 
   return (
-    <Container size="lg" py="xl">
+    <Container size="lg" py="xl" px="0" component="main">
       <Stack gap="xl">
-        <Card className="hero-gradient" padding="xl" radius="lg" withBorder>
-          <Badge variant="light" color="moss" mb="md">
-            TurGPT · Norway hiking utility
+        <Card
+          padding="xl"
+          radius="lg"
+          withBorder
+          component="section"
+          aria-labelledby="hero-title"
+          style={{
+            backgroundColor: isDark ? '#182c23' : '#f4f8f5',
+            border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
+          }}
+        >
+          <Badge variant="light" color="moss" mb="md" aria-label="Application badge">
+            TurNorge · Norway hiking guide
           </Badge>
-          <Title order={1} className="hero-title" maw={720}>
-            Plan safer days in the Norwegian mountains with local-first AI.
+
+          <Title
+            id="hero-title"
+            order={1}
+            maw={720}
+            c={isDark ? '#eef4f1' : 'dark.8'}
+            styles={{
+              root: {
+                fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+              },
+            }}
+          >
+            Plan safer days in the Norwegian mountains with trusted local guidance.
           </Title>
-          <Text mt="md" maw={640} className="hero-copy" size="lg">
-            NordicTrail AI blends open geographic guidelines with an on-device trip assistant for
-            weather-aware itineraries, packing lists, and Allemannsretten-aware camping advice.
+
+          <Text mt="md" maw={640} size="lg" c={isDark ? '#c3d1c9' : 'dimmed'}>
+            TurNorge brings together open geographic data, weather information, and Norwegian
+            outdoor guidelines to help you plan routes, packing lists, and Allemannsretten-aware
+            camping trips.
           </Text>
+
           <Group mt="xl">
-            <Button component={Link} to="/planner" size="md" color="moss">
-              Plan a Trip with AI
+            <Button
+              component={Link}
+              to="/planner"
+              size="md"
+              color="moss"
+              aria-label="Plan your custom trip"
+            >
+              Plan Your Trip
             </Button>
-            <Button component={Link} to="/explore" size="md" variant="white" color="pine">
-              Explore Trails
+
+            <Button
+              component={Link}
+              to="/explore"
+              size="md"
+              variant="white"
+              color="pine"
+              aria-label="Explore popular Norwegian trails"
+            >
+              Explore Transport
             </Button>
           </Group>
         </Card>
 
-        <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
+        <SimpleGrid
+          cols={{ base: 1, sm: 3 }}
+          spacing="md"
+          component="section"
+          aria-label="Core platform features"
+        >
           {FEATURES.map((feature) => (
-            <Card key={feature.title} padding="lg" radius="md" withBorder>
-              <feature.icon size={22} aria-hidden="true" />
-              <Title order={3} mt="sm">
+            <Card
+              key={feature.title}
+              padding="lg"
+              radius="md"
+              withBorder
+              style={{
+                backgroundColor: isDark ? '#182c23' : '#f4f8f5',
+                border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
+              }}
+            >
+              <feature.icon size={22} color="#2d6a4f" aria-hidden="true" />
+
+              <Title order={3} mt="sm" size="h4" c={isDark ? '#eef4f1' : 'dark.8'}>
                 {feature.title}
               </Title>
-              <Text size="sm" mt="xs">
+
+              <Text size="sm" mt="xs" c={isDark ? '#c3d1c9' : 'dimmed'}>
                 {feature.body}
               </Text>
             </Card>
           ))}
         </SimpleGrid>
 
-        <Card withBorder padding="lg">
-          <Title order={2}>Saved locally</Title>
-          <Text size="sm" mt="xs">
+        <Card
+          withBorder
+          padding="lg"
+          component="section"
+          aria-labelledby="storage-status-heading"
+          style={{
+            backgroundColor: isDark ? '#182c23' : '#f4f8f5',
+            border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
+          }}
+        >
+          <Title order={2} id="storage-status-heading" size="h3" c={isDark ? '#eef4f1' : 'dark.8'}>
+            Saved locally
+          </Title>
+
+          <Text size="sm" mt="xs" c={isDark ? '#c3d1c9' : 'dimmed'}>
             {savedRoutes.length === 0
               ? 'No saved routes yet. Generate a plan or pin a trail and it will be stored in this browser only.'
               : `${savedRoutes.length} saved route${savedRoutes.length === 1 ? '' : 's'} on this device.`}

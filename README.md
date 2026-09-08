@@ -1,4 +1,4 @@
-# NordicTrail AI
+# TurNorge
 
 A privacy-focused Norwegian hiking utility featuring a matte Scandinavian forest aesthetic, local-first state persistence, and interactive trip planning.
 
