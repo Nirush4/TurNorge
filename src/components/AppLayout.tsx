@@ -41,7 +41,7 @@ export function AppLayout() {
         padding="md"
       >
         <AppShell.Header>
-          <Container size="lg" h="100%" px="md">
+          <Container size="lg" h="100%" px={{ base: 'md', lg: '0' }}>
             <Group h="100%" justify="space-between" wrap="nowrap">
               <Group gap="sm" wrap="nowrap">
                 <Burger
