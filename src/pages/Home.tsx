@@ -60,7 +60,7 @@ export function HomePage() {
           }}
         >
           <Grid gutter={{ base: 'xl', md: '2xl' }} align="center">
-            <Grid.Col span={{ base: 12, md: 6 }}>
+            <Grid.Col span={{ base: 12, md: 6 }} p={0}>
               <Stack gap="md">
                 <Badge variant="light" color="moss" size="lg" w="fit-content">
                   TurNorge · Norway hiking guide
@@ -72,7 +72,7 @@ export function HomePage() {
                   c={headingColor}
                   styles={{
                     root: {
-                      fontSize: 'clamp(2rem, 5vw, 3.2rem)',
+                      fontSize: 'clamp(2.5rem, 5vw, 3.2rem)',
                       lineHeight: 1.15,
                     },
                   }}
@@ -162,7 +162,7 @@ export function HomePage() {
                     height: 'auto',
                     position: 'relative',
                     zIndex: 1,
-                    opacity: isDark ? 0.8 : 0.75,
+                    opacity: isDark ? 0.8 : 0.7,
                     filter: isDark ? 'brightness(0) invert(1)' : 'grayscale(1) brightness(0.7)',
                   }}
                 />
