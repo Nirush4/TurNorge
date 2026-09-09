@@ -318,6 +318,7 @@ export function PlannerPage() {
       notifications.show({
         title: 'Could not generate itinerary',
         message: 'Something went wrong while generating your route.',
+        color: '#FFFFFF',
         styles: {
           root: {
             backgroundColor: '#E03131',
@@ -354,6 +355,7 @@ export function PlannerPage() {
       notifications.show({
         title: 'Could not generate itinerary',
         message: 'Something went wrong while generating your route.',
+        color: '#FFFFFF',
         styles: {
           root: {
             backgroundColor: '#E03131',
@@ -611,6 +613,7 @@ export function PlannerPage() {
                     setIsFavorite(true);
                     notifications.show({
                       message: `${lastPlan.title} saved in your favorites.`,
+                      color: '#FFFFFF',
                       styles: {
                         root: {
                           backgroundColor: '#28726B',

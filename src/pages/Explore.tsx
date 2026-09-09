@@ -468,6 +468,7 @@ export function ExplorePage() {
 
                 notifications.show({
                   message: `${selected.name} saved in your favorites.`,
+                  color: '#FFFFFF',
                   styles: {
                     root: {
                       backgroundColor: '#28726B',
