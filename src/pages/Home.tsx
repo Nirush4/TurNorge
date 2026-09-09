@@ -77,13 +77,12 @@ export function HomePage() {
                     },
                   }}
                 >
-                  Explore Norway’s mountains and ski slopes safely.
+                  Explore Norway’s mountains and trails safely.
                 </Title>
 
                 <Text size="lg" c={bodyColor} maw={640} lh={1.6}>
-                  TurNorge brings together open geographic data, weather information, and Norwegian
-                  outdoor guidelines to help you plan routes, packing lists, and
-                  Allemannsretten-aware camping trips.
+                  TurNorge combines open data, weather forecasts, and outdoor guidelines to help you
+                  plan routes, packing lists, and responsible camping trips.
                 </Text>
 
                 <Group mt="sm" gap="md" wrap="wrap">
@@ -96,7 +95,7 @@ export function HomePage() {
                     styles={{
                       root: {
                         minHeight: '44px',
-                        '&:focus-visible': {
+                        '&:focusVisible': {
                           outline: '3px solid #f0c75e',
                           outlineOffset: '3px',
                         },
@@ -116,14 +115,14 @@ export function HomePage() {
                     styles={{
                       root: {
                         minHeight: '44px',
-                        '&:focus-visible': {
+                        '&:focusVisible': {
                           outline: '3px solid #f0c75e',
                           outlineOffset: '3px',
                         },
                       },
                     }}
                   >
-                    Explore Transport
+                    Explore Trails
                   </Button>
                 </Group>
               </Stack>
@@ -162,8 +161,10 @@ export function HomePage() {
                     height: 'auto',
                     position: 'relative',
                     zIndex: 1,
-                    opacity: isDark ? 0.8 : 0.7,
-                    filter: isDark ? 'brightness(0) invert(1)' : 'grayscale(1) brightness(0.7)',
+                    opacity: isDark ? 0.5 : 0.7,
+                    filter: isDark
+                      ? 'brightness(0) saturate(100%) invert(43%) sepia(16%) saturate(693%) hue-rotate(114deg) brightness(56%) contrast(90%)'
+                      : 'brightness(0) saturate(100%) invert(63%) sepia(6%) saturate(693%) hue-rotate(114deg) brightness(26%) contrast(87%)',
                   }}
                 />
               </div>
