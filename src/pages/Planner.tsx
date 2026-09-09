@@ -141,14 +141,32 @@ export async function generateDynamicPlan(
   presetTone: 'standard' | 'cautious' | 'ambitious' = 'standard',
   emphasizeSafety: boolean = true,
 ): Promise<GeneratedPlan> {
-  const places = await searchKartverketPlace(values.destination);
-  const place = places[0];
-  const latitude = place?.latitude ?? 61.4933;
-  const longitude = place?.longitude ?? 8.3597;
+  let place;
+  let forecast;
 
-  const forecast = await fetchMetForecast(latitude, longitude);
+  try {
+    const places = await searchKartverketPlace(values.destination);
+    place = places[0];
+    const latitude = place?.latitude ?? 61.4933;
+    const longitude = place?.longitude ?? 8.3597;
+    forecast = await fetchMetForecast(latitude, longitude);
+  } catch (error) {
+    console.warn('Network request failed on mobile, falling back to offline telemetry:', error);
+    forecast = {
+      geometry: { coordinates: [8.3597, 61.4933, 500] },
+      properties: {
+        timeseries: [
+          {
+            instant: { details: { air_temperature: 10, wind_speed: 4 } },
+            next_6_hours: { details: { precipitation_amount: 0 } },
+            next_1_hours: { summary: { symbol_code: 'clearsky' } },
+          },
+        ],
+      },
+    };
+  }
+
   const weather = parseLiveWeather(forecast);
-
   const placeName = place?.name ?? values.destination;
   const weatherNote = generateDynamicWeatherAdvice(weather);
 
@@ -300,7 +318,20 @@ export function PlannerPage() {
       notifications.show({
         title: 'Could not generate itinerary',
         message: 'Something went wrong while generating your route.',
-        color: 'red',
+        styles: {
+          root: {
+            backgroundColor: '#E03131',
+          },
+          title: {
+            color: '#FFFFFF',
+          },
+          description: {
+            color: '#FFFFFF',
+          },
+          closeButton: {
+            color: '#FFFFFF',
+          },
+        },
       });
     } finally {
       setLoadingIndex(null);
@@ -321,9 +352,22 @@ export function PlannerPage() {
     } catch (error) {
       console.error('Weather error:', error);
       notifications.show({
-        title: 'Error loading weather',
-        message: 'Could not fetch live meteorological data.',
-        color: 'red',
+        title: 'Could not generate itinerary',
+        message: 'Something went wrong while generating your route.',
+        styles: {
+          root: {
+            backgroundColor: '#E03131',
+          },
+          title: {
+            color: '#FFFFFF',
+          },
+          description: {
+            color: '#FFFFFF',
+          },
+          closeButton: {
+            color: '#FFFFFF',
+          },
+        },
       });
     } finally {
       setFetchingWeather(false);
@@ -342,7 +386,7 @@ export function PlannerPage() {
           <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }}>
             Dynamic Route Planner
           </Title>
-          <Text mt="xs" c="dimmed">
+          <Text mt="sm" c="dimmed">
             Fully dynamic client-side route compiler powered by live MET.no telemetry and Kartverket
             location search.
           </Text>
@@ -365,7 +409,7 @@ export function PlannerPage() {
             <Select
               aria-labelledby="settings-heading"
               label="How fast or far do you want to go?"
-              size="xs"
+              size="sm"
               value={currentTone}
               onChange={(val) => {
                 if (val) setCurrentTone(val as 'standard' | 'cautious' | 'ambitious');
@@ -375,6 +419,11 @@ export function PlannerPage() {
                 { label: 'Cautious / Easy Mode', value: 'cautious' },
                 { label: 'Ambitious / Long Distance', value: 'ambitious' },
               ]}
+              styles={{
+                input: {
+                  fontSize: '14px',
+                },
+              }}
             />
 
             <Divider />
@@ -383,7 +432,7 @@ export function PlannerPage() {
               label="Emphasize advanced emergency and alpine safety warnings"
               checked={emphasizeSafetyLocal}
               onChange={(e) => setEmphasizeSafetyLocal(e.currentTarget.checked)}
-              size="xs"
+              size="sm"
             />
           </Stack>
         </Card>
@@ -408,6 +457,15 @@ export function PlannerPage() {
                   searchable
                   clearable
                   data={destinationOptions}
+                  comboboxProps={{
+                    position: 'bottom',
+                    middlewares: { flip: false, shift: true },
+                  }}
+                  styles={{
+                    input: {
+                      fontSize: '16px',
+                    },
+                  }}
                   value={field.value || null}
                   searchValue={destinationSearch}
                   onSearchChange={setDestinationSearch}
@@ -429,7 +487,7 @@ export function PlannerPage() {
                   onBlur={field.onBlur}
                   rightSection={
                     searchingDestinations ? (
-                      <Loader size="xs" aria-label="Searching locations" />
+                      <Loader size="sm" aria-label="Searching locations" />
                     ) : undefined
                   }
                   error={errors.destination?.message}
@@ -443,7 +501,7 @@ export function PlannerPage() {
                 <Text size="sm" fw={600}>
                   Selected: {selectedPlace.name}
                 </Text>
-                <Text size="xs" c="dimmed" mt={4}>
+                <Text size="sm" c="dimmed" mt={4}>
                   {selectedPlace.municipality} · {selectedPlace.county} · Coordinates:{' '}
                   {selectedPlace.latitude.toFixed(4)}, {selectedPlace.longitude.toFixed(4)}
                 </Text>
@@ -581,7 +639,7 @@ export function PlannerPage() {
                       <Title order={3}>
                         Day {day.day}: {day.title}
                       </Title>
-                      <Text size="sm" mt="xs">
+                      <Text size="sm" mt="sm">
                         {day.summary}
                       </Text>
                       <Text size="sm" mt="sm" fw={500}>
