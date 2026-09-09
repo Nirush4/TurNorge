@@ -24,22 +24,28 @@ interface TrailTransitBoardProps {
   stationData: StopPlaceData | null;
 }
 
+import { IconBus, IconTrain, IconShip, IconMapPin } from '@tabler/icons-react';
+
 function getTransportModeBadge(mode: string) {
   switch (mode.toLowerCase()) {
     case 'metro':
-      return { label: '🚇 T-bane', color: 'blue' };
+      return { label: 'Metro', color: 'blue', icon: <IconTrain size={14} /> };
     case 'rail':
     case 'train':
-      return { label: '🚆 Train', color: 'grape' };
+      return { label: 'Train', color: 'grape', icon: <IconTrain size={14} /> };
     case 'bus':
-      return { label: '🚌 Bus', color: 'orange' };
+      return { label: 'Bus', color: 'orange', icon: <IconBus size={14} /> };
     case 'tram':
-      return { label: '🚋 Tram', color: 'cyan' };
+      return { label: 'Tram', color: 'cyan', icon: <IconTrain size={14} /> };
     case 'water':
     case 'ferry':
-      return { label: '⛴️ Ferry', color: 'teal' };
+      return { label: 'Ferry', color: 'teal', icon: <IconShip size={14} /> };
     default:
-      return { label: `🚏 ${mode}`, color: 'gray' };
+      return {
+        label: mode.charAt(0).toUpperCase() + mode.slice(1),
+        color: 'gray',
+        icon: <IconMapPin size={14} />,
+      };
   }
 }
 
@@ -84,9 +90,10 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                         <Group gap="xs" wrap="nowrap" justify="flex-start">
                           <Badge
                             size="sm"
-                            color="blue"
+                            color={modeInfo.color}
                             pt={2}
                             variant="light"
+                            leftSection={modeInfo.icon}
                             style={{ flexShrink: 0 }}
                           >
                             {modeInfo.label}
@@ -145,7 +152,12 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                     <Stack gap={6} hiddenFrom="sm" style={{ width: '100%', textAlign: 'left' }}>
                       <Group gap="xs" wrap="nowrap" justify="space-between">
                         <Group gap="xs" wrap="nowrap">
-                          <Badge size="sm" color="blue" variant="light">
+                          <Badge
+                            size="sm"
+                            color={modeInfo.color}
+                            variant="light"
+                            leftSection={modeInfo.icon}
+                          >
                             {modeInfo.label}
                           </Badge>
                           <Badge size="sm" variant="filled">
