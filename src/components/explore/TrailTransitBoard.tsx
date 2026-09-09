@@ -1,3 +1,4 @@
+import { formatDepartureCountdown } from '@/api/utils/formatDepartureCountdown';
 import { Badge, Card, Group, List, Stack, Text, Title } from '@mantine/core';
 
 interface StopPlaceData {
@@ -23,22 +24,28 @@ interface TrailTransitBoardProps {
   stationData: StopPlaceData | null;
 }
 
+import { IconBus, IconTrain, IconShip, IconMapPin } from '@tabler/icons-react';
+
 function getTransportModeBadge(mode: string) {
   switch (mode.toLowerCase()) {
     case 'metro':
-      return { label: '🚇 T-bane', color: 'blue' };
+      return { label: 'Metro', color: 'blue', icon: <IconTrain size={14} /> };
     case 'rail':
     case 'train':
-      return { label: '🚆 Train', color: 'grape' };
+      return { label: 'Train', color: 'grape', icon: <IconTrain size={14} /> };
     case 'bus':
-      return { label: '🚌 Bus', color: 'orange' };
+      return { label: 'Bus', color: 'orange', icon: <IconBus size={14} /> };
     case 'tram':
-      return { label: '🚋 Tram', color: 'cyan' };
+      return { label: 'Tram', color: 'cyan', icon: <IconTrain size={14} /> };
     case 'water':
     case 'ferry':
-      return { label: '⛴️ Ferry', color: 'teal' };
+      return { label: 'Ferry', color: 'teal', icon: <IconShip size={14} /> };
     default:
-      return { label: `🚏 ${mode}`, color: 'gray' };
+      return {
+        label: mode.charAt(0).toUpperCase() + mode.slice(1),
+        color: 'gray',
+        icon: <IconMapPin size={14} />,
+      };
   }
 }
 
@@ -51,42 +58,132 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
           Locating nearby station departures and platform feeds...
         </Text>
       ) : stationData ? (
-        <Stack gap="xs" mt="xs">
+        <Stack gap="md" mt="xs">
           <Group justify="space-between">
-            <Text size="sm" fw={600}>
+            <Text size="sm" c="lime" fw={600}>
               Station: {stationData.name}
             </Text>
           </Group>
           {stationData.estimatedCalls.length > 0 ? (
-            <List size="sm" spacing="xs">
+            <List size="sm" spacing="md">
               {stationData.estimatedCalls.map((call, index) => {
-                const timeStr = new Date(call.expectedDepartureTime).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                });
+                const { timeStr, countdownStr, isUrgent } = formatDepartureCountdown(
+                  call.expectedDepartureTime,
+                );
                 const modeInfo = getTransportModeBadge(call.serviceJourney.line.transportMode);
+                const destinationText = call.serviceJourney.line.name || '';
 
                 return (
                   <List.Item key={index}>
-                    <Group gap="xs" wrap="nowrap">
-                      <Badge size="sm" color={modeInfo.color} variant="light">
-                        {modeInfo.label}
-                      </Badge>
-                      <Badge size="sm" variant="filled">
-                        Line {call.serviceJourney.line.publicCode}
-                      </Badge>
-                      <Text span size="sm" truncate>
-                        {call.serviceJourney.line.name || ''}
-                      </Text>
-                      {call.quay?.publicCode && (
-                        <Badge size="sm" variant="outline" color="gray">
-                          Platform {call.quay.publicCode}
-                        </Badge>
-                      )}
-                      <Text span fw={500} ml="auto" style={{ whiteSpace: 'nowrap' }}>
-                        {timeStr} {call.realtime}
-                      </Text>
+                    {/* Desktop / Tablet Row Layout (50/50 split) */}
+                    <Group align="center" wrap="nowrap" visibleFrom="sm" style={{ width: '100%' }}>
+                      <Stack
+                        gap={2}
+                        style={{
+                          flex: '0 0 50%',
+                          minWidth: '160px',
+                          paddingRight: '12px',
+                          alignItems: 'flex-start',
+                          textAlign: 'left',
+                        }}
+                      >
+                        <Group gap="xs" wrap="nowrap" justify="flex-start">
+                          <Badge
+                            size="sm"
+                            color={modeInfo.color}
+                            pt={2}
+                            variant="light"
+                            leftSection={modeInfo.icon}
+                            style={{ flexShrink: 0 }}
+                          >
+                            {modeInfo.label}
+                          </Badge>
+                          <Badge size="sm" variant="filled" style={{ flexShrink: 0 }}>
+                            Line {call.serviceJourney.line.publicCode}
+                          </Badge>
+                        </Group>
+                        <Text
+                          size="xs"
+                          truncate
+                          style={{ paddingLeft: '2px', width: '100%', textAlign: 'left' }}
+                        >
+                          {destinationText}
+                        </Text>
+                      </Stack>
+
+                      <Group
+                        gap="xs"
+                        align="center"
+                        style={{
+                          flex: '0 0 50%',
+                          minWidth: '160px',
+                          justifyContent: 'flex-start',
+                          paddingLeft: '22px',
+                        }}
+                      >
+                        {call.quay?.publicCode && (
+                          <Badge size="sm" variant="outline" color="gray" style={{ flexShrink: 0 }}>
+                            Pl. {call.quay.publicCode}
+                          </Badge>
+                        )}
+                        <Stack
+                          gap={0}
+                          style={{ minWidth: 0, alignItems: 'flex-start', textAlign: 'left' }}
+                        >
+                          <Text
+                            fw={600}
+                            size="sm"
+                            style={{ whiteSpace: 'nowrap', textAlign: 'left', lineHeight: 1.2 }}
+                          >
+                            {timeStr}
+                          </Text>
+                          <Text
+                            size="xs"
+                            c={isUrgent ? 'red' : 'dimmed'}
+                            fw={isUrgent ? 600 : 400}
+                            style={{ whiteSpace: 'nowrap', textAlign: 'left', lineHeight: 1.2 }}
+                          >
+                            {countdownStr}
+                          </Text>
+                        </Stack>
+                      </Group>
                     </Group>
+
+                    <Stack gap={6} hiddenFrom="sm" style={{ width: '100%', textAlign: 'left' }}>
+                      <Group gap="xs" wrap="nowrap" justify="space-between">
+                        <Group gap="xs" wrap="nowrap">
+                          <Badge
+                            size="sm"
+                            color={modeInfo.color}
+                            variant="light"
+                            leftSection={modeInfo.icon}
+                          >
+                            {modeInfo.label}
+                          </Badge>
+                          <Badge size="sm" variant="filled">
+                            Line {call.serviceJourney.line.publicCode}
+                          </Badge>
+                        </Group>
+                        {call.quay?.publicCode && (
+                          <Badge size="sm" variant="outline" color="gray">
+                            Pl. {call.quay.publicCode}
+                          </Badge>
+                        )}
+                      </Group>
+
+                      <Text size="xs" truncate style={{ width: '100%' }}>
+                        {destinationText}
+                      </Text>
+
+                      <Group justify="space-between" align="center" style={{ width: '100%' }}>
+                        <Text fw={600} size="sm">
+                          {timeStr}
+                        </Text>
+                        <Text size="xs" c={isUrgent ? 'red' : 'dimmed'} fw={isUrgent ? 600 : 400}>
+                          {countdownStr}
+                        </Text>
+                      </Group>
+                    </Stack>
                   </List.Item>
                 );
               })}

@@ -318,6 +318,7 @@ export function PlannerPage() {
       notifications.show({
         title: 'Could not generate itinerary',
         message: 'Something went wrong while generating your route.',
+        color: '#FFFFFF',
         styles: {
           root: {
             backgroundColor: '#E03131',
@@ -343,30 +344,30 @@ export function PlannerPage() {
     try {
       let place = selectedPlace;
       if (!place || place.name.toLowerCase() !== regionName.toLowerCase()) {
-        place = await resolveKartverketPlace(regionName);
+        try {
+          place = await resolveKartverketPlace(regionName);
+        } catch {
+          place = null;
+        }
       }
-      if (!place) throw new Error(`Could not find "${regionName}"`);
-      const liveData = await fetchMetForecast(place.latitude, place.longitude);
+
+      const latitude = place?.latitude ?? 61.4933;
+      const longitude = place?.longitude ?? 8.3597;
+
+      const liveData = await fetchMetForecast(latitude, longitude);
       setSelectedDayWeather(liveData as unknown as MetForecastResponse);
       open();
     } catch (error) {
       console.error('Weather error:', error);
       notifications.show({
-        title: 'Could not generate itinerary',
-        message: 'Something went wrong while generating your route.',
+        title: 'Weather Unavailable',
+        message: 'Could not load live meteorological telemetry for this region.',
+        color: '#FFFFFF',
         styles: {
-          root: {
-            backgroundColor: '#E03131',
-          },
-          title: {
-            color: '#FFFFFF',
-          },
-          description: {
-            color: '#FFFFFF',
-          },
-          closeButton: {
-            color: '#FFFFFF',
-          },
+          root: { backgroundColor: '#E03131' },
+          title: { color: '#FFFFFF' },
+          description: { color: '#FFFFFF' },
+          closeButton: { color: '#FFFFFF' },
         },
       });
     } finally {
@@ -380,329 +381,342 @@ export function PlannerPage() {
   }));
 
   return (
-    <Container size="lg" pt="md" pb="xl" px="0" component="main" mih="100dvh">
-      <Stack gap="lg">
-        <header>
-          <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }}>
-            Dynamic Route Planner
-          </Title>
-          <Text mt="sm" c="dimmed">
-            Fully dynamic client-side route compiler powered by live MET.no telemetry and Kartverket
-            location search.
-          </Text>
-        </header>
+    <>
+      <style>{`
+        @media screen and (max-width: 768px) {
+          input, select, textarea, .mantine-Input-input, .mantine-Select-input, .mantine-NumberInput-input {
+            font-size: 16px !important;
+          }
+        }
+      `}</style>
+      <Container size="lg" pt="md" pb="xl" px="0" component="main" mih="100dvh">
+        <Stack gap="lg">
+          <header>
+            <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }}>
+              Dynamic Route Planner
+            </Title>
+            <Text mt="sm" c="dimmed">
+              Fully dynamic client-side route compiler powered by live MET.no telemetry and
+              Kartverket location search.
+            </Text>
+          </header>
 
-        <Card
-          withBorder
-          padding="md"
-          radius="md"
-          role="region"
-          aria-label="Planner Configuration Options"
-        >
-          <Stack gap="sm">
-            <Group justify="space-between">
-              <Text size="sm" fw={600} id="settings-heading">
-                Walking Pace &amp; Preferences
-              </Text>
-            </Group>
-
-            <Select
-              aria-labelledby="settings-heading"
-              label="How fast or far do you want to go?"
-              size="sm"
-              value={currentTone}
-              onChange={(val) => {
-                if (val) setCurrentTone(val as 'standard' | 'cautious' | 'ambitious');
-              }}
-              data={[
-                { label: 'Standard Mode', value: 'standard' },
-                { label: 'Cautious / Easy Mode', value: 'cautious' },
-                { label: 'Ambitious / Long Distance', value: 'ambitious' },
-              ]}
-              styles={{
-                input: {
-                  fontSize: '14px',
-                },
-              }}
-            />
-
-            <Divider />
-
-            <Checkbox
-              label="Emphasize advanced emergency and alpine safety warnings"
-              checked={emphasizeSafetyLocal}
-              onChange={(e) => setEmphasizeSafetyLocal(e.currentTarget.checked)}
-              size="sm"
-            />
-          </Stack>
-        </Card>
-
-        <Card
-          withBorder
-          padding="lg"
-          component="form"
-          onSubmit={handleSubmit(onSubmit)}
-          role="region"
-          aria-label="Trip Configuration Form"
-        >
-          <Stack gap="md">
-            <Controller
-              name="destination"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  label="Destination"
-                  description="Choose a popular destination or search Kartverket for any location."
-                  placeholder="Choose a Norwegian destination"
-                  searchable
-                  clearable
-                  data={destinationOptions}
-                  comboboxProps={{
-                    position: 'bottom',
-                    middlewares: { flip: false, shift: true },
-                  }}
-                  styles={{
-                    input: {
-                      fontSize: '16px',
-                    },
-                  }}
-                  value={field.value || null}
-                  searchValue={destinationSearch}
-                  onSearchChange={setDestinationSearch}
-                  onChange={(value) => {
-                    field.onChange(value ?? '');
-                    if (!value) {
-                      setSelectedPlace(null);
-                      return;
-                    }
-                    const place = destinations.find((item) => item.name === value);
-                    if (place) {
-                      setSelectedPlace(place);
-                    } else {
-                      void resolveKartverketPlace(value).then((resolved) => {
-                        if (resolved) setSelectedPlace(resolved);
-                      });
-                    }
-                  }}
-                  onBlur={field.onBlur}
-                  rightSection={
-                    searchingDestinations ? (
-                      <Loader size="sm" aria-label="Searching locations" />
-                    ) : undefined
-                  }
-                  error={errors.destination?.message}
-                  required
-                />
-              )}
-            />
-
-            {selectedPlace ? (
-              <Card withBorder padding="sm" role="status" aria-live="polite">
-                <Text size="sm" fw={600}>
-                  Selected: {selectedPlace.name}
+          <Card
+            withBorder
+            padding="md"
+            radius="md"
+            role="region"
+            aria-label="Planner Configuration Options"
+          >
+            <Stack gap="sm">
+              <Group justify="space-between">
+                <Text size="sm" fw={600} id="settings-heading">
+                  Walking Pace &amp; Preferences
                 </Text>
-                <Text size="sm" c="dimmed" mt={4}>
-                  {selectedPlace.municipality} · {selectedPlace.county} · Coordinates:{' '}
-                  {selectedPlace.latitude.toFixed(4)}, {selectedPlace.longitude.toFixed(4)}
-                </Text>
-              </Card>
-            ) : null}
-
-            <Controller
-              name="experienceLevel"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  label="Experience level"
-                  data={EXPERIENCE_OPTIONS}
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  error={errors.experienceLevel?.message}
-                  required
-                />
-              )}
-            />
-
-            <Controller
-              name="durationDays"
-              control={control}
-              render={({ field }) => (
-                <NumberInput
-                  label="Duration (days)"
-                  min={1}
-                  max={14}
-                  value={field.value}
-                  onChange={(value) => field.onChange(typeof value === 'number' ? value : 1)}
-                  onBlur={field.onBlur}
-                  error={errors.durationDays?.message}
-                  required
-                />
-              )}
-            />
-
-            <Controller
-              name="season"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  label="Season"
-                  data={SEASON_OPTIONS}
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  error={errors.season?.message}
-                  required
-                />
-              )}
-            />
-
-            <Controller
-              name="includeCabinStay"
-              control={control}
-              render={({ field }) => (
-                <Checkbox
-                  label="Include DNT / self-service cabin options"
-                  checked={field.value}
-                  onChange={(event) => field.onChange(event.currentTarget.checked)}
-                />
-              )}
-            />
-
-            <Button
-              type="submit"
-              loading={isSubmitting || loadingIndex !== null}
-              loaderProps={{ type: 'dots' }}
-              disabled={!selectedPlace || searchingDestinations}
-              color="pine"
-              aria-busy={loadingIndex !== null}
-              fullWidth
-            >
-              {loadingIndex !== null ? PLANNER_LOADING_STEPS[loadingIndex] : 'Generate Itinerary'}
-            </Button>
-          </Stack>
-        </Card>
-
-        {lastPlan ? (
-          <Stack gap="md" component="section" aria-label="Generated Itinerary Results">
-            <Card withBorder padding="lg">
-              <Group justify="space-between" align="flex-start">
-                <div>
-                  <Title order={2}>{lastPlan.title}</Title>
-                  <Text mt="sm">{lastPlan.overview}</Text>
-                </div>
-                <Button
-                  variant="filled"
-                  radius="md"
-                  color="blue.5"
-                  size="sm"
-                  disabled={isFavorite}
-                  onClick={() => {
-                    const newRoute = {
-                      id: lastPlan.id,
-                      trailId: lastPlan.id,
-                      title: lastPlan.title,
-                      region: lastPlan.region,
-                      notes: lastPlan.overview,
-                      savedAt: new Date().toISOString(),
-                    };
-
-                    saveRoute(newRoute);
-                    setIsFavorite(true);
-                    notifications.show({
-                      message: `${lastPlan.title} saved in your favorites.`,
-                      styles: {
-                        root: {
-                          backgroundColor: '#28726B',
-                        },
-                        description: {
-                          color: '#FFFFFF',
-                        },
-                        closeButton: {
-                          color: '#FFFFFF',
-                        },
-                      },
-                    });
-                  }}
-                  aria-label={isFavorite ? 'Route saved to favorites' : 'Save route to favorites'}
-                >
-                  {isFavorite ? 'Saved' : 'Save to Favorites'}
-                </Button>
               </Group>
-            </Card>
 
-            <SimpleGrid cols={{ base: 1, md: 2 }}>
-              {lastPlan.days.map((day) => (
-                <Card key={day.day} withBorder padding="md" component="article">
-                  <Stack justify="space-between" h="100%">
-                    <div>
-                      <Title order={3}>
-                        Day {day.day}: {day.title}
-                      </Title>
-                      <Text size="sm" mt="sm">
-                        {day.summary}
-                      </Text>
-                      <Text size="sm" mt="sm" fw={500}>
-                        {day.distanceKm} km · {day.elevationGainM} m elevation gain
-                      </Text>
-                      <Text size="sm" mt={4}>
-                        {day.overnight}
-                      </Text>
-                      <Text size="sm" c="dimmed" mt={4}>
-                        {day.weatherNote}
-                      </Text>
-                    </div>
+              <Select
+                aria-labelledby="settings-heading"
+                label="How fast or far do you want to go?"
+                size="sm"
+                value={currentTone}
+                onChange={(val) => {
+                  if (val) setCurrentTone(val as 'standard' | 'cautious' | 'ambitious');
+                }}
+                data={[
+                  { label: 'Standard Mode', value: 'standard' },
+                  { label: 'Cautious / Easy Mode', value: 'cautious' },
+                  { label: 'Ambitious / Long Distance', value: 'ambitious' },
+                ]}
+                styles={{
+                  input: { fontSize: '16px' },
+                  dropdown: { fontSize: '16px' },
+                }}
+              />
 
-                    <Button
-                      variant="light"
-                      color="pine"
-                      size="sm"
-                      mt="md"
-                      radius="md"
-                      loading={fetchingWeather}
-                      leftSection={<IconCloudRain size={16} aria-hidden="true" />}
-                      onClick={() => handleOpenWeatherDashboard(lastPlan.region)}
-                      aria-label={`Open live meteorological dashboard for ${lastPlan.region}`}
-                    >
-                      Live Weather Dashboard
-                    </Button>
-                  </Stack>
+              <Divider />
+
+              <Checkbox
+                label="Emphasize advanced emergency and alpine safety warnings"
+                checked={emphasizeSafetyLocal}
+                onChange={(e) => setEmphasizeSafetyLocal(e.currentTarget.checked)}
+                size="sm"
+              />
+            </Stack>
+          </Card>
+
+          <Card
+            withBorder
+            padding="lg"
+            component="form"
+            onSubmit={handleSubmit(onSubmit)}
+            role="region"
+            aria-label="Trip Configuration Form"
+          >
+            <Stack gap="md">
+              <Controller
+                name="destination"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    label="Destination"
+                    description="Choose a popular destination or search Kartverket for any location."
+                    placeholder="Choose a Norwegian destination"
+                    searchable
+                    clearable
+                    data={destinationOptions}
+                    comboboxProps={{
+                      position: 'bottom',
+                      middlewares: { flip: false, shift: true },
+                    }}
+                    styles={{
+                      input: { fontSize: '16px' },
+                      dropdown: { fontSize: '16px' },
+                    }}
+                    value={field.value || null}
+                    searchValue={destinationSearch}
+                    onSearchChange={setDestinationSearch}
+                    onChange={(value) => {
+                      field.onChange(value ?? '');
+                      if (!value) {
+                        setSelectedPlace(null);
+                        return;
+                      }
+                      const place = destinations.find((item) => item.name === value);
+                      if (place) {
+                        setSelectedPlace(place);
+                      } else {
+                        void resolveKartverketPlace(value).then((resolved) => {
+                          if (resolved) setSelectedPlace(resolved);
+                        });
+                      }
+                    }}
+                    onBlur={field.onBlur}
+                    rightSection={
+                      searchingDestinations ? (
+                        <Loader size="sm" aria-label="Searching locations" />
+                      ) : undefined
+                    }
+                    error={errors.destination?.message}
+                    required
+                  />
+                )}
+              />
+
+              {selectedPlace ? (
+                <Card withBorder padding="sm" role="status" aria-live="polite">
+                  <Text size="sm" fw={600}>
+                    Selected: {selectedPlace.name}
+                  </Text>
+                  <Text size="sm" c="dimmed" mt={4}>
+                    {selectedPlace.municipality} · {selectedPlace.county} · Coordinates:{' '}
+                    {selectedPlace.latitude.toFixed(4)}, {selectedPlace.longitude.toFixed(4)}
+                  </Text>
                 </Card>
-              ))}
-            </SimpleGrid>
+              ) : null}
 
-            <Card withBorder padding="lg">
-              <Title order={3}>Packing List</Title>
-              <List mt="sm" aria-label="Required packing list items">
-                {lastPlan.packingList.map((item) => (
-                  <List.Item key={item}>{item}</List.Item>
+              <Controller
+                name="experienceLevel"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    label="Experience level"
+                    data={EXPERIENCE_OPTIONS}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    styles={{
+                      input: { fontSize: '16px' },
+                      dropdown: { fontSize: '16px' },
+                    }}
+                    error={errors.experienceLevel?.message}
+                    required
+                  />
+                )}
+              />
+
+              <Controller
+                name="durationDays"
+                control={control}
+                render={({ field }) => (
+                  <NumberInput
+                    label="Duration (days)"
+                    min={1}
+                    max={14}
+                    value={field.value}
+                    onChange={(value) => field.onChange(typeof value === 'number' ? value : 1)}
+                    onBlur={field.onBlur}
+                    styles={{
+                      input: { fontSize: '16px' },
+                    }}
+                    error={errors.durationDays?.message}
+                    required
+                  />
+                )}
+              />
+
+              <Controller
+                name="season"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    label="Season"
+                    data={SEASON_OPTIONS}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    styles={{
+                      input: { fontSize: '16px' },
+                      dropdown: { fontSize: '16px' },
+                    }}
+                    error={errors.season?.message}
+                    required
+                  />
+                )}
+              />
+
+              <Controller
+                name="includeCabinStay"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    label="Include DNT / self-service cabin options"
+                    checked={field.value}
+                    onChange={(event) => field.onChange(event.currentTarget.checked)}
+                  />
+                )}
+              />
+
+              <Button
+                type="submit"
+                loading={isSubmitting || loadingIndex !== null}
+                loaderProps={{ type: 'dots' }}
+                disabled={!selectedPlace || searchingDestinations}
+                color="pine"
+                aria-busy={loadingIndex !== null}
+                fullWidth
+              >
+                {loadingIndex !== null ? PLANNER_LOADING_STEPS[loadingIndex] : 'Generate Itinerary'}
+              </Button>
+            </Stack>
+          </Card>
+
+          {lastPlan ? (
+            <Stack gap="md" component="section" aria-label="Generated Itinerary Results">
+              <Card withBorder padding="lg">
+                <Group justify="space-between" align="flex-start">
+                  <div>
+                    <Title order={2}>{lastPlan.title}</Title>
+                    <Text mt="sm">{lastPlan.overview}</Text>
+                  </div>
+                  <Button
+                    variant="filled"
+                    radius="md"
+                    color="blue.5"
+                    size="sm"
+                    disabled={isFavorite}
+                    onClick={() => {
+                      const newRoute = {
+                        id: lastPlan.id,
+                        trailId: lastPlan.id,
+                        title: lastPlan.title,
+                        region: lastPlan.region,
+                        notes: lastPlan.overview,
+                        savedAt: new Date().toISOString(),
+                      };
+
+                      saveRoute(newRoute);
+                      setIsFavorite(true);
+                      notifications.show({
+                        message: `${lastPlan.title} saved in your favorites.`,
+                        color: '#FFFFFF',
+                        styles: {
+                          root: { backgroundColor: '#28726B' },
+                          description: { color: '#FFFFFF' },
+                          closeButton: { color: '#FFFFFF' },
+                        },
+                      });
+                    }}
+                    aria-label={isFavorite ? 'Route saved to favorites' : 'Save route to favorites'}
+                  >
+                    {isFavorite ? 'Saved' : 'Save to Favorites'}
+                  </Button>
+                </Group>
+              </Card>
+
+              <SimpleGrid cols={{ base: 1, md: 2 }}>
+                {lastPlan.days.map((day) => (
+                  <Card key={day.day} withBorder padding="md" component="article">
+                    <Stack justify="space-between" h="100%">
+                      <div>
+                        <Title order={3}>
+                          Day {day.day}: {day.title}
+                        </Title>
+                        <Text size="sm" mt="sm">
+                          {day.summary}
+                        </Text>
+                        <Text size="sm" mt="sm" fw={500}>
+                          {day.distanceKm} km · {day.elevationGainM} m elevation gain
+                        </Text>
+                        <Text size="sm" mt={4}>
+                          {day.overnight}
+                        </Text>
+                        <Text size="sm" c="dimmed" mt={4}>
+                          {day.weatherNote}
+                        </Text>
+                      </div>
+
+                      <Button
+                        variant="light"
+                        color="pine"
+                        size="sm"
+                        mt="md"
+                        radius="md"
+                        loading={fetchingWeather}
+                        leftSection={<IconCloudRain size={16} aria-hidden="true" />}
+                        onClick={() => handleOpenWeatherDashboard(lastPlan.region)}
+                        aria-label={`Open live meteorological dashboard for ${lastPlan.region}`}
+                      >
+                        Live Weather Dashboard
+                      </Button>
+                    </Stack>
+                  </Card>
                 ))}
-              </List>
-            </Card>
+              </SimpleGrid>
 
-            <Card withBorder padding="lg">
-              <Title order={3}>Safety Disclaimers</Title>
-              <List mt="sm" aria-label="Important safety and emergency notes">
-                {lastPlan.safetyDisclaimers.map((item) => (
-                  <List.Item key={item}>{item}</List.Item>
-                ))}
-              </List>
-            </Card>
-          </Stack>
-        ) : null}
+              <Card withBorder padding="lg">
+                <Title order={3}>Packing List</Title>
+                <List mt="sm" aria-label="Required packing list items">
+                  {lastPlan.packingList.map((item) => (
+                    <List.Item key={item}>{item}</List.Item>
+                  ))}
+                </List>
+              </Card>
 
-        <Modal
-          opened={opened}
-          onClose={close}
-          title="Live Meteorological Dashboard"
-          size="4xl"
-          aria-describedby="weather-modal-content"
-        >
-          <div id="weather-modal-content">
-            {selectedDayWeather ? <WeatherDashboard forecast={selectedDayWeather} /> : null}
-          </div>
-        </Modal>
-      </Stack>
-    </Container>
+              <Card withBorder padding="lg">
+                <Title order={3}>Safety Disclaimers</Title>
+                <List mt="sm" aria-label="Important safety and emergency notes">
+                  {lastPlan.safetyDisclaimers.map((item) => (
+                    <List.Item key={item}>{item}</List.Item>
+                  ))}
+                </List>
+              </Card>
+            </Stack>
+          ) : null}
+
+          <Modal
+            opened={opened}
+            onClose={close}
+            title="Live Meteorological Dashboard"
+            size="4xl"
+            aria-describedby="weather-modal-content"
+          >
+            <div id="weather-modal-content">
+              {selectedDayWeather ? <WeatherDashboard forecast={selectedDayWeather} /> : null}
+            </div>
+          </Modal>
+        </Stack>
+      </Container>
+    </>
   );
 }

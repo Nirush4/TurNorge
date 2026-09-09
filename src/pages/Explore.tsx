@@ -275,7 +275,7 @@ export function ExplorePage() {
       <Stack gap="lg">
         <div>
           <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={isDark ? '#eef4f1' : 'dark.7'}>
-            Explore Transport
+            Explore Trails
           </Title>
 
           <Text mt="xs">
@@ -468,6 +468,7 @@ export function ExplorePage() {
 
                 notifications.show({
                   message: `${selected.name} saved in your favorites.`,
+                  color: '#FFFFFF',
                   styles: {
                     root: {
                       backgroundColor: '#28726B',
