@@ -2,6 +2,7 @@ export function formatDepartureCountdown(departureTime: string): {
   timeStr: string;
   countdownStr: string;
   isUrgent: boolean;
+  isPast: boolean;
 } {
   const departureDate = new Date(departureTime);
   const timeStr = departureDate.toLocaleTimeString([], {
@@ -14,6 +15,7 @@ export function formatDepartureCountdown(departureTime: string): {
 
   let countdownStr = 'Expected now';
   let isUrgent = false;
+  let isPast = false;
 
   if (totalMins > 0) {
     if (totalMins < 60) {
@@ -26,6 +28,7 @@ export function formatDepartureCountdown(departureTime: string): {
 
     countdownStr = `Departure in ${formattedHours}h. ${formattedMins}mins`;
   } else if (totalMins < 0) {
+    isPast = true;
     const pastMins = Math.abs(totalMins);
     const hours = Math.floor(pastMins / 60);
     const mins = pastMins % 60;
@@ -39,5 +42,5 @@ export function formatDepartureCountdown(departureTime: string): {
     }
   }
 
-  return { timeStr, countdownStr, isUrgent };
+  return { timeStr, countdownStr, isUrgent, isPast };
 }

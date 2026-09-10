@@ -382,12 +382,12 @@ export function ExplorePage() {
               ) : currentDetails ? (
                 <Stack gap={4} mt="xs">
                   <Text size="sm" fw={500}>
-                    {currentDetails.air_temperature.toFixed(1)}°C · Humidity{' '}
-                    {currentDetails.relative_humidity}%
+                    {currentDetails.air_temperature?.toFixed(1) ?? 'N/A'}°C · Humidity{' '}
+                    {currentDetails.relative_humidity ?? 'N/A'}%
                   </Text>
 
                   <Text size="xs" c="dimmed">
-                    Wind: {currentDetails.wind_speed.toFixed(1)} m/s from{' '}
+                    Wind: {currentDetails.wind_speed?.toFixed(1) ?? 'N/A'} m/s from{' '}
                     {currentDetails.wind_from_direction ?? 'N/A'}° · Pressure:{' '}
                     {currentDetails.air_pressure_at_sea_level ?? 'N/A'} hPa
                   </Text>

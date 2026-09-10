@@ -60,14 +60,14 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
       ) : stationData ? (
         <Stack gap="md" mt="xs">
           <Group justify="space-between">
-            <Text size="sm" c="lime" fw={600}>
+            <Text size="md" c="lime" fw={600}>
               Station: {stationData.name}
             </Text>
           </Group>
           {stationData.estimatedCalls.length > 0 ? (
-            <List size="sm" spacing="md">
+            <List size="md" spacing="md">
               {stationData.estimatedCalls.map((call, index) => {
-                const { timeStr, countdownStr, isUrgent } = formatDepartureCountdown(
+                const { timeStr, countdownStr, isUrgent, isPast } = formatDepartureCountdown(
                   call.expectedDepartureTime,
                 );
                 const modeInfo = getTransportModeBadge(call.serviceJourney.line.transportMode);
@@ -75,21 +75,30 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
 
                 return (
                   <List.Item key={index}>
-                    {/* Desktop / Tablet Row Layout (50/50 split) */}
-                    <Group align="center" wrap="nowrap" visibleFrom="sm" style={{ width: '100%' }}>
+                    {/* Desktop / Tablet Grid Table Layout with Strict Column Widths */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '45% 25% 40%',
+                        alignItems: 'center',
+                        width: '100%',
+                      }}
+                      className="mantine-visible-from-sm"
+                    >
+                      {/* Column 1: Route & Destination */}
                       <Stack
                         gap={2}
                         style={{
-                          flex: '0 0 50%',
-                          minWidth: '160px',
-                          paddingRight: '12px',
                           alignItems: 'flex-start',
                           textAlign: 'left',
+                          paddingRight: '12px',
+                          minWidth: 250,
+                          overflow: 'hidden',
                         }}
                       >
                         <Group gap="xs" wrap="nowrap" justify="flex-start">
                           <Badge
-                            size="sm"
+                            size="md"
                             color={modeInfo.color}
                             pt={2}
                             variant="light"
@@ -98,62 +107,71 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                           >
                             {modeInfo.label}
                           </Badge>
-                          <Badge size="sm" variant="filled" style={{ flexShrink: 0 }}>
+                          <Badge size="md" variant="filled" style={{ flexShrink: 0 }}>
                             Line {call.serviceJourney.line.publicCode}
                           </Badge>
                         </Group>
-                        <Text
-                          size="xs"
-                          truncate
-                          style={{ paddingLeft: '2px', width: '100%', textAlign: 'left' }}
-                        >
+                        <Text size="md" truncate style={{ width: '100%', textAlign: 'left' }}>
                           {destinationText}
                         </Text>
                       </Stack>
 
-                      <Group
-                        gap="xs"
-                        align="center"
+                      {/* Column 2: Platform */}
+                      <Stack
+                        gap={2}
                         style={{
-                          flex: '0 0 50%',
-                          minWidth: '160px',
-                          justifyContent: 'flex-start',
-                          paddingLeft: '22px',
+                          alignItems: 'flex-start',
+                          textAlign: 'left',
+                          minWidth: 0,
                         }}
                       >
-                        {call.quay?.publicCode && (
-                          <Badge size="sm" variant="outline" color="gray" style={{ flexShrink: 0 }}>
+                        {call.quay?.publicCode ? (
+                          <Badge size="md" variant="outline" color="gray" style={{ flexShrink: 0 }}>
                             Pl. {call.quay.publicCode}
                           </Badge>
+                        ) : (
+                          <Text size="xs" c="transparent">
+                            -
+                          </Text>
                         )}
-                        <Stack
-                          gap={0}
-                          style={{ minWidth: 0, alignItems: 'flex-start', textAlign: 'left' }}
-                        >
-                          <Text
-                            fw={600}
-                            size="sm"
-                            style={{ whiteSpace: 'nowrap', textAlign: 'left', lineHeight: 1.2 }}
-                          >
-                            {timeStr}
-                          </Text>
-                          <Text
-                            size="xs"
-                            c={isUrgent ? 'red' : 'dimmed'}
-                            fw={isUrgent ? 600 : 400}
-                            style={{ whiteSpace: 'nowrap', textAlign: 'left', lineHeight: 1.2 }}
-                          >
-                            {countdownStr}
-                          </Text>
-                        </Stack>
-                      </Group>
-                    </Group>
+                        <Text size="xs" c="transparent">
+                          -
+                        </Text>
+                      </Stack>
 
-                    <Stack gap={6} hiddenFrom="sm" style={{ width: '100%', textAlign: 'left' }}>
+                      {/* Column 3: Time & Countdown */}
+                      <Stack
+                        gap={0}
+                        style={{
+                          alignItems: 'flex-start',
+                          textAlign: 'left',
+                          minWidth: 0,
+                        }}
+                      >
+                        <Text
+                          fw={600}
+                          size="md"
+                          style={{ whiteSpace: 'nowrap', textAlign: 'left', lineHeight: 1.2 }}
+                        >
+                          {timeStr}
+                        </Text>
+                        <Text
+                          size="xs"
+                          c={isPast ? 'dimmed' : isUrgent ? 'red' : 'green'}
+                          fw={isUrgent || !isPast ? 600 : 400}
+                          style={{ whiteSpace: 'nowrap', textAlign: 'left', lineHeight: 1.2 }}
+                        >
+                          {countdownStr}
+                        </Text>
+                      </Stack>
+                    </div>
+
+                    {/* Mobile Stack Layout with Gap Between Details and Time */}
+                    <Stack gap={2} hiddenFrom="sm" style={{ width: '100%', textAlign: 'left' }}>
                       <Group gap="xs" wrap="nowrap" justify="space-between">
                         <Group gap="xs" wrap="nowrap">
                           <Badge
-                            size="sm"
+                            size="md"
                             color={modeInfo.color}
                             variant="light"
                             leftSection={modeInfo.icon}
@@ -165,21 +183,30 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                           </Badge>
                         </Group>
                         {call.quay?.publicCode && (
-                          <Badge size="sm" variant="outline" color="gray">
+                          <Badge size="md" variant="outline" color="gray">
                             Pl. {call.quay.publicCode}
                           </Badge>
                         )}
                       </Group>
 
-                      <Text size="xs" truncate style={{ width: '100%' }}>
+                      <Text size="sm" truncate style={{ width: '100%', fontWeight: 500 }}>
                         {destinationText}
                       </Text>
 
-                      <Group justify="space-between" align="center" style={{ width: '100%' }}>
-                        <Text fw={600} size="sm">
+                      <Group
+                        justify="space-between"
+                        align="center"
+                        wrap="wrap"
+                        style={{ width: '100%' }}
+                      >
+                        <Text fw={600} size="md">
                           {timeStr}
                         </Text>
-                        <Text size="xs" c={isUrgent ? 'red' : 'dimmed'} fw={isUrgent ? 600 : 400}>
+                        <Text
+                          size="sm"
+                          c={isPast ? 'dimmed' : isUrgent ? 'red' : 'green'}
+                          fw={isUrgent || !isPast ? 600 : 500}
+                        >
                           {countdownStr}
                         </Text>
                       </Group>
@@ -189,13 +216,13 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
               })}
             </List>
           ) : (
-            <Text size="sm" c="dimmed">
+            <Text size="md" c="dimmed">
               No upcoming departures available for this station right now.
             </Text>
           )}
         </Stack>
       ) : (
-        <Text size="sm" mt="xs" c="dimmed">
+        <Text size="md" mt="xs" c="dimmed">
           No public transport station found within range of this trail.
         </Text>
       )}
