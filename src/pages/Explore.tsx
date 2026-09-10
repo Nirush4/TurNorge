@@ -5,7 +5,6 @@ import {
   Container,
   Drawer,
   Group,
-  SimpleGrid,
   Stack,
   Text,
   Title,
@@ -20,8 +19,10 @@ import { fetchNearestStationDepartures } from '@/api/enturDepartures';
 
 import { useAppState } from '@/context/AppStateContext';
 import type { KartverketPlace, MetLocationForecast } from '@/types/schemas';
-import type { TrailDifficulty } from '@/types';
+import type { TrailDifficulty, Trail } from '@/types';
+
 import { ExploreFilters } from '@/components/explore/ExploreFilters';
+import { TrailGrid } from '@/components/explore/TrailGrid';
 import { TrailTransitBoard } from '@/components/explore/TrailTransitBoard';
 
 interface StopPlaceData {
@@ -89,6 +90,39 @@ export function ExplorePage() {
       return matchRegion;
     });
   }, [destinations, region]);
+
+  const mappedTrails: Trail[] = useMemo(() => {
+    return filteredDestinations.map((place, index) => ({
+      id: place.ssrId ?? String(index),
+      name: place.name,
+      region: place.municipality || place.county || 'Norway',
+      difficulty: 'moderate' as TrailDifficulty,
+      description: `Discovered exploration point mapped at coordinates ${place.latitude.toFixed(2)}, ${place.longitude.toFixed(2)}.`,
+      distanceKm: 12.5,
+      durationHours: 5,
+      durationLabel: 'Full day',
+      elevationGainM: 450,
+      latitude: place.latitude,
+      longitude: place.longitude,
+      highlights: [place.county, place.municipality].filter(Boolean) as string[],
+      waterSources: [
+        {
+          name: 'Natural mountain stream',
+          safety: 'filter',
+          note: 'Running water, recommended to filter before drinking.',
+        },
+      ],
+      elevationProfile: [
+        { km: 0, elevationM: 0 },
+        { km: 3, elevationM: 150 },
+        { km: 6, elevationM: 300 },
+        { km: 9, elevationM: 450 },
+        { km: 11, elevationM: 200 },
+        { km: 12.5, elevationM: 0 },
+      ],
+      kartverketSsrId: place.ssrId,
+    }));
+  }, [filteredDestinations]);
 
   useEffect(() => {
     if (!selectedPlace) {
@@ -167,25 +201,15 @@ export function ExplorePage() {
             Querying Kartverket database...
           </Text>
         ) : (
-          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-            {filteredDestinations.map((place) => (
-              <Card key={place.ssrId} withBorder padding="lg">
-                <Group justify="space-between">
-                  <Badge color="pine">{place.county}</Badge>
-                  <Badge variant="light">{place.municipality}</Badge>
-                </Group>
-                <Title order={3} mt="sm">
-                  {place.name}
-                </Title>
-                <Text size="sm" mt="xs" c="dimmed">
-                  Coordinates: {place.latitude.toFixed(2)}, {place.longitude.toFixed(2)}
-                </Text>
-                <Button mt="md" onClick={() => setSelectedPlace(place)}>
-                  Open Live Conditions
-                </Button>
-              </Card>
-            ))}
-          </SimpleGrid>
+          <TrailGrid
+            trails={mappedTrails}
+            onSelect={(trail) => {
+              const matchedPlace = destinations.find(
+                (d) => d.ssrId === trail.id || d.name === trail.name,
+              );
+              if (matchedPlace) setSelectedPlace(matchedPlace);
+            }}
+          />
         )}
       </Stack>
 
