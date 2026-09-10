@@ -1,4 +1,4 @@
-import { formatDepartureCountdown } from '@/api/utils/formatDepartureCountdown';
+import { formatDepartureCountdown } from '@/utils/formatDepartureCountdown';
 import { Badge, Card, Group, List, Stack, Text, Title } from '@mantine/core';
 
 interface StopPlaceData {
