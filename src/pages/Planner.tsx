@@ -342,19 +342,25 @@ export function PlannerPage() {
   const handleOpenWeatherDashboard = async (regionName: string) => {
     setFetchingWeather(true);
     try {
-      let place = selectedPlace;
-      if (!place || place.name.toLowerCase() !== regionName.toLowerCase()) {
+      let latitude = selectedPlace?.latitude;
+      let longitude = selectedPlace?.longitude;
+
+      if (!latitude || !longitude) {
         try {
-          place = await resolveKartverketPlace(regionName);
+          const results = await searchKartverketPlace(regionName);
+          if (results && results.length > 0) {
+            latitude = results[0].latitude;
+            longitude = results[0].longitude;
+          }
         } catch {
-          place = null;
+          // Fallback to default coordinates if search fails
         }
       }
 
-      const latitude = place?.latitude ?? 61.4933;
-      const longitude = place?.longitude ?? 8.3597;
+      const finalLat = latitude ?? 61.4933;
+      const finalLon = longitude ?? 8.3597;
 
-      const liveData = await fetchMetForecast(latitude, longitude);
+      const liveData = await fetchMetForecast(finalLat, finalLon);
       setSelectedDayWeather(liveData as unknown as MetForecastResponse);
       open();
     } catch (error) {
@@ -709,6 +715,11 @@ export function PlannerPage() {
             onClose={close}
             title="Live Meteorological Dashboard"
             size="4xl"
+            styles={{
+              body: { paddingBottom: '2rem' },
+              inner: { padding: '10px' },
+              content: { maxWidth: '100%', width: '100%' },
+            }}
             aria-describedby="weather-modal-content"
           >
             <div id="weather-modal-content">

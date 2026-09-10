@@ -12,6 +12,7 @@ import {
   Box,
   rem,
   useMantineColorScheme,
+  Table,
 } from '@mantine/core';
 import {
   IconCloudRain,
@@ -21,6 +22,7 @@ import {
   IconCompass,
   IconAlertTriangle,
   IconSparkles,
+  IconGauge,
 } from '@tabler/icons-react';
 import type { MetForecastResponse } from '@/types/met';
 import {
@@ -52,6 +54,7 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
   const precipitation = latest?.next_1_hours?.details?.precipitation_amount ?? 0;
   const windDirection = instantDetails?.wind_from_direction ?? 0;
   const airTemp = instantDetails?.air_temperature ?? 0;
+  const airPressure = instantDetails?.air_pressure_at_sea_level ?? 1013;
 
   const [lon, lat, alt] = forecast.geometry.coordinates;
 
@@ -148,71 +151,66 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
   };
 
   return (
-    <Container fluid px={{ base: 'md', lg: 'xl' }} py="md">
-      <Stack gap="md" maw={1500} mx="auto">
+    <Container fluid px={{ base: 'xs', sm: 'md', lg: 'xl' }} py="md">
+      <Stack gap="lg" maw={1500} mx="auto">
         <Paper
           withBorder
-          p="lg"
-          radius="md"
+          p={{ base: 'md', sm: 'lg' }}
+          radius="lg"
           style={{
             background: isDark
-              ? 'linear-gradient(135deg, var(--mantine-color-dark-6) 0%, rgba(27, 67, 50, 0.15) 100%)'
-              : 'linear-gradient(135deg, var(--mantine-color-body) 0%, rgba(27, 67, 50, 0.04) 100%)',
-            boxShadow: 'var(--mantine-shadow-xs)',
+              ? 'linear-gradient(135deg, var(--mantine-color-dark-6) 0%, rgba(27, 67, 50, 0.25) 100%)'
+              : 'linear-gradient(135deg, var(--mantine-color-body) 0%, rgba(27, 67, 50, 0.06) 100%)',
+            boxShadow: 'var(--mantine-shadow-sm)',
           }}
         >
           <Group justify="space-between" align="center" wrap="wrap" gap="md">
             <div>
-              <Group gap="xs" mb={4}>
-                <ThemeIcon size="sm" radius="xl" color="teal" variant="light" aria-hidden="true">
-                  <IconSparkles size={14} />
+              <Group gap="xs" mb={6}>
+                <ThemeIcon size="md" radius="xl" color="teal" variant="light" aria-hidden="true">
+                  <IconSparkles size={16} />
                 </ThemeIcon>
-                <Title order={1} size="h4" fw={700} style={{ letterSpacing: '-0.5px' }}>
+                <Title order={1} size="h3" fw={800} style={{ letterSpacing: '-0.5px' }}>
                   Meteorological Intelligence
                 </Title>
               </Group>
-              <Text size="xs" c="dimmed" fw={500}>
-                Coordinates: {lat}°N, {lon}°E · Elevation: {alt}m · Synced:{' '}
+              <Text size="sm" c="dimmed" fw={500}>
+                Coordinates: {lat.toFixed(4)}°N, {lon.toFixed(4)}°E · Elevation: {alt}m · Synced:{' '}
                 {new Date(forecast.properties.meta.updated_at).toLocaleTimeString([], {
                   hour: '2-digit',
                   minute: '2-digit',
                 })}
               </Text>
             </div>
-            <Badge
-              variant="gradient"
-              gradient={{ from: 'teal', to: 'pine', deg: 135 }}
-              size="lg"
-              radius="sm"
-            >
-              MET Norway API
+            <Badge variant="light" color="teal" size="lg" radius="md">
+              Live MET.no Feed
             </Badge>
           </Group>
         </Paper>
 
         {airTemp < 0 && (
           <Paper
-            p="sm"
+            p="md"
             radius="md"
             bg={isDark ? 'rgba(217, 72, 15, 0.15)' : 'rgba(217, 72, 15, 0.06)'}
             style={{ border: '1px solid var(--mantine-color-red-6)' }}
             role="alert"
           >
-            <Group wrap="nowrap" gap="sm" align="flex-start">
-              <ThemeIcon color="red" variant="light" size="lg" radius="md" aria-hidden="true">
-                <IconAlertTriangle size={20} />
+            <Group wrap="nowrap" gap="md" align="flex-start">
+              <ThemeIcon color="red" variant="light" size="xl" radius="md" aria-hidden="true">
+                <IconAlertTriangle size={22} />
               </ThemeIcon>
               <Box>
                 <Text
                   fw={700}
-                  size="xs"
+                  size="sm"
                   c={isDark ? 'red.4' : 'red.7'}
                   tt="uppercase"
                   style={{ letterSpacing: '0.05em' }}
                 >
                   Freezing Environment Warning
                 </Text>
-                <Text size="xs" c="dimmed" mt={2}>
+                <Text size="sm" c="dimmed" mt={4}>
                   Sub-zero conditions detected along active path profile. Confirm microspikes and
                   insulation layer readiness.
                 </Text>
@@ -221,12 +219,12 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
           </Paper>
         )}
 
-        <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
-          <Card withBorder padding="md" radius="md">
+        <SimpleGrid cols={{ base: 1, sm: 2, md: 5 }} spacing="md">
+          <Card withBorder padding="lg" radius="md" shadow="xs">
             <Group wrap="nowrap" justify="space-between">
               <div>
                 <Text
-                  size="10px"
+                  size="11px"
                   c="dimmed"
                   tt="uppercase"
                   fw={700}
@@ -234,37 +232,37 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
                 >
                   Temperature
                 </Text>
-                <Text fw={700} size="xl" lh={1.2} mt={4}>
+                <Text fw={800} size="xl" lh={1.2} mt={6}>
                   {airTemp}°C
                 </Text>
               </div>
-              <ThemeIcon color="pine" size="xl" radius="md" variant="light" aria-hidden="true">
-                <IconTemperature size={22} />
+              <ThemeIcon color="teal" size="xl" radius="md" variant="light" aria-hidden="true">
+                <IconTemperature size={24} />
               </ThemeIcon>
             </Group>
           </Card>
 
-          <Card withBorder padding="md" radius="md">
+          <Card withBorder padding="lg" radius="md" shadow="xs">
             <Group wrap="nowrap" justify="space-between">
               <Box style={{ flex: 1 }}>
                 <Text
-                  size="10px"
+                  size="11px"
                   c="dimmed"
                   tt="uppercase"
                   fw={700}
                   style={{ letterSpacing: '0.05em' }}
                 >
-                  Wind Speed & Gusts
+                  Wind & Direction
                 </Text>
-                <Group gap={6} align="center" mt={4}>
-                  <Text fw={700} size="xl" lh={1.2}>
+                <Group gap={6} align="center" mt={6}>
+                  <Text fw={800} size="xl" lh={1.2}>
                     {instantDetails?.wind_speed}{' '}
                     <Text span size="xs" c="dimmed" fw={500}>
                       m/s
                     </Text>
                   </Text>
                   <IconCompass
-                    size={18}
+                    size={20}
                     style={{
                       transform: `rotate(${windDirection}deg)`,
                       transition: 'transform 0.4s ease',
@@ -275,16 +273,16 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
                 </Group>
               </Box>
               <ThemeIcon color="blue" size="xl" radius="md" variant="light" aria-hidden="true">
-                <IconWind size={22} />
+                <IconWind size={24} />
               </ThemeIcon>
             </Group>
           </Card>
 
-          <Card withBorder padding="md" radius="md">
+          <Card withBorder padding="lg" radius="md" shadow="xs">
             <Group wrap="nowrap" justify="space-between">
               <div>
                 <Text
-                  size="10px"
+                  size="11px"
                   c="dimmed"
                   tt="uppercase"
                   fw={700}
@@ -292,7 +290,7 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
                 >
                   Precipitation
                 </Text>
-                <Text fw={700} size="xl" lh={1.2} mt={4}>
+                <Text fw={800} size="xl" lh={1.2} mt={6}>
                   {precipitation}{' '}
                   <Text span size="xs" c="dimmed" fw={500}>
                     mm
@@ -300,16 +298,16 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
                 </Text>
               </div>
               <ThemeIcon color="cyan" size="xl" radius="md" variant="light" aria-hidden="true">
-                <IconCloudRain size={22} />
+                <IconCloudRain size={24} />
               </ThemeIcon>
             </Group>
           </Card>
 
-          <Card withBorder padding="md" radius="md">
+          <Card withBorder padding="lg" radius="md" shadow="xs">
             <Group wrap="nowrap" justify="space-between">
               <div>
                 <Text
-                  size="10px"
+                  size="11px"
                   c="dimmed"
                   tt="uppercase"
                   fw={700}
@@ -317,23 +315,48 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
                 >
                   Humidity
                 </Text>
-                <Text fw={700} size="xl" lh={1.2} mt={4}>
+                <Text fw={800} size="xl" lh={1.2} mt={6}>
                   {instantDetails?.relative_humidity}%
                 </Text>
               </div>
               <ThemeIcon color="teal" size="xl" radius="md" variant="light" aria-hidden="true">
-                <IconDroplet size={22} />
+                <IconDroplet size={24} />
+              </ThemeIcon>
+            </Group>
+          </Card>
+
+          <Card withBorder padding="lg" radius="md" shadow="xs">
+            <Group wrap="nowrap" justify="space-between">
+              <div>
+                <Text
+                  size="11px"
+                  c="dimmed"
+                  tt="uppercase"
+                  fw={700}
+                  style={{ letterSpacing: '0.05em' }}
+                >
+                  Pressure
+                </Text>
+                <Text fw={800} size="xl" lh={1.2} mt={6}>
+                  {airPressure}{' '}
+                  <Text span size="xs" c="dimmed" fw={500}>
+                    hPa
+                  </Text>
+                </Text>
+              </div>
+              <ThemeIcon color="violet" size="xl" radius="md" variant="light" aria-hidden="true">
+                <IconGauge size={24} />
               </ThemeIcon>
             </Group>
           </Card>
         </SimpleGrid>
 
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
-          <Card withBorder padding="md" radius="md">
+          <Card withBorder padding="lg" radius="md" shadow="xs">
             <Group justify="space-between" mb="xs">
               <Title
                 order={2}
-                size="xs"
+                size="sm"
                 fw={700}
                 tt="uppercase"
                 c="dimmed"
@@ -341,99 +364,147 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
               >
                 Temperature Trend (°C)
               </Title>
-              <Badge size="xs" variant="dot" color="teal">
-                12h Trend
+              <Badge size="sm" variant="light" color="teal" radius="sm">
+                12h Outlook
               </Badge>
             </Group>
-            <div style={{ height: rem(190), position: 'relative' }}>
-              <Line options={sharedChartOptions} data={tempChartConfig} />
-            </div>
+            <Text size="xs" c="dimmed" mb="md">
+              Continuous hourly thermal progression across active terrain elevations.
+            </Text>
+            <Box
+              p="xs"
+              style={{
+                borderRadius: 'var(--mantine-radius-md)',
+                backgroundColor: isDark
+                  ? 'var(--mantine-color-dark-6)'
+                  : 'var(--mantine-color-gray-0)',
+              }}
+            >
+              <div style={{ height: rem(210), position: 'relative' }}>
+                <Line options={sharedChartOptions} data={tempChartConfig} />
+              </div>
+            </Box>
           </Card>
 
-          <Card withBorder padding="md" radius="md">
+          <Card withBorder padding="lg" radius="md" shadow="xs">
             <Group justify="space-between" mb="xs">
               <Title
                 order={2}
-                size="xs"
+                size="sm"
                 fw={700}
                 tt="uppercase"
                 c="dimmed"
                 style={{ letterSpacing: '0.05em' }}
               >
-                Wind Speed & Gusts (m/s)
+                Wind Speed &amp; Gusts (m/s)
               </Title>
-              <Badge size="xs" variant="dot" color="blue">
-                12h Trend
+              <Badge size="sm" variant="light" color="blue" radius="sm">
+                12h Outlook
               </Badge>
             </Group>
-            <div style={{ height: rem(190), position: 'relative' }}>
-              <Line options={sharedChartOptions} data={windChartConfig} />
-            </div>
+            <Text size="xs" c="dimmed" mb="md">
+              Projected aerodynamic velocity variations along exposed regional coordinates.
+            </Text>
+            <Box
+              p="xs"
+              style={{
+                borderRadius: 'var(--mantine-radius-md)',
+                backgroundColor: isDark
+                  ? 'var(--mantine-color-dark-6)'
+                  : 'var(--mantine-color-gray-0)',
+              }}
+            >
+              <div style={{ height: rem(210), position: 'relative' }}>
+                <Line options={sharedChartOptions} data={windChartConfig} />
+              </div>
+            </Box>
           </Card>
         </SimpleGrid>
 
-        <Card withBorder padding="md" radius="md">
+        <Card withBorder padding="lg" radius="md" shadow="xs">
           <Title
             order={2}
-            size="xs"
+            size="sm"
             fw={700}
             tt="uppercase"
             c="dimmed"
-            mb="sm"
+            mb="md"
             style={{ letterSpacing: '0.05em' }}
           >
             Short-Range Progression Schedule
           </Title>
-          <Stack gap={6}>
-            {forecast.properties.timeseries.slice(0, 6).map((slot) => {
-              const timeStr = new Date(slot.time).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              });
-              const temp = slot.data.instant.details.air_temperature;
-              const wind = slot.data.instant.details.wind_speed;
-              const hum = slot.data.instant.details.relative_humidity;
-              const symbol = slot.data.next_1_hours?.summary.symbol_code || symbolCode;
-
-              return (
-                <Group
-                  key={slot.time}
-                  justify="space-between"
-                  py={8}
-                  px="sm"
+          <Box style={{ overflowX: 'auto' }}>
+            <Table horizontalSpacing="md" verticalSpacing="sm" fz="sm" withRowBorders={false}>
+              <Table.Thead>
+                <Table.Tr
                   style={{
-                    borderRadius: 'var(--mantine-radius-sm)',
-                    backgroundColor: 'var(--mantine-color-default-hover)',
+                    borderBottom: `1px solid ${isDark ? 'var(--mantine-color-dark-4)' : 'var(--mantine-color-gray-3)'}`,
                   }}
-                  wrap="nowrap"
                 >
-                  <Text fw={600} size="xs" w={55}>
-                    {timeStr}
-                  </Text>
-                  <Text
-                    size="xs"
-                    tt="capitalize"
-                    c="dimmed"
-                    style={{ flex: 1, textAlign: 'center' }}
-                    fw={500}
-                  >
-                    {symbol.replace('_', ' ')}
-                  </Text>
-                  <Group gap="xl">
-                    <Text size="xs" c="dimmed">
-                      💧 {hum}%
-                    </Text>
-                    <Text size="xs" c="dimmed">
-                      🌬️ {wind} m/s
-                    </Text>
-                    <Text fw={700} size="xs" w={45} ta="right">
-                      {temp}°C
-                    </Text>
-                  </Group>
-                </Group>
-              );
-            })}
-          </Stack>
+                  <Table.Th fw={700} c="dimmed">
+                    Time
+                  </Table.Th>
+                  <Table.Th fw={700} c="dimmed" ta="center">
+                    Condition
+                  </Table.Th>
+                  <Table.Th fw={700} c="dimmed" ta="right">
+                    Precipitation
+                  </Table.Th>
+                  <Table.Th fw={700} c="dimmed" ta="right">
+                    Humidity
+                  </Table.Th>
+                  <Table.Th fw={700} c="dimmed" ta="right">
+                    Wind
+                  </Table.Th>
+                  <Table.Th fw={700} c="dimmed" ta="right">
+                    Temp
+                  </Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {forecast.properties.timeseries.slice(0, 6).map((slot) => {
+                  const timeStr = new Date(slot.time).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  });
+                  const temp = slot.data.instant.details.air_temperature;
+                  const wind = slot.data.instant.details.wind_speed;
+                  const hum = slot.data.instant.details.relative_humidity;
+                  const precip = slot.data.next_1_hours?.details?.precipitation_amount ?? 0;
+                  const symbol = slot.data.next_1_hours?.summary.symbol_code || symbolCode;
+
+                  return (
+                    <Table.Tr
+                      key={slot.time}
+                      style={{
+                        backgroundColor: isDark
+                          ? 'var(--mantine-color-dark-6)'
+                          : 'var(--mantine-color-gray-0)',
+                        borderRadius: 'var(--mantine-radius-md)',
+                      }}
+                    >
+                      <Table.Td fw={700}>{timeStr}</Table.Td>
+                      <Table.Td tt="capitalize" c="dimmed" fw={600} ta="center">
+                        {symbol.replace('_', ' ')}
+                      </Table.Td>
+                      <Table.Td ta="right" c="dimmed">
+                        🌧️ {precip} mm
+                      </Table.Td>
+                      <Table.Td ta="right" c="dimmed">
+                        💧 {hum}%
+                      </Table.Td>
+                      <Table.Td ta="right" c="dimmed">
+                        🌬️ {wind} m/s
+                      </Table.Td>
+                      <Table.Td ta="right" fw={800}>
+                        {temp}°C
+                      </Table.Td>
+                    </Table.Tr>
+                  );
+                })}
+              </Table.Tbody>
+            </Table>
+          </Box>
         </Card>
       </Stack>
     </Container>
