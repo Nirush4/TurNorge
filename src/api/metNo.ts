@@ -19,7 +19,14 @@ export async function fetchMetForecast(lat: number, lon: number): Promise<MetLoc
 
   const json: unknown = await response.json();
 
-  return metLocationForecastSchema.parse(json);
+  const result = metLocationForecastSchema.safeParse(json);
+  if (!result.success) {
+    console.warn('MetForecast schema validation warning:', result.error);
+
+    return json as MetLocationForecast;
+  }
+
+  return result.data;
 }
 
 export function getMockMetForecast(_region: string): MetLocationForecast {
