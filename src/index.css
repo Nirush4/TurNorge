@@ -105,3 +105,33 @@ h5,
 h6 {
   font-family: 'Playfair Display', Georgia, serif;
 }
+
+
+
+@keyframes autoMarquee {
+  0% {
+    transform: translateX(0%);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.destination-marquee-container {
+  width: 100%;
+  overflow: hidden;
+  whiteSpace: nowrap;
+  position: relative;
+}
+
+.destination-marquee-text {
+  display: inline-block;
+  animation: autoMarquee 8s linear infinite;
+  padding-right: 50px;
+  text-align: left;
+}
+
+.destination-marquee-text:hover {
+  animation-play-state: paused;
+}

@@ -12,4 +12,17 @@ export default defineConfig({
       '@': path.resolve(rootDir, './src'),
     },
   },
+  server: {
+    proxy: {
+      // Proxy for Overpass API
+      '/api/overpass': {
+        target: 'https://overpass-api.de',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/overpass/, '/api'),
+        headers: {
+          'User-Agent': 'NorwegianTrailExplorer/1.0 (Educational Project)',
+        },
+      },
+    },
+  },
 });

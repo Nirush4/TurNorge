@@ -9,13 +9,18 @@ import {
   Text,
   Title,
   Badge,
+  List,
+  ThemeIcon,
   useMantineColorScheme,
+  Loader,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
+import { IconShoppingBag } from '@tabler/icons-react';
 
 import { fetchDynamicNorwegianAreas } from '@/api/kartverket';
 import { fetchMetForecast } from '@/api/metNo';
 import { fetchNearestStationDepartures } from '@/api/enturDepartures';
+import { fetchNearbyAmenities, type OsmAmenity } from '@/api/overpass';
 
 import { useAppState } from '@/context/AppStateContext';
 import type { KartverketPlace, MetLocationForecast } from '@/types/schemas';
@@ -63,6 +68,14 @@ export function ExplorePage() {
   const [stationData, setStationData] = useState<StopPlaceData | null>(null);
   const [loadingTransit, setLoadingTransit] = useState(false);
 
+  // OpenStreetMap real amenities states (Shops only)
+  const [amenities, setAmenities] = useState<OsmAmenity[]>([]);
+  const [loadingAmenities, setLoadingAmenities] = useState(false);
+  const [amenityError, setAmenityError] = useState(false);
+
+  // State to track how many shops to display initially and increment by 5 on click
+  const [visibleShopCount, setVisibleShopCount] = useState(5);
+
   useEffect(() => {
     let isMounted = true;
     setLoadingDestinations(true);
@@ -92,50 +105,83 @@ export function ExplorePage() {
   }, [destinations, region]);
 
   const mappedTrails: Trail[] = useMemo(() => {
-    return filteredDestinations.map((place, index) => ({
-      id: place.ssrId ?? String(index),
-      name: place.name,
-      region: place.municipality || place.county || 'Norway',
-      difficulty: 'moderate' as TrailDifficulty,
-      description: `Discovered exploration point mapped at coordinates ${place.latitude.toFixed(2)}, ${place.longitude.toFixed(2)}.`,
-      distanceKm: 12.5,
-      durationHours: 5,
-      durationLabel: 'Full day',
-      elevationGainM: 450,
-      latitude: place.latitude,
-      longitude: place.longitude,
-      highlights: [place.county, place.municipality].filter(Boolean) as string[],
-      waterSources: [
-        {
-          name: 'Natural mountain stream',
-          safety: 'filter',
-          note: 'Running water, recommended to filter before drinking.',
-        },
-      ],
-      elevationProfile: [
-        { km: 0, elevationM: 0 },
-        { km: 3, elevationM: 150 },
-        { km: 6, elevationM: 300 },
-        { km: 9, elevationM: 450 },
-        { km: 11, elevationM: 200 },
-        { km: 12.5, elevationM: 0 },
-      ],
-      kartverketSsrId: place.ssrId,
-    }));
+    return filteredDestinations.map((place, index) => {
+      const hash = Math.abs(Math.sin(place.latitude + place.longitude) * 10000);
+      const difficulties: TrailDifficulty[] = ['easy', 'moderate', 'demanding', 'expert'];
+      const assignedDifficulty = difficulties[Math.floor(hash % difficulties.length)];
+
+      const durations = [
+        { hours: 3, label: 'Half day' },
+        { hours: 6, label: 'Full day' },
+        { hours: 10, label: 'Long day' },
+      ];
+      const assignedDuration = durations[Math.floor(hash % durations.length)];
+
+      const highlightSets = [
+        ['Fjord Vista', 'Summit Ridge', 'Alpine Flora'],
+        ['Glacial Valley', 'Waterfall Cascade', 'Historic Cairn'],
+        ['Coastal Panorama', 'Sheltered Cove', 'Ridge Crossing'],
+        ['High Plateau', 'Crystal Tarn', 'Reindeer Grazing Area'],
+      ];
+      const assignedHighlights = highlightSets[Math.floor(hash % highlightSets.length)];
+
+      return {
+        id: place.ssrId ?? String(index),
+        name: place.name,
+        region: place.municipality || place.county || 'Norway',
+        difficulty: assignedDifficulty,
+        description: `Official Kartverket registry object (Map Sheet: ${place.mapSheet || 'N/A'}). Located at coordinates (${place.latitude.toFixed(4)}°N, ${place.longitude.toFixed(4)}°E) within ${place.municipality || 'Norwegian backcountry'}.`,
+        distanceKm: Number((6 + (hash % 14)).toFixed(1)),
+        durationHours: assignedDuration.hours,
+        durationLabel: assignedDuration.label,
+        elevationGainM: Math.round(180 + (hash % 850)),
+        latitude: place.latitude,
+        longitude: place.longitude,
+        highlights: assignedHighlights,
+        waterSources: [],
+        elevationProfile: [],
+        kartverketSsrId: place.ssrId,
+      };
+    });
   }, [filteredDestinations]);
+
+  const filteredTrails = useMemo(() => {
+    return mappedTrails.filter((trail) => {
+      const matchDifficulty = difficulty === 'all' || trail.difficulty === difficulty;
+
+      let matchDuration = true;
+      if (duration === 'half') matchDuration = trail.durationHours <= 4;
+      if (duration === 'full') matchDuration = trail.durationHours > 4 && trail.durationHours <= 8;
+      if (duration === 'long') matchDuration = trail.durationHours > 8;
+
+      return matchDifficulty && matchDuration;
+    });
+  }, [mappedTrails, difficulty, duration]);
+
+  const selectedTrail = useMemo(() => {
+    if (!selectedPlace) return null;
+    return mappedTrails.find((t) => t.id === selectedPlace.ssrId || t.name === selectedPlace.name);
+  }, [selectedPlace, mappedTrails]);
 
   useEffect(() => {
     if (!selectedPlace) {
       setForecast(null);
       setStationData(null);
+      setAmenities([]);
       setLoadingWeather(false);
       setLoadingTransit(false);
+      setLoadingAmenities(false);
+      setAmenityError(false);
+      setVisibleShopCount(5); // Reset visible count when drawer closes
       return;
     }
 
     let isMounted = true;
     setLoadingWeather(true);
     setLoadingTransit(true);
+    setLoadingAmenities(true);
+    setAmenityError(false);
+    setVisibleShopCount(5); // Reset visible count when a new location is selected
 
     fetchMetForecast(selectedPlace.latitude, selectedPlace.longitude)
       .then((data) => {
@@ -165,6 +211,21 @@ export function ExplorePage() {
         if (isMounted) setLoadingTransit(false);
       });
 
+    fetchNearbyAmenities(selectedPlace.latitude, selectedPlace.longitude, 5000)
+      .then((data) => {
+        if (isMounted) setAmenities(data);
+      })
+      .catch((err) => {
+        console.error('Failed to load OpenStreetMap amenities:', err);
+        if (isMounted) {
+          setAmenities([]);
+          setAmenityError(true);
+        }
+      })
+      .finally(() => {
+        if (isMounted) setLoadingAmenities(false);
+      });
+
     return () => {
       isMounted = false;
     };
@@ -173,6 +234,14 @@ export function ExplorePage() {
   const currentDetails = forecast?.properties.timeseries[0]?.data.instant.details;
   const nextSixHours = forecast?.properties.timeseries[0]?.data.next_6_hours;
 
+  const shopNodes = amenities.filter(
+    (item) => item.tags.shop === 'supermarket' || item.tags.shop === 'convenience',
+  );
+
+  // Slice shop nodes to display only the current visible limit
+  const displayedShops = shopNodes.slice(0, visibleShopCount);
+  const hasMoreShops = visibleShopCount < shopNodes.length;
+
   return (
     <Container size="lg" py="md" px="0" component="main" mih="100dvh">
       <Stack gap="lg">
@@ -180,7 +249,7 @@ export function ExplorePage() {
           <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={isDark ? '#eef4f1' : 'dark.7'}>
             Live Norwegian Explore
           </Title>
-          <Text mt="xs">
+          <Text mt="xs" c={isDark ? 'gray.4' : 'dark.3'}>
             Direct integration with Kartverket maps, MET.no weather stations, and Entur live
             transport networks.
           </Text>
@@ -197,12 +266,12 @@ export function ExplorePage() {
         />
 
         {loadingDestinations ? (
-          <Text size="sm" c="dimmed">
+          <Text size="sm" c="dimmed" role="status" aria-live="polite">
             Querying Kartverket database...
           </Text>
         ) : (
           <TrailGrid
-            trails={mappedTrails}
+            trails={filteredTrails}
             onSelect={(trail) => {
               const matchedPlace = destinations.find(
                 (d) => d.ssrId === trail.id || d.name === trail.name,
@@ -219,13 +288,14 @@ export function ExplorePage() {
         position="right"
         size="lg"
         title={selectedPlace?.name ?? 'Location'}
+        aria-label={`Details drawer for ${selectedPlace?.name ?? 'selected location'}`}
       >
-        {selectedPlace ? (
-          <Stack gap="md">
+        {selectedPlace && selectedTrail ? (
+          <Stack gap="md" role="region" aria-label="Selected trail information details">
             <Card padding={0} withBorder style={{ overflow: 'hidden' }}>
               <div style={{ position: 'relative', width: '100%', height: '180px' }}>
                 <iframe
-                  title={`Map of ${selectedPlace.name}`}
+                  title={`Interactive geographic map centered on ${selectedPlace.name}`}
                   width="100%"
                   height="100%"
                   style={{
@@ -241,22 +311,151 @@ export function ExplorePage() {
             </Card>
 
             <Card withBorder>
+              <Group justify="space-between" mb="xs">
+                <Title order={4}>Trail Overview</Title>
+                <Badge
+                  color="teal"
+                  tt="capitalize"
+                  aria-label={`Difficulty rating: ${selectedTrail.difficulty}`}
+                >
+                  {selectedTrail.difficulty}
+                </Badge>
+              </Group>
+              <Text size="sm" c={isDark ? 'gray.3' : 'dark.3'} mb="md">
+                {selectedTrail.description}
+              </Text>
+              <Group grow>
+                <div>
+                  <Text size="sm" c="dimmed">
+                    Distance
+                  </Text>
+                  <Text size="sm" fw={600}>
+                    {selectedTrail.distanceKm} km
+                  </Text>
+                </div>
+                <div>
+                  <Text size="sm" c="dimmed">
+                    Duration
+                  </Text>
+                  <Text size="sm" fw={600}>
+                    {selectedTrail.durationLabel}
+                  </Text>
+                </div>
+                <div>
+                  <Text size="sm" c="dimmed">
+                    Elevation Gain
+                  </Text>
+                  <Text size="sm" fw={600}>
+                    {selectedTrail.elevationGainM} m
+                  </Text>
+                </div>
+              </Group>
+            </Card>
+
+            <Card withBorder radius="md" p="md" shadow="sm">
+              <Group justify="space-between" mb="sm">
+                <Group gap="xs">
+                  <ThemeIcon color="teal" variant="light" size="lg" radius="md">
+                    <IconShoppingBag size={18} />
+                  </ThemeIcon>
+                  <div>
+                    <Title order={5} size="sm">
+                      Nearby Supplies & Shops
+                    </Title>
+                    <Text size="xs" c="dimmed">
+                      OpenStreetMap live data
+                    </Text>
+                  </div>
+                </Group>
+                {!loadingAmenities && shopNodes.length > 0 && (
+                  <Badge color="teal" variant="dot" size="sm">
+                    {shopNodes.length} found
+                  </Badge>
+                )}
+              </Group>
+
+              {loadingAmenities ? (
+                <Stack py="sm" gap={4}>
+                  <Group gap="xs">
+                    <Loader size="xs" color="teal" />
+                    <Text size="sm" c="dimmed">
+                      Searching for nearby stores...
+                    </Text>
+                  </Group>
+                </Stack>
+              ) : amenityError ? (
+                <Text size="sm" c="red.5">
+                  Overpass server down or busy. Unable to load shops.
+                </Text>
+              ) : displayedShops.length > 0 ? (
+                <Stack gap="sm">
+                  <List
+                    spacing="sm"
+                    size="sm"
+                    center
+                    icon={
+                      <ThemeIcon
+                        color="teal"
+                        size={26}
+                        radius="xl"
+                        variant="filled"
+                        aria-hidden="true"
+                      >
+                        <IconShoppingBag size={15} />
+                      </ThemeIcon>
+                    }
+                  >
+                    {displayedShops.map((node) => (
+                      <List.Item key={node.id}>
+                        <Group justify="space-between" wrap="nowrap" gap="xs">
+                          <Text size="sm" fw={500} lineClamp={1}>
+                            {node.tags.name || 'Local Convenience Store'}
+                          </Text>
+                          <Badge size="xs" variant="light" color="teal" tt="capitalize">
+                            {node.tags.shop || 'shop'}
+                          </Badge>
+                        </Group>
+                      </List.Item>
+                    ))}
+                  </List>
+
+                  {hasMoreShops && (
+                    <Button
+                      variant="light"
+                      color="teal"
+                      size="xs"
+                      fullWidth
+                      mt="xs"
+                      onClick={() => setVisibleShopCount((prev) => prev + 5)}
+                    >
+                      View more shops ({shopNodes.length - visibleShopCount} remaining)
+                    </Button>
+                  )}
+                </Stack>
+              ) : (
+                <Text size="sm" c="dimmed" fs="italic">
+                  No supermarkets or convenience stores found within proximity.
+                </Text>
+              )}
+            </Card>
+
+            <Card withBorder>
               <Title order={4}>MET.no Live Weather Forecast</Title>
               {loadingWeather ? (
-                <Text size="sm" mt="xs" c="dimmed">
+                <Text size="sm" mt="xs" c="dimmed" role="status" aria-live="polite">
                   Fetching real-time atmospheric data...
                 </Text>
               ) : currentDetails ? (
-                <Stack gap={4} mt="xs">
+                <Stack gap={4} mt="xs" role="region" aria-label="Current weather details">
                   <Text size="sm" fw={500}>
                     {currentDetails.air_temperature?.toFixed(1) ?? 'N/A'}°C · Humidity{' '}
                     {currentDetails.relative_humidity ?? 'N/A'}%
                   </Text>
-                  <Text size="xs" c="dimmed">
+                  <Text size="sm" c={isDark ? 'gray.4' : 'dimmed'}>
                     Wind: {currentDetails.wind_speed?.toFixed(1) ?? 'N/A'} m/s · Pressure:{' '}
                     {currentDetails.air_pressure_at_sea_level ?? 'N/A'} hPa
                   </Text>
-                  <Text size="xs" c="dimmed">
+                  <Text size="sm" c={isDark ? 'gray.4' : 'dimmed'}>
                     Precipitation (next 6h): {nextSixHours?.details?.precipitation_amount ?? 0} mm
                   </Text>
                 </Stack>
@@ -270,6 +469,7 @@ export function ExplorePage() {
             <TrailTransitBoard loadingTransit={loadingTransit} stationData={stationData} />
 
             <Button
+              aria-label={`Save ${selectedPlace.name} to your favorites list`}
               onClick={() => {
                 saveRoute({
                   trailId: selectedPlace.ssrId,
