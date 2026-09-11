@@ -1,3 +1,4 @@
+// vite.config.ts
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
@@ -14,9 +15,9 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      // Proxy for Overpass API
+      // Proxy for Overpass API switched to a reliable mirror
       '/api/overpass': {
-        target: 'https://overpass-api.de',
+        target: 'https://overpass.kumi.systems',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/overpass/, '/api'),
         headers: {

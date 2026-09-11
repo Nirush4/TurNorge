@@ -8,6 +8,7 @@ export interface OsmAmenity {
     amenity?: string;
     natural?: string;
     shop?: string;
+    tourism?: string;
     operator?: string;
   };
 }
@@ -17,12 +18,9 @@ const amenityCache = new Map<string, OsmAmenity[]>();
 const OVERPASS_ENDPOINTS = [
   '/api/overpass/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
-  'https://overpass-api.de/api/interpreter',
+  'https://overpass.openstreetmap.fr/api/interpreter',
 ];
 
-// Client-side timeout so a hung proxy/mirror doesn't stall the whole chain.
-// This is separate from Overpass's own [timeout:8], which only bounds
-// server-side query execution, not how long we wait for a response.
 async function fetchWithTimeout(
   url: string,
   options: RequestInit,
@@ -40,9 +38,10 @@ async function fetchWithTimeout(
 export async function fetchNearbyAmenities(
   lat: number,
   lon: number,
-  radiusMeters = 1500,
+  radiusMeters = 2000,
 ): Promise<OsmAmenity[]> {
-  const searchRadii = [radiusMeters, 3500];
+  // Expanded search radii for wilderness/trail maps (up to 5km)
+  const searchRadii = [radiusMeters, 5000];
 
   for (const radius of searchRadii) {
     const cacheKey = `${lat.toFixed(5)}_${lon.toFixed(5)}_${radius}`;
@@ -55,11 +54,15 @@ export async function fetchNearbyAmenities(
       continue;
     }
 
+    // Expanded query looking for shops, shelters, alpine cabins, and drinking water
     const query = `
       [out:json][timeout:8];
       (
         node(around:${radius},${lat},${lon})[shop=supermarket];
         node(around:${radius},${lat},${lon})[shop=convenience];
+        node(around:${radius},${lat},${lon})[amenity=shelter];
+        node(around:${radius},${lat},${lon})[tourism=alpine_hut];
+        node(around:${radius},${lat},${lon})[amenity=drinking_water];
       );
       out body;
     `;
@@ -67,6 +70,10 @@ export async function fetchNearbyAmenities(
     let gotValidResponse = false;
 
     for (const endpoint of OVERPASS_ENDPOINTS) {
+      if (endpoint.startsWith('/') && import.meta.env.DEV) {
+        continue;
+      }
+
       try {
         const response = await fetchWithTimeout(
           endpoint,
@@ -75,7 +82,7 @@ export async function fetchNearbyAmenities(
             body: query,
             headers: {
               'Content-Type': 'text/plain',
-              'User-Agent': 'TrailApp/1.0',
+              'User-Agent': 'NorwegianTrailExplorer/1.0',
             },
           },
           8000,
@@ -93,9 +100,6 @@ export async function fetchNearbyAmenities(
 
         amenityCache.set(cacheKey, elements);
         gotValidResponse = true;
-
-        // A genuinely empty result is still a valid answer — stop trying
-        // other mirrors for this radius instead of burning more requests.
         break;
       } catch (err) {
         console.warn(`Overpass mirror failed on ${endpoint}:`, err);
