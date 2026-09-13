@@ -1,5 +1,5 @@
-import { formatDepartureCountdown } from '@/api/utils/formatDepartureCountdown';
-import { Badge, Card, Group, List, Stack, Text, Title } from '@mantine/core';
+import { formatDepartureCountdown } from '@/utils/formatDepartureCountdown';
+import { Badge, Card, Group, Stack, Text, Title } from '@mantine/core';
 
 interface StopPlaceData {
   name: string;
@@ -52,7 +52,9 @@ function getTransportModeBadge(mode: string) {
 export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitBoardProps) {
   return (
     <Card withBorder>
-      <Title order={4}>Public Transport & Platform Board (Entur)</Title>
+      <Title order={4} mb="xs">
+        Public Transport & Platform Board (Entur)
+      </Title>
       {loadingTransit ? (
         <Text size="sm" mt="xs" c="dimmed">
           Locating nearby station departures and platform feeds...
@@ -65,34 +67,32 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
             </Text>
           </Group>
           {stationData.estimatedCalls.length > 0 ? (
-            <List size="md" spacing="md">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {stationData.estimatedCalls.map((call, index) => {
                 const { timeStr, countdownStr, isUrgent, isPast } = formatDepartureCountdown(
                   call.expectedDepartureTime,
                 );
                 const modeInfo = getTransportModeBadge(call.serviceJourney.line.transportMode);
                 const destinationText = call.serviceJourney.line.name || '';
+                const isLong = destinationText.length > 22;
 
                 return (
-                  <List.Item key={index}>
-                    {/* Desktop / Tablet Grid Table Layout with Strict Column Widths */}
+                  <div key={index}>
                     <div
                       style={{
                         display: 'grid',
-                        gridTemplateColumns: '45% 25% 40%',
+                        gridTemplateColumns: '40% 20% 40%',
                         alignItems: 'center',
                         width: '100%',
                       }}
                       className="mantine-visible-from-sm"
                     >
-                      {/* Column 1: Route & Destination */}
                       <Stack
-                        gap={2}
+                        gap={4}
                         style={{
                           alignItems: 'flex-start',
                           textAlign: 'left',
                           paddingRight: '12px',
-                          minWidth: 250,
                           overflow: 'hidden',
                         }}
                       >
@@ -100,7 +100,6 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                           <Badge
                             size="md"
                             color={modeInfo.color}
-                            pt={2}
                             variant="light"
                             leftSection={modeInfo.icon}
                             style={{ flexShrink: 0 }}
@@ -111,63 +110,57 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                             Line {call.serviceJourney.line.publicCode}
                           </Badge>
                         </Group>
-                        <Text size="md" truncate style={{ width: '100%', textAlign: 'left' }}>
-                          {destinationText}
-                        </Text>
+                        <div className="destination-marquee-container" style={{ width: '100%' }}>
+                          <Text
+                            size="sm"
+                            className={`destination-marquee-text ${isLong ? 'is-scrolling' : ''}`}
+                            fw={500}
+                          >
+                            {destinationText}
+                          </Text>
+                        </div>
                       </Stack>
 
-                      {/* Column 2: Platform */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'flex-start',
+                        }}
+                      >
+                        {call.quay?.publicCode ? (
+                          <Badge size="md" variant="outline" color="gray">
+                            Pl. {call.quay.publicCode}
+                          </Badge>
+                        ) : (
+                          <Text size="xs" c="dimmed">
+                            -
+                          </Text>
+                        )}
+                      </div>
+
                       <Stack
                         gap={2}
                         style={{
                           alignItems: 'flex-start',
                           textAlign: 'left',
-                          minWidth: 0,
                         }}
                       >
-                        {call.quay?.publicCode ? (
-                          <Badge size="md" variant="outline" color="gray" style={{ flexShrink: 0 }}>
-                            Pl. {call.quay.publicCode}
-                          </Badge>
-                        ) : (
-                          <Text size="xs" c="transparent">
-                            -
-                          </Text>
-                        )}
-                        <Text size="xs" c="transparent">
-                          -
-                        </Text>
-                      </Stack>
-
-                      {/* Column 3: Time & Countdown */}
-                      <Stack
-                        gap={0}
-                        style={{
-                          alignItems: 'flex-start',
-                          textAlign: 'left',
-                          minWidth: 0,
-                        }}
-                      >
-                        <Text
-                          fw={600}
-                          size="md"
-                          style={{ whiteSpace: 'nowrap', textAlign: 'left', lineHeight: 1.2 }}
-                        >
+                        <Text fw={600} size="md" style={{ whiteSpace: 'nowrap', lineHeight: 1.2 }}>
                           {timeStr}
                         </Text>
                         <Text
                           size="xs"
                           c={isPast ? 'dimmed' : isUrgent ? 'red' : 'green'}
                           fw={isUrgent || !isPast ? 600 : 400}
-                          style={{ whiteSpace: 'nowrap', textAlign: 'left', lineHeight: 1.2 }}
+                          style={{ whiteSpace: 'nowrap', lineHeight: 1.2 }}
                         >
                           {countdownStr}
                         </Text>
                       </Stack>
                     </div>
 
-                    {/* Mobile Stack Layout with Gap Between Details and Time */}
-                    <Stack gap={2} hiddenFrom="sm" style={{ width: '100%', textAlign: 'left' }}>
+                    <Stack gap={4} hiddenFrom="sm" style={{ width: '100%', textAlign: 'left' }}>
                       <Group gap="xs" wrap="nowrap" justify="space-between">
                         <Group gap="xs" wrap="nowrap">
                           <Badge
@@ -189,9 +182,15 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                         )}
                       </Group>
 
-                      <Text size="sm" truncate style={{ width: '100%', fontWeight: 500 }}>
-                        {destinationText}
-                      </Text>
+                      <div className="destination-marquee-container" style={{ width: '100%' }}>
+                        <Text
+                          size="sm"
+                          className={`destination-marquee-text ${isLong ? 'is-scrolling' : ''}`}
+                          fw={500}
+                        >
+                          {destinationText}
+                        </Text>
+                      </div>
 
                       <Group
                         justify="space-between"
@@ -211,10 +210,10 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                         </Text>
                       </Group>
                     </Stack>
-                  </List.Item>
+                  </div>
                 );
               })}
-            </List>
+            </div>
           ) : (
             <Text size="md" c="dimmed">
               No upcoming departures available for this station right now.
