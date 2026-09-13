@@ -74,10 +74,10 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                 );
                 const modeInfo = getTransportModeBadge(call.serviceJourney.line.transportMode);
                 const destinationText = call.serviceJourney.line.name || '';
+                const isLong = destinationText.length > 22;
 
                 return (
                   <div key={index}>
-                    {/* Desktop / Tablet Grid Table Layout with Aligned Center Items */}
                     <div
                       style={{
                         display: 'grid',
@@ -87,7 +87,6 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                       }}
                       className="mantine-visible-from-sm"
                     >
-                      {/* Column 1: Route & Destination */}
                       <Stack
                         gap={4}
                         style={{
@@ -112,13 +111,16 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                           </Badge>
                         </Group>
                         <div className="destination-marquee-container" style={{ width: '100%' }}>
-                          <Text size="sm" className="destination-marquee-text" fw={500}>
+                          <Text
+                            size="sm"
+                            className={`destination-marquee-text ${isLong ? 'is-scrolling' : ''}`}
+                            fw={500}
+                          >
                             {destinationText}
                           </Text>
                         </div>
                       </Stack>
 
-                      {/* Column 2: Platform */}
                       <div
                         style={{
                           display: 'flex',
@@ -137,7 +139,6 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                         )}
                       </div>
 
-                      {/* Column 3: Time & Countdown */}
                       <Stack
                         gap={2}
                         style={{
@@ -159,7 +160,6 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                       </Stack>
                     </div>
 
-                    {/* Mobile Stack Layout */}
                     <Stack gap={4} hiddenFrom="sm" style={{ width: '100%', textAlign: 'left' }}>
                       <Group gap="xs" wrap="nowrap" justify="space-between">
                         <Group gap="xs" wrap="nowrap">
@@ -183,7 +183,11 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                       </Group>
 
                       <div className="destination-marquee-container" style={{ width: '100%' }}>
-                        <Text size="sm" className="destination-marquee-text" fw={500}>
+                        <Text
+                          size="sm"
+                          className={`destination-marquee-text ${isLong ? 'is-scrolling' : ''}`}
+                          fw={500}
+                        >
                           {destinationText}
                         </Text>
                       </div>

@@ -20,7 +20,7 @@ import { IconShoppingBag } from '@tabler/icons-react';
 import { fetchDynamicNorwegianAreas } from '@/api/kartverket';
 import { fetchMetForecast } from '@/api/metNo';
 import { fetchNearestStationDepartures } from '@/api/enturDepartures';
-import { fetchNearbyAmenities, type OsmAmenity } from '@/api/overpass';
+import { useAmenities } from '@/hooks/useAmenities'; // <-- Using your custom hook
 
 import { useAppState } from '@/context/AppStateContext';
 import type { KartverketPlace, MetLocationForecast } from '@/types/schemas';
@@ -68,13 +68,19 @@ export function ExplorePage() {
   const [stationData, setStationData] = useState<StopPlaceData | null>(null);
   const [loadingTransit, setLoadingTransit] = useState(false);
 
-  // OpenStreetMap real amenities states (Shops only)
-  const [amenities, setAmenities] = useState<OsmAmenity[]>([]);
-  const [loadingAmenities, setLoadingAmenities] = useState(false);
-  const [amenityError, setAmenityError] = useState(false);
-
   // State to track how many shops to display initially and increment by 5 on click
   const [visibleShopCount, setVisibleShopCount] = useState(5);
+
+  // Hook-based amenity fetching (active only when a location is selected)
+  const {
+    data: amenities,
+    loading: loadingAmenities,
+    error: amenityError,
+  } = useAmenities({
+    lat: selectedPlace?.latitude ?? 0,
+    lon: selectedPlace?.longitude ?? 0,
+    radius: 5000,
+  });
 
   useEffect(() => {
     let isMounted = true;
@@ -167,21 +173,16 @@ export function ExplorePage() {
     if (!selectedPlace) {
       setForecast(null);
       setStationData(null);
-      setAmenities([]);
       setLoadingWeather(false);
       setLoadingTransit(false);
-      setLoadingAmenities(false);
-      setAmenityError(false);
-      setVisibleShopCount(5); // Reset visible count when drawer closes
+      setVisibleShopCount(5);
       return;
     }
 
     let isMounted = true;
     setLoadingWeather(true);
     setLoadingTransit(true);
-    setLoadingAmenities(true);
-    setAmenityError(false);
-    setVisibleShopCount(5); // Reset visible count when a new location is selected
+    setVisibleShopCount(5);
 
     fetchMetForecast(selectedPlace.latitude, selectedPlace.longitude)
       .then((data) => {
@@ -211,21 +212,6 @@ export function ExplorePage() {
         if (isMounted) setLoadingTransit(false);
       });
 
-    fetchNearbyAmenities(selectedPlace.latitude, selectedPlace.longitude, 5000)
-      .then((data) => {
-        if (isMounted) setAmenities(data);
-      })
-      .catch((err) => {
-        console.error('Failed to load OpenStreetMap amenities:', err);
-        if (isMounted) {
-          setAmenities([]);
-          setAmenityError(true);
-        }
-      })
-      .finally(() => {
-        if (isMounted) setLoadingAmenities(false);
-      });
-
     return () => {
       isMounted = false;
     };
@@ -238,7 +224,6 @@ export function ExplorePage() {
     (item) => item.tags.shop === 'supermarket' || item.tags.shop === 'convenience',
   );
 
-  // Slice shop nodes to display only the current visible limit
   const displayedShops = shopNodes.slice(0, visibleShopCount);
   const hasMoreShops = visibleShopCount < shopNodes.length;
 
@@ -385,7 +370,7 @@ export function ExplorePage() {
                 </Stack>
               ) : amenityError ? (
                 <Text size="sm" c="red.5">
-                  Overpass server down or busy. Unable to load shops.
+                  {amenityError}
                 </Text>
               ) : displayedShops.length > 0 ? (
                 <Stack gap="sm">

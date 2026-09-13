@@ -107,7 +107,6 @@ h6 {
 }
 
 
-
 @keyframes autoMarquee {
   0% {
     transform: translateX(0%);
@@ -121,17 +120,20 @@ h6 {
 .destination-marquee-container {
   width: 100%;
   overflow: hidden;
-  whiteSpace: nowrap;
+  white-space: nowrap;
   position: relative;
 }
 
 .destination-marquee-text {
   display: inline-block;
-  animation: autoMarquee 8s linear infinite;
   padding-right: 50px;
   text-align: left;
 }
 
-.destination-marquee-text:hover {
+.destination-marquee-text.is-scrolling {
+  animation: autoMarquee 8s linear infinite;
+}
+
+.destination-marquee-text.is-scrolling:hover {
   animation-play-state: paused;
 }
