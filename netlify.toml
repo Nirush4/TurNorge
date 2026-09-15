@@ -7,3 +7,5 @@
   to = "https://overpass-api.de/api/:splat"
   status = 200
   force = true
+  [redirects.headers]
+    User-Agent = "NordicTrail-AI/1.0 (https://nordictrail-ai-staging.netlify.app)"

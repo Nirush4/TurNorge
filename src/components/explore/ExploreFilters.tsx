@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Card, SegmentedControl, Select, Stack } from '@mantine/core';
 
 import type { KartverketPlace } from '@/types/schemas';
@@ -14,51 +15,19 @@ interface ExploreFiltersProps {
   setDuration: (value: 'all' | 'half' | 'full' | 'long') => void;
 }
 
-/**
- * Mantine expects mutable arrays for SegmentedControl data.
- *
- * Do not use `as const` here.
- */
 const DIFFICULTY_OPTIONS = [
-  {
-    value: 'all',
-    label: 'All grades',
-  },
-  {
-    value: 'easy',
-    label: 'Easy',
-  },
-  {
-    value: 'moderate',
-    label: 'Moderate',
-  },
-  {
-    value: 'demanding',
-    label: 'Demanding',
-  },
-  {
-    value: 'expert',
-    label: 'Expert',
-  },
+  { value: 'all', label: 'All grades' },
+  { value: 'easy', label: 'Easy' },
+  { value: 'moderate', label: 'Moderate' },
+  { value: 'demanding', label: 'Demanding' },
+  { value: 'expert', label: 'Expert' },
 ];
 
 const DURATION_OPTIONS = [
-  {
-    value: 'all',
-    label: 'Any length',
-  },
-  {
-    value: 'half',
-    label: 'Half day',
-  },
-  {
-    value: 'full',
-    label: 'Full day',
-  },
-  {
-    value: 'long',
-    label: 'Long day',
-  },
+  { value: 'all', label: 'Any length' },
+  { value: 'half', label: 'Half day' },
+  { value: 'full', label: 'Full day' },
+  { value: 'long', label: 'Long day' },
 ];
 
 export function ExploreFilters({
@@ -70,51 +39,47 @@ export function ExploreFilters({
   duration,
   setDuration,
 }: ExploreFiltersProps) {
-  const staticOptions = NORWEGIAN_DESTINATIONS.map((name) => ({
-    value: name,
-    label: name,
-  }));
-
-  const kartverketOptions = destinations
-    .filter((destination) => {
-      const destinationName = destination.name.toLocaleLowerCase('nb');
-
-      return !NORWEGIAN_DESTINATIONS.some(
-        (name) => name.toLocaleLowerCase('nb') === destinationName,
-      );
-    })
-    .map((destination) => ({
-      value: destination.name,
-      label: destination.municipality
-        ? `${destination.name} · ${destination.municipality}`
-        : destination.name,
+  const destinationData = useMemo(() => {
+    const staticOptions = NORWEGIAN_DESTINATIONS.map((name) => ({
+      value: name,
+      label: name,
     }));
 
-  const destinationOptions = Array.from(
-    new Map(
-      [...staticOptions, ...kartverketOptions].map((option) => [
-        option.value.toLocaleLowerCase('nb'),
-        option,
-      ]),
-    ).values(),
-  ).sort((a, b) => a.label.localeCompare(b.label, 'nb'));
+    const kartverketOptions = destinations
+      .filter((destination) => {
+        const destinationName = destination.name.toLocaleLowerCase('nb');
+        return !NORWEGIAN_DESTINATIONS.some(
+          (name) => name.toLocaleLowerCase('nb') === destinationName,
+        );
+      })
+      .map((destination) => ({
+        value: destination.name,
+        label: destination.municipality
+          ? `${destination.name} · ${destination.municipality}`
+          : destination.name,
+      }));
+
+    const destinationOptions = Array.from(
+      new Map(
+        [...staticOptions, ...kartverketOptions].map((option) => [
+          option.value.toLocaleLowerCase('nb'),
+          option,
+        ]),
+      ).values(),
+    ).sort((a, b) => a.label.localeCompare(b.label, 'nb'));
+
+    return [{ value: 'all', label: 'All destinations' }, ...destinationOptions];
+  }, [destinations]);
 
   return (
     <Card withBorder padding="md">
       <Stack gap="md">
         <Select
           label="Destination"
-          required
           placeholder="Search Norwegian areas..."
           value={region === 'all' ? null : region}
           onChange={(value) => setRegion(value ?? 'all')}
-          data={[
-            {
-              value: 'all',
-              label: 'All destinations',
-            },
-            ...destinationOptions,
-          ]}
+          data={destinationData}
           searchable
           clearable
           nothingFoundMessage="No Norwegian destination found"
