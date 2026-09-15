@@ -417,7 +417,9 @@ export function ExplorePage() {
                 </Stack>
               ) : (
                 <Text size="sm" c="dimmed" fs="italic">
-                  No supermarkets or convenience stores found within proximity.
+                  No supermarkets or convenience stores found within 15km. This location may be in a
+                  remote mountain or wilderness area—consider stocking up in nearby towns before
+                  heading out!
                 </Text>
               )}
             </Card>

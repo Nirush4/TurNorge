@@ -17,7 +17,7 @@ export interface GeoapifyFeature {
 export async function fetchNorwegianShops(
   lat: number,
   lon: number,
-  radiusMeters = 5000,
+  radiusMeters = 15000,
 ): Promise<ShopItem[]> {
   if (!Number.isFinite(lat) || !Number.isFinite(lon) || (lat === 0 && lon === 0)) {
     return [];
@@ -34,8 +34,7 @@ export async function fetchNorwegianShops(
   const filterParam = `circle:${lon},${lat},${radiusMeters}`;
   const biasParam = `proximity:${lon},${lat}`;
 
-  const url = `https://api.geoapify.com/v2/places?categories=${categories}&filter=${filterParam}&bias=${biasParam}&limit=20&apiKey=${GEOAPIFY_API_KEY}`;
-
+  const url = `https://api.geoapify.com/v2/places?categories=${categories}&filter=${filterParam}&bias=${biasParam}&limit=30&apiKey=${GEOAPIFY_API_KEY}`;
   try {
     const response = await fetch(url);
     if (!response.ok) {
