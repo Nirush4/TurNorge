@@ -306,6 +306,15 @@ export function PlannerPage() {
     setIsFavorite(false);
 
     try {
+      // Auto-resolve place if missing on mobile touch events
+      let activePlace = selectedPlace;
+      if (!activePlace && values.destination) {
+        activePlace = await resolveKartverketPlace(values.destination);
+        if (activePlace) {
+          setSelectedPlace(activePlace);
+        }
+      }
+
       for (let index = 0; index < PLANNER_LOADING_STEPS.length; index += 1) {
         setLoadingIndex(index);
         await new Promise<void>((resolve) => window.setTimeout(resolve, 450));
@@ -597,7 +606,7 @@ export function PlannerPage() {
                 type="submit"
                 loading={isSubmitting || loadingIndex !== null}
                 loaderProps={{ type: 'dots' }}
-                disabled={!selectedPlace || searchingDestinations}
+                disabled={searchingDestinations}
                 color="pine"
                 aria-busy={loadingIndex !== null}
                 fullWidth
