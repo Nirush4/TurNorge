@@ -20,7 +20,6 @@ import { IconShoppingBag } from '@tabler/icons-react';
 import { fetchDynamicNorwegianAreas } from '@/api/kartverket';
 import { fetchMetForecast } from '@/api/metNo';
 import { fetchNearestStationDepartures } from '@/api/enturDepartures';
-import { useAmenities } from '@/hooks/useAmenities';
 
 import { useAppState } from '@/context/AppStateContext';
 import type { KartverketPlace, MetLocationForecast } from '@/types/schemas';
@@ -29,6 +28,8 @@ import type { TrailDifficulty, Trail } from '@/types';
 import { ExploreFilters } from '@/components/explore/ExploreFilters';
 import { TrailGrid } from '@/components/explore/TrailGrid';
 import { TrailTransitBoard } from '@/components/explore/TrailTransitBoard';
+import { fetchNorwegianShops } from '@/api/shops';
+import type { ShopItem } from '@/types/shopItemSchema';
 
 interface StopPlaceData {
   name: string;
@@ -68,21 +69,9 @@ export function ExplorePage() {
   const [stationData, setStationData] = useState<StopPlaceData | null>(null);
   const [loadingTransit, setLoadingTransit] = useState(false);
 
-  // State to track how many shops to display initially and increment by 5 on click
+  const [shops, setShops] = useState<ShopItem[]>([]);
+  const [loadingShops, setLoadingShops] = useState(false);
   const [visibleShopCount, setVisibleShopCount] = useState(5);
-
-  // Hook-based amenity fetching including source tracking (live vs fallback)
-  const {
-    data: amenities,
-    loading: loadingAmenities,
-    error: amenityError,
-    source,
-  } = useAmenities({
-    lat: selectedPlace?.latitude ?? 0,
-    lon: selectedPlace?.longitude ?? 0,
-    radius: 5000,
-    destinationName: selectedPlace?.name,
-  });
 
   useEffect(() => {
     let isMounted = true;
@@ -92,7 +81,7 @@ export function ExplorePage() {
       .then((data) => {
         if (isMounted) setDestinations(data);
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         console.error('Failed to load Kartverket areas:', error);
         if (isMounted) setDestinations([]);
       })
@@ -175,8 +164,10 @@ export function ExplorePage() {
     if (!selectedPlace) {
       setForecast(null);
       setStationData(null);
+      setShops([]);
       setLoadingWeather(false);
       setLoadingTransit(false);
+      setLoadingShops(false);
       setVisibleShopCount(5);
       return;
     }
@@ -184,13 +175,14 @@ export function ExplorePage() {
     let isMounted = true;
     setLoadingWeather(true);
     setLoadingTransit(true);
+    setLoadingShops(true);
     setVisibleShopCount(5);
 
     fetchMetForecast(selectedPlace.latitude, selectedPlace.longitude)
       .then((data) => {
         if (isMounted) setForecast(data);
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         console.error('Failed to load MET.no weather:', error);
         if (isMounted) setForecast(null);
       })
@@ -206,12 +198,24 @@ export function ExplorePage() {
       .then((data) => {
         if (isMounted) setStationData(data);
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         console.error('Failed to load Entur transit details:', err);
         if (isMounted) setStationData(null);
       })
       .finally(() => {
         if (isMounted) setLoadingTransit(false);
+      });
+
+    fetchNorwegianShops(selectedPlace.latitude, selectedPlace.longitude)
+      .then((shopList: ShopItem[]) => {
+        if (isMounted) setShops(shopList);
+      })
+      .catch((err: unknown) => {
+        console.error('Failed to load nearby shops:', err);
+        if (isMounted) setShops([]);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingShops(false);
       });
 
     return () => {
@@ -222,12 +226,8 @@ export function ExplorePage() {
   const currentDetails = forecast?.properties.timeseries[0]?.data.instant.details;
   const nextSixHours = forecast?.properties.timeseries[0]?.data.next_6_hours;
 
-  const shopNodes = amenities.filter(
-    (item) => item.tags?.shop === 'supermarket' || item.tags?.shop === 'convenience',
-  );
-
-  const displayedShops = shopNodes.slice(0, visibleShopCount);
-  const hasMoreShops = visibleShopCount < shopNodes.length;
+  const displayedShops = shops.slice(0, visibleShopCount);
+  const hasMoreShops = visibleShopCount < shops.length;
 
   return (
     <Container size="lg" py="md" px="0" component="main" mih="100dvh">
@@ -350,20 +350,18 @@ export function ExplorePage() {
                       Nearby Supplies & Shops
                     </Title>
                     <Text size="xs" c="dimmed">
-                      {source === 'fallback'
-                        ? 'Estimated local dataset'
-                        : 'OpenStreetMap live data'}
+                      Local grocery & convenience stores
                     </Text>
                   </div>
                 </Group>
-                {!loadingAmenities && shopNodes.length > 0 && (
-                  <Badge color={source === 'fallback' ? 'gray' : 'teal'} variant="dot" size="sm">
-                    {source === 'fallback' ? 'Estimated' : `${shopNodes.length} found`}
+                {!loadingShops && shops.length > 0 && (
+                  <Badge color="teal" variant="dot" size="sm">
+                    {shops.length} found
                   </Badge>
                 )}
               </Group>
 
-              {loadingAmenities ? (
+              {loadingShops ? (
                 <Stack py="sm" gap={4}>
                   <Group gap="xs">
                     <Loader size="xs" color="teal" />
@@ -372,10 +370,6 @@ export function ExplorePage() {
                     </Text>
                   </Group>
                 </Stack>
-              ) : amenityError ? (
-                <Text size="sm" c="red.5">
-                  {amenityError}
-                </Text>
               ) : displayedShops.length > 0 ? (
                 <Stack gap="sm">
                   <List
@@ -384,7 +378,7 @@ export function ExplorePage() {
                     center
                     icon={
                       <ThemeIcon
-                        color={source === 'fallback' ? 'gray' : 'teal'}
+                        color="teal"
                         size={26}
                         radius="xl"
                         variant="filled"
@@ -394,19 +388,14 @@ export function ExplorePage() {
                       </ThemeIcon>
                     }
                   >
-                    {displayedShops.map((node) => (
-                      <List.Item key={node.id}>
+                    {displayedShops.map((shop) => (
+                      <List.Item key={shop.id}>
                         <Group justify="space-between" wrap="nowrap" gap="xs">
                           <Text size="sm" fw={500} lineClamp={1}>
-                            {node.tags.name || 'Local Convenience Store'}
+                            {shop.name}
                           </Text>
-                          <Badge
-                            size="xs"
-                            variant="light"
-                            color={source === 'fallback' ? 'gray' : 'teal'}
-                            tt="capitalize"
-                          >
-                            {node.tags.shop || 'shop'}
+                          <Badge size="xs" variant="light" color="teal" tt="capitalize">
+                            {shop.shopType}
                           </Badge>
                         </Group>
                       </List.Item>
@@ -416,13 +405,13 @@ export function ExplorePage() {
                   {hasMoreShops && (
                     <Button
                       variant="light"
-                      color={source === 'fallback' ? 'gray' : 'teal'}
+                      color="teal"
                       size="xs"
                       fullWidth
                       mt="xs"
                       onClick={() => setVisibleShopCount((prev) => prev + 5)}
                     >
-                      View more shops ({shopNodes.length - visibleShopCount} remaining)
+                      View more shops ({shops.length - visibleShopCount} remaining)
                     </Button>
                   )}
                 </Stack>
