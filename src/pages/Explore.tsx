@@ -183,35 +183,8 @@ export function ExplorePage() {
         if (isMounted) setForecast(data);
       })
       .catch((error: unknown) => {
-        console.warn(
-          'Failed to load MET.no weather on mobile, applying telemetry fallback:',
-          error,
-        );
-        if (isMounted) {
-          setForecast({
-            properties: {
-              timeseries: [
-                {
-                  data: {
-                    instant: {
-                      details: {
-                        air_temperature: 10.0,
-                        relative_humidity: 80,
-                        wind_speed: 4.2,
-                        air_pressure_at_sea_level: 1012,
-                      },
-                    },
-                    next_6_hours: {
-                      details: {
-                        precipitation_amount: 0.2,
-                      },
-                    },
-                  },
-                },
-              ],
-            },
-          } as unknown as MetLocationForecast);
-        }
+        console.error('Failed to load MET.no weather:', error);
+        if (isMounted) setForecast(null);
       })
       .finally(() => {
         if (isMounted) setLoadingWeather(false);
