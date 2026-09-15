@@ -20,7 +20,7 @@ import { IconShoppingBag } from '@tabler/icons-react';
 import { fetchDynamicNorwegianAreas } from '@/api/kartverket';
 import { fetchMetForecast } from '@/api/metNo';
 import { fetchNearestStationDepartures } from '@/api/enturDepartures';
-import { useAmenities } from '@/hooks/useAmenities'; // <-- Using your custom hook
+import { useAmenities } from '@/hooks/useAmenities';
 
 import { useAppState } from '@/context/AppStateContext';
 import type { KartverketPlace, MetLocationForecast } from '@/types/schemas';
@@ -71,15 +71,17 @@ export function ExplorePage() {
   // State to track how many shops to display initially and increment by 5 on click
   const [visibleShopCount, setVisibleShopCount] = useState(5);
 
-  // Hook-based amenity fetching (active only when a location is selected)
+  // Hook-based amenity fetching including source tracking (live vs fallback)
   const {
     data: amenities,
     loading: loadingAmenities,
     error: amenityError,
+    source,
   } = useAmenities({
     lat: selectedPlace?.latitude ?? 0,
     lon: selectedPlace?.longitude ?? 0,
     radius: 5000,
+    destinationName: selectedPlace?.name,
   });
 
   useEffect(() => {
@@ -221,7 +223,7 @@ export function ExplorePage() {
   const nextSixHours = forecast?.properties.timeseries[0]?.data.next_6_hours;
 
   const shopNodes = amenities.filter(
-    (item) => item.tags.shop === 'supermarket' || item.tags.shop === 'convenience',
+    (item) => item.tags?.shop === 'supermarket' || item.tags?.shop === 'convenience',
   );
 
   const displayedShops = shopNodes.slice(0, visibleShopCount);
@@ -348,13 +350,15 @@ export function ExplorePage() {
                       Nearby Supplies & Shops
                     </Title>
                     <Text size="xs" c="dimmed">
-                      OpenStreetMap live data
+                      {source === 'fallback'
+                        ? 'Estimated local dataset'
+                        : 'OpenStreetMap live data'}
                     </Text>
                   </div>
                 </Group>
                 {!loadingAmenities && shopNodes.length > 0 && (
-                  <Badge color="teal" variant="dot" size="sm">
-                    {shopNodes.length} found
+                  <Badge color={source === 'fallback' ? 'gray' : 'teal'} variant="dot" size="sm">
+                    {source === 'fallback' ? 'Estimated' : `${shopNodes.length} found`}
                   </Badge>
                 )}
               </Group>
@@ -380,7 +384,7 @@ export function ExplorePage() {
                     center
                     icon={
                       <ThemeIcon
-                        color="teal"
+                        color={source === 'fallback' ? 'gray' : 'teal'}
                         size={26}
                         radius="xl"
                         variant="filled"
@@ -396,7 +400,12 @@ export function ExplorePage() {
                           <Text size="sm" fw={500} lineClamp={1}>
                             {node.tags.name || 'Local Convenience Store'}
                           </Text>
-                          <Badge size="xs" variant="light" color="teal" tt="capitalize">
+                          <Badge
+                            size="xs"
+                            variant="light"
+                            color={source === 'fallback' ? 'gray' : 'teal'}
+                            tt="capitalize"
+                          >
                             {node.tags.shop || 'shop'}
                           </Badge>
                         </Group>
@@ -407,7 +416,7 @@ export function ExplorePage() {
                   {hasMoreShops && (
                     <Button
                       variant="light"
-                      color="teal"
+                      color={source === 'fallback' ? 'gray' : 'teal'}
                       size="xs"
                       fullWidth
                       mt="xs"
