@@ -97,7 +97,9 @@ export function ToolkitPage() {
 
         <Accordion variant="separated" defaultValue="roam">
           <Accordion.Item value="roam">
-            <Accordion.Control icon={<Compass size={16} color="#2d7a4f" aria-hidden="true" />}>
+            <Accordion.Control
+              icon={<Compass size={16} color={isDark ? '#70c77a' : '#2d7a2f'} aria-hidden="true" />}
+            >
               <Text fw={600} c={isDark ? '#eef4f1' : 'dark.8'}>
                 The Right to Roam (Allemannsretten)
               </Text>
@@ -113,7 +115,11 @@ export function ToolkitPage() {
           </Accordion.Item>
 
           <Accordion.Item value="camp">
-            <Accordion.Control icon={<Backpack size={16} color="#2d7a4f" aria-hidden="true" />}>
+            <Accordion.Control
+              icon={
+                <Backpack size={16} color={isDark ? '#70c77a' : '#2d7a2f'} aria-hidden="true" />
+              }
+            >
               <Text fw={600} c={isDark ? '#eef4f1' : 'dark.8'}>
                 Wild Camping Rules & Distance Limits
               </Text>
@@ -130,7 +136,9 @@ export function ToolkitPage() {
           </Accordion.Item>
 
           <Accordion.Item value="fire">
-            <Accordion.Control icon={<Flame size={16} color="#2d7a4f" aria-hidden="true" />}>
+            <Accordion.Control
+              icon={<Flame size={16} color={isDark ? '#70c77a' : '#2d7a2f'} aria-hidden="true" />}
+            >
               <Text fw={600} c={isDark ? '#eef4f1' : 'dark.8'}>
                 Campfires & Outdoor Cooking Regulations
               </Text>
@@ -149,7 +157,11 @@ export function ToolkitPage() {
           </Accordion.Item>
 
           <Accordion.Item value="waste">
-            <Accordion.Control icon={<Droplets size={16} color="#2d7a4f" aria-hidden="true" />}>
+            <Accordion.Control
+              icon={
+                <Droplets size={16} color={isDark ? '#70c77a' : '#2d7a2f'} aria-hidden="true" />
+              }
+            >
               <Text fw={600} c={isDark ? '#eef4f1' : 'dark.8'}>
                 Water Safety & Leave No Trace Waste
               </Text>
@@ -165,7 +177,11 @@ export function ToolkitPage() {
           </Accordion.Item>
 
           <Accordion.Item value="emergency">
-            <Accordion.Control icon={<PhoneCall size={16} color="#2d7a4f" aria-hidden="true" />}>
+            <Accordion.Control
+              icon={
+                <PhoneCall size={16} color={isDark ? '#70c77a' : '#2d7a2f'} aria-hidden="true" />
+              }
+            >
               <Text fw={600} c={isDark ? '#eef4f1' : 'dark.8'}>
                 Emergency Contacts & Mountain Rescue
               </Text>

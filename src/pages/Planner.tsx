@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Button,
@@ -32,6 +32,8 @@ import { fetchMetForecast } from '@/api/metNo';
 import { useAppState } from '@/context/AppStateContext';
 import { plannerSchema, type PlannerFormValues, type KartverketPlace } from '@/types/schemas';
 import { WeatherDashboard } from '@/components/WeatherDashboard';
+import { RegionSearchBar } from '@/components/RegionSearchBar';
+
 import type { MetForecastResponse } from '@/types/met';
 import type { GeneratedPlan, ItineraryDay } from '@/types';
 
@@ -237,11 +239,8 @@ export function PlannerPage() {
   const [opened, { open, close }] = useDisclosure(false);
   const [selectedDayWeather, setSelectedDayWeather] = useState<MetForecastResponse | null>(null);
 
-  const [destinations, setDestinations] = useState<KartverketPlace[]>(() =>
-    getPopularNorwegianDestinations(),
-  );
-  const [searchingDestinations, setSearchingDestinations] = useState(false);
-  const [destinationSearch, setDestinationSearch] = useState('');
+  const [destinations] = useState<KartverketPlace[]>(() => getPopularNorwegianDestinations());
+  const [searchingDestinations] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<KartverketPlace | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -263,50 +262,11 @@ export function PlannerPage() {
     },
   });
 
-  useEffect(() => {
-    const query = destinationSearch.trim();
-    if (query.length < 2) {
-      setDestinations(getPopularNorwegianDestinations());
-      setSearchingDestinations(false);
-      return;
-    }
-
-    let cancelled = false;
-    const timeout = window.setTimeout(async () => {
-      setSearchingDestinations(true);
-      try {
-        const results = await searchKartverketPlace(query);
-        if (cancelled) return;
-        if (results.length > 0) {
-          setDestinations(results);
-        } else {
-          const lowerQuery = query.toLocaleLowerCase('nb');
-          const fallback = getPopularNorwegianDestinations().filter((place) =>
-            `${place.name} ${place.municipality} ${place.county}`
-              .toLocaleLowerCase('nb')
-              .includes(lowerQuery),
-          );
-          setDestinations(fallback);
-        }
-      } catch (error) {
-        console.error('Failed search:', error);
-      } finally {
-        if (!cancelled) setSearchingDestinations(false);
-      }
-    }, 350);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timeout);
-    };
-  }, [destinationSearch]);
-
   const onSubmit = async (values: PlannerFormValues): Promise<void> => {
     setLastPlan(null);
     setIsFavorite(false);
 
     try {
-      // Auto-resolve place if missing on mobile touch events
       let activePlace = selectedPlace;
       if (!activePlace && values.destination) {
         activePlace = await resolveKartverketPlace(values.destination);
@@ -361,9 +321,7 @@ export function PlannerPage() {
             latitude = results[0].latitude;
             longitude = results[0].longitude;
           }
-        } catch {
-          // Fallback to default coordinates if search fails
-        }
+        } catch {}
       }
 
       const finalLat = latitude ?? 61.4933;
@@ -389,11 +347,6 @@ export function PlannerPage() {
       setFetchingWeather(false);
     }
   };
-
-  const destinationOptions = destinations.map((place) => ({
-    value: place.name,
-    label: `${place.name} — ${place.municipality}, ${place.county}`,
-  }));
 
   return (
     <>
@@ -473,48 +426,44 @@ export function PlannerPage() {
                 name="destination"
                 control={control}
                 render={({ field }) => (
-                  <Select
-                    label="Destination"
-                    description="Choose a popular destination or search Kartverket for any location."
-                    placeholder="Choose a Norwegian destination"
-                    searchable
-                    clearable
-                    data={destinationOptions}
-                    comboboxProps={{
-                      position: 'bottom',
-                      middlewares: { flip: false, shift: true },
-                    }}
-                    styles={{
-                      input: { fontSize: '16px' },
-                      dropdown: { fontSize: '16px' },
-                    }}
-                    value={field.value || null}
-                    searchValue={destinationSearch}
-                    onSearchChange={setDestinationSearch}
-                    onChange={(value) => {
-                      field.onChange(value ?? '');
-                      if (!value) {
-                        setSelectedPlace(null);
-                        return;
-                      }
-                      const place = destinations.find((item) => item.name === value);
-                      if (place) {
-                        setSelectedPlace(place);
-                      } else {
-                        void resolveKartverketPlace(value).then((resolved) => {
-                          if (resolved) setSelectedPlace(resolved);
-                        });
-                      }
-                    }}
-                    onBlur={field.onBlur}
-                    rightSection={
-                      searchingDestinations ? (
-                        <Loader size="sm" aria-label="Searching locations" />
-                      ) : undefined
-                    }
-                    error={errors.destination?.message}
-                    required
-                  />
+                  <Stack gap={4}>
+                    <RegionSearchBar
+                      destinations={destinations}
+                      region={field.value || 'all'}
+                      setRegion={(val: string) => {
+                        const resolvedVal = val === 'all' ? '' : val;
+                        field.onChange(resolvedVal);
+                        if (!resolvedVal) {
+                          setSelectedPlace(null);
+                          return;
+                        }
+                        const place = destinations.find((item) => item.name === resolvedVal);
+                        if (place) {
+                          setSelectedPlace(place);
+                        } else {
+                          void resolveKartverketPlace(resolvedVal).then((resolved) => {
+                            if (resolved) setSelectedPlace(resolved);
+                          });
+                        }
+                      }}
+                      label="Destination"
+                      description="Choose a popular destination or search Kartverket for any location."
+                      placeholder="Choose a Norwegian destination"
+                    />
+                    {searchingDestinations && (
+                      <Group gap="xs" role="status" aria-live="polite">
+                        <Loader size="xs" aria-label="Searching locations" />
+                        <Text size="xs" c="dimmed">
+                          Searching locations...
+                        </Text>
+                      </Group>
+                    )}
+                    {errors.destination?.message && (
+                      <Text size="xs" c="red" role="alert">
+                        {errors.destination.message}
+                      </Text>
+                    )}
+                  </Stack>
                 )}
               />
 
