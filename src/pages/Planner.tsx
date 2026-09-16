@@ -671,18 +671,24 @@ export function PlannerPage() {
           <Modal
             opened={opened}
             onClose={close}
-            title="Live Meteorological Dashboard"
             size="4xl"
+            title="Live Meteorological Dashboard"
             styles={{
-              body: { paddingBottom: '2rem' },
-              inner: { padding: '10px' },
-              content: { maxWidth: '100%', width: '100%' },
+              content: {
+                maxHeight: '92dvh',
+                display: 'flex',
+                flexDirection: 'column',
+                maxWidth: '100%',
+                width: '100%',
+              },
+              body: {
+                overflowY: 'auto',
+                flex: 1,
+                maxHeight: 'calc(92dvh - 60px)',
+              },
             }}
-            aria-describedby="weather-modal-content"
           >
-            <div id="weather-modal-content">
-              {selectedDayWeather ? <WeatherDashboard forecast={selectedDayWeather} /> : null}
-            </div>
+            {selectedDayWeather && <WeatherDashboard forecast={selectedDayWeather} />}
           </Modal>
         </Stack>
       </Container>

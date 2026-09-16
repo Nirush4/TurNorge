@@ -170,7 +170,7 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
                 <ThemeIcon size="md" radius="xl" color="teal" variant="light" aria-hidden="true">
                   <IconSparkles size={16} />
                 </ThemeIcon>
-                <Title order={1} size="h3" fw={800} style={{ letterSpacing: '-0.5px' }}>
+                <Title order={1} size="h3" fw={700} style={{ letterSpacing: '-0.5px' }}>
                   Meteorological Intelligence
                 </Title>
               </Group>

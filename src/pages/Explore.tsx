@@ -117,7 +117,6 @@ export function ExplorePage() {
 
   const [visibleTrailCount, setVisibleTrailCount] = useState(10);
 
-  // Load destination data on mount
   useEffect(() => {
     let isMounted = true;
     setLoadingDestinations(true);
