@@ -13,23 +13,24 @@ import {
   ThemeIcon,
   useMantineColorScheme,
   Loader,
+  Box,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconShoppingBag } from '@tabler/icons-react';
+import { IconShoppingBag, IconChevronDown } from '@tabler/icons-react';
 
 import { fetchDynamicNorwegianAreas } from '@/api/kartverket';
 import { fetchMetForecast } from '@/api/metNo';
 import { fetchNearestStationDepartures } from '@/api/enturDepartures';
+import { fetchNorwegianShops } from '@/api/shops';
 
 import { useAppState } from '@/context/AppStateContext';
 import type { KartverketPlace, MetLocationForecast } from '@/types/schemas';
 import type { TrailDifficulty, Trail } from '@/types';
+import type { ShopItem } from '@/types/shopItemSchema';
 
 import { ExploreFilters } from '@/components/explore/ExploreFilters';
 import { TrailGrid } from '@/components/explore/TrailGrid';
 import { TrailTransitBoard } from '@/components/explore/TrailTransitBoard';
-import { fetchNorwegianShops } from '@/api/shops';
-import type { ShopItem } from '@/types/shopItemSchema';
 
 interface StopPlaceData {
   name: string;
@@ -48,6 +49,47 @@ interface StopPlaceData {
     };
   }>;
 }
+
+// Pure mapping utility to keep component lean and decoupled
+const mapDestinationsToTrails = (destinations: KartverketPlace[]): Trail[] => {
+  const difficulties: TrailDifficulty[] = ['easy', 'moderate', 'demanding', 'expert'];
+  const durations = [
+    { hours: 3, label: 'Half day' },
+    { hours: 6, label: 'Full day' },
+    { hours: 10, label: 'Long day' },
+  ];
+  const highlightSets = [
+    ['Fjord Vista', 'Summit Ridge', 'Alpine Flora'],
+    ['Glacial Valley', 'Waterfall Cascade', 'Historic Cairn'],
+    ['Coastal Panorama', 'Sheltered Cove', 'Ridge Crossing'],
+    ['High Plateau', 'Crystal Tarn', 'Reindeer Grazing Area'],
+  ];
+
+  return destinations.map((place, index) => {
+    const hash = Math.abs(Math.sin(place.latitude + place.longitude) * 10000);
+    const assignedDifficulty = difficulties[Math.floor(hash % difficulties.length)];
+    const assignedDuration = durations[Math.floor(hash % durations.length)];
+    const assignedHighlights = highlightSets[Math.floor(hash % highlightSets.length)];
+
+    return {
+      id: place.ssrId ?? String(index),
+      name: place.name,
+      region: place.municipality || place.county || 'Norway',
+      difficulty: assignedDifficulty,
+      description: `Official Kartverket registry object (Map Sheet: ${place.mapSheet || 'N/A'}). Located at coordinates (${place.latitude.toFixed(4)}°N, ${place.longitude.toFixed(4)}°E) within ${place.municipality || 'Norwegian backcountry'}.`,
+      distanceKm: Number((6 + (hash % 14)).toFixed(1)),
+      durationHours: assignedDuration.hours,
+      durationLabel: assignedDuration.label,
+      elevationGainM: Math.round(180 + (hash % 850)),
+      latitude: place.latitude,
+      longitude: place.longitude,
+      highlights: assignedHighlights,
+      waterSources: [],
+      elevationProfile: [],
+      kartverketSsrId: place.ssrId,
+    };
+  });
+};
 
 export function ExplorePage() {
   const { saveRoute } = useAppState();
@@ -73,6 +115,9 @@ export function ExplorePage() {
   const [loadingShops, setLoadingShops] = useState(false);
   const [visibleShopCount, setVisibleShopCount] = useState(5);
 
+  const [visibleTrailCount, setVisibleTrailCount] = useState(10);
+
+  // Load destination data on mount
   useEffect(() => {
     let isMounted = true;
     setLoadingDestinations(true);
@@ -94,53 +139,12 @@ export function ExplorePage() {
     };
   }, []);
 
-  const filteredDestinations = useMemo(() => {
-    return destinations.filter((place) => {
-      const matchRegion = region === 'all' || place.name.toLowerCase() === region.toLowerCase();
-      return matchRegion;
-    });
-  }, [destinations, region]);
+  // Reset pagination on filter change
+  useEffect(() => {
+    setVisibleTrailCount(10);
+  }, [region, difficulty, duration]);
 
-  const mappedTrails: Trail[] = useMemo(() => {
-    return filteredDestinations.map((place, index) => {
-      const hash = Math.abs(Math.sin(place.latitude + place.longitude) * 10000);
-      const difficulties: TrailDifficulty[] = ['easy', 'moderate', 'demanding', 'expert'];
-      const assignedDifficulty = difficulties[Math.floor(hash % difficulties.length)];
-
-      const durations = [
-        { hours: 3, label: 'Half day' },
-        { hours: 6, label: 'Full day' },
-        { hours: 10, label: 'Long day' },
-      ];
-      const assignedDuration = durations[Math.floor(hash % durations.length)];
-
-      const highlightSets = [
-        ['Fjord Vista', 'Summit Ridge', 'Alpine Flora'],
-        ['Glacial Valley', 'Waterfall Cascade', 'Historic Cairn'],
-        ['Coastal Panorama', 'Sheltered Cove', 'Ridge Crossing'],
-        ['High Plateau', 'Crystal Tarn', 'Reindeer Grazing Area'],
-      ];
-      const assignedHighlights = highlightSets[Math.floor(hash % highlightSets.length)];
-
-      return {
-        id: place.ssrId ?? String(index),
-        name: place.name,
-        region: place.municipality || place.county || 'Norway',
-        difficulty: assignedDifficulty,
-        description: `Official Kartverket registry object (Map Sheet: ${place.mapSheet || 'N/A'}). Located at coordinates (${place.latitude.toFixed(4)}°N, ${place.longitude.toFixed(4)}°E) within ${place.municipality || 'Norwegian backcountry'}.`,
-        distanceKm: Number((6 + (hash % 14)).toFixed(1)),
-        durationHours: assignedDuration.hours,
-        durationLabel: assignedDuration.label,
-        elevationGainM: Math.round(180 + (hash % 850)),
-        latitude: place.latitude,
-        longitude: place.longitude,
-        highlights: assignedHighlights,
-        waterSources: [],
-        elevationProfile: [],
-        kartverketSsrId: place.ssrId,
-      };
-    });
-  }, [filteredDestinations]);
+  const mappedTrails = useMemo(() => mapDestinationsToTrails(destinations), [destinations]);
 
   const filteredTrails = useMemo(() => {
     return mappedTrails.filter((trail) => {
@@ -151,15 +155,34 @@ export function ExplorePage() {
       if (duration === 'full') matchDuration = trail.durationHours > 4 && trail.durationHours <= 8;
       if (duration === 'long') matchDuration = trail.durationHours > 8;
 
-      return matchDifficulty && matchDuration;
+      let matchRegion = true;
+      if (region !== 'all') {
+        const searchTarget = region.toLowerCase();
+        const trailName = trail.name.toLowerCase();
+        const trailRegion = trail.region.toLowerCase();
+        matchRegion =
+          trailName === searchTarget ||
+          trailRegion === searchTarget ||
+          searchTarget.includes(trailName) ||
+          searchTarget.includes(trailRegion);
+      }
+
+      return matchDifficulty && matchDuration && matchRegion;
     });
-  }, [mappedTrails, difficulty, duration]);
+  }, [mappedTrails, difficulty, duration, region]);
+
+  const displayedTrails = useMemo(() => {
+    return filteredTrails.slice(0, visibleTrailCount);
+  }, [filteredTrails, visibleTrailCount]);
+
+  const hasMoreTrails = visibleTrailCount < filteredTrails.length;
 
   const selectedTrail = useMemo(() => {
     if (!selectedPlace) return null;
     return mappedTrails.find((t) => t.id === selectedPlace.ssrId || t.name === selectedPlace.name);
   }, [selectedPlace, mappedTrails]);
 
+  // Load contextual data for the selected place drawer
   useEffect(() => {
     if (!selectedPlace) {
       setForecast(null);
@@ -226,11 +249,11 @@ export function ExplorePage() {
   const currentDetails = forecast?.properties.timeseries[0]?.data.instant.details;
   const nextSixHours = forecast?.properties.timeseries[0]?.data.next_6_hours;
 
-  const displayedShops = shops.slice(0, visibleShopCount);
+  const displayedShops = useMemo(() => shops.slice(0, visibleShopCount), [shops, visibleShopCount]);
   const hasMoreShops = visibleShopCount < shops.length;
 
   return (
-    <Container size="lg" py="md" px="0" component="main" mih="100dvh">
+    <Container size="lg" py="md" px="0" pb={70} component="main" mih="100dvh">
       <Stack gap="lg">
         <div>
           <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={isDark ? '#eef4f1' : 'dark.7'}>
@@ -253,19 +276,46 @@ export function ExplorePage() {
         />
 
         {loadingDestinations ? (
-          <Text size="sm" c="dimmed" role="status" aria-live="polite">
-            Querying Kartverket database...
-          </Text>
+          <Box role="status" aria-live="polite" py="md">
+            <Group gap="xs">
+              <Loader size="sm" color="teal" />
+              <Text size="sm" c="dimmed">
+                Querying Kartverket database...
+              </Text>
+            </Group>
+          </Box>
         ) : (
-          <TrailGrid
-            trails={filteredTrails}
-            onSelect={(trail) => {
-              const matchedPlace = destinations.find(
-                (d) => d.ssrId === trail.id || d.name === trail.name,
-              );
-              if (matchedPlace) setSelectedPlace(matchedPlace);
-            }}
-          />
+          <Stack gap="md" aria-live="polite">
+            <Text size="sm" c="dimmed" id="results-count-announcement">
+              Showing {displayedTrails.length} of {filteredTrails.length} available trails
+            </Text>
+
+            <Box>
+              <TrailGrid
+                trails={displayedTrails}
+                onSelect={(trail) => {
+                  const matchedPlace = destinations.find(
+                    (d) => d.ssrId === trail.id || d.name === trail.name,
+                  );
+                  if (matchedPlace) setSelectedPlace(matchedPlace);
+                }}
+              />
+            </Box>
+
+            {hasMoreTrails && (
+              <Group justify="center" mt="md">
+                <Button
+                  variant="defalut"
+                  color="pine"
+                  leftSection={<IconChevronDown size={16} />}
+                  onClick={() => setVisibleTrailCount((prev) => prev + 10)}
+                  aria-label="Load more destination trails"
+                >
+                  Load More Trails ({filteredTrails.length - visibleTrailCount} remaining)
+                </Button>
+              </Group>
+            )}
+          </Stack>
         )}
       </Stack>
 
@@ -274,7 +324,11 @@ export function ExplorePage() {
         onClose={() => setSelectedPlace(null)}
         position="right"
         size="lg"
-        title={selectedPlace?.name ?? 'Location'}
+        title={
+          <Text fw={700} fz={{ base: '1.1rem', sm: '1.4rem' }} c={isDark ? 'white' : 'dark'}>
+            {selectedPlace?.name ?? 'Location'}
+          </Text>
+        }
         aria-label={`Details drawer for ${selectedPlace?.name ?? 'selected location'}`}
       >
         {selectedPlace && selectedTrail ? (
@@ -362,7 +416,7 @@ export function ExplorePage() {
               </Group>
 
               {loadingShops ? (
-                <Stack py="sm" gap={4}>
+                <Stack py="sm" gap={4} role="status" aria-live="polite">
                   <Group gap="xs">
                     <Loader size="xs" color="teal" />
                     <Text size="sm" c="dimmed">
@@ -410,6 +464,7 @@ export function ExplorePage() {
                       fullWidth
                       mt="xs"
                       onClick={() => setVisibleShopCount((prev) => prev + 5)}
+                      aria-label="Load more nearby shops"
                     >
                       View more shops ({shops.length - visibleShopCount} remaining)
                     </Button>
@@ -462,9 +517,14 @@ export function ExplorePage() {
                   region: selectedPlace.municipality,
                   notes: `Saved destination at lat: ${selectedPlace.latitude}, lon: ${selectedPlace.longitude}`,
                 });
+
                 notifications.show({
-                  message: `${selectedPlace.name} saved successfully!`,
-                  color: 'teal',
+                  message: `${selectedPlace.name} saved in your favorites`,
+                  styles: {
+                    root: { backgroundColor: '#28726B' },
+                    description: { color: '#FFFFFF' },
+                    closeButton: { color: '#FFFFFF' },
+                  },
                 });
               }}
             >

@@ -10,8 +10,10 @@ import {
   Text,
   Title,
   useMantineColorScheme,
+  ThemeIcon,
+  Box,
 } from '@mantine/core';
-import { Database, Landmark, ShieldCheck } from 'lucide-react';
+import { Database, Landmark, ShieldCheck, Compass, ArrowRight, Bookmark } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAppState } from '@/context/AppStateContext';
 
@@ -40,14 +42,14 @@ export function HomePage() {
 
   const headingColor = isDark ? '#f1f5f2' : '#183024';
   const bodyColor = isDark ? '#d5e0d9' : '#43544b';
-  const cardBackground = isDark ? '#182c23' : '#f4f8f5';
-  const borderColor = isDark ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.12)';
+  const cardBackground = isDark ? '#14251d' : '#f4f8f5';
+  const borderColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
 
   return (
-    <Container size="lg" py="md" px="0" component="main" mih="100dvh">
+    <Container size="lg" py="xl" px={0} pt="md" pb="xl" component="main" mih="100dvh">
       <Stack gap="xl">
         <Card
-          padding="xl"
+          p={{ base: 'lg', md: 'xl' }}
           radius="lg"
           withBorder
           component="section"
@@ -60,9 +62,19 @@ export function HomePage() {
           }}
         >
           <Grid gutter={{ base: 'xl', md: '2xl' }} align="center">
-            <Grid.Col span={{ base: 12, md: 6 }} p={0}>
+            <Grid.Col span={{ base: 12, md: 7 }} p="sm">
               <Stack gap="md">
-                <Badge variant="light" color="moss" size="lg" w="fit-content">
+                <Badge
+                  variant="light"
+                  color="teal"
+                  size="lg"
+                  radius="sm"
+                  w="fit-content"
+                  style={{ textTransform: 'none', fontWeight: 600 }}
+                >
+                  <Box component="span" mr={6} aria-hidden="true">
+                    🇳🇴
+                  </Box>{' '}
                   TurNorge · Norway hiking guide
                 </Badge>
 
@@ -70,37 +82,26 @@ export function HomePage() {
                   id="hero-title"
                   order={1}
                   c={headingColor}
-                  styles={{
-                    root: {
-                      fontSize: 'clamp(2.5rem, 5vw, 3.2rem)',
-                      lineHeight: 1.15,
-                    },
-                  }}
+                  fz={{ base: '1.8rem', sm: '2.8rem', md: '3.0rem' }}
+                  lh={1.15}
+                  fw={700}
                 >
                   Explore Norway’s mountains and trails safely.
                 </Title>
 
-                <Text size="lg" c={bodyColor} maw={640} lh={1.6}>
+                <Text size="lg" c={bodyColor} maw={600} lh={1.6}>
                   TurNorge combines open data, weather forecasts, and outdoor guidelines to help you
                   plan routes, packing lists, and responsible camping trips.
                 </Text>
 
-                <Group mt="sm" gap="md" wrap="wrap">
+                <Group mt="xs" gap="md" wrap="wrap">
                   <Button
                     component={Link}
                     to="/planner"
                     size="md"
-                    color="moss"
+                    color="pine"
+                    rightSection={<ArrowRight size={16} />}
                     aria-label="Plan your custom trip with TurNorge"
-                    styles={{
-                      root: {
-                        minHeight: '44px',
-                        '&:focusVisible': {
-                          outline: '3px solid #f0c75e',
-                          outlineOffset: '3px',
-                        },
-                      },
-                    }}
                   >
                     Plan Your Trip
                   </Button>
@@ -110,17 +111,9 @@ export function HomePage() {
                     to="/explore"
                     size="md"
                     variant="outline"
-                    color={isDark ? 'gray' : 'pine'}
+                    color={isDark ? 'gray' : 'teal'}
+                    leftSection={<Compass size={16} />}
                     aria-label="Explore Norwegian hiking trails and transport"
-                    styles={{
-                      root: {
-                        minHeight: '44px',
-                        '&:focusVisible': {
-                          outline: '3px solid #f0c75e',
-                          outlineOffset: '3px',
-                        },
-                      },
-                    }}
                   >
                     Explore Trails
                   </Button>
@@ -128,75 +121,82 @@ export function HomePage() {
               </Stack>
             </Grid.Col>
 
-            <Grid.Col span={{ base: 12, md: 6 }}>
-              <div
+            <Grid.Col span={{ base: 12, md: 5 }}>
+              <Box
                 aria-hidden="true"
                 style={{
                   width: '100%',
-                  minHeight: '280px',
+                  minHeight: '260px',
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
-                  pointerEvents: 'none',
                   position: 'relative',
-                  overflow: 'hidden',
-                  borderRadius: '16px',
                 }}
               >
-                <div
-                  style={{
-                    position: 'absolute',
-                    width: '65%',
-                    height: '65%',
-                  }}
-                />
-
                 <img
                   src="/mountain.svg"
                   alt=""
                   aria-hidden="true"
                   style={{
                     width: '100%',
-                    maxWidth: '420px',
+                    maxWidth: '360px',
                     height: 'auto',
                     position: 'relative',
                     zIndex: 1,
-                    opacity: isDark ? 0.5 : 0.7,
+                    opacity: isDark ? 0.6 : 0.85,
                     filter: isDark
-                      ? 'brightness(0) saturate(100%) invert(43%) sepia(16%) saturate(693%) hue-rotate(114deg) brightness(56%) contrast(90%)'
-                      : 'brightness(0) saturate(100%) invert(63%) sepia(6%) saturate(693%) hue-rotate(114deg) brightness(26%) contrast(87%)',
+                      ? 'brightness(0) saturate(100%) invert(75%) sepia(10%) saturate(400%) hue-rotate(120deg)'
+                      : 'none',
                   }}
                 />
-              </div>
+              </Box>
             </Grid.Col>
           </Grid>
         </Card>
 
+        {/* Features Section */}
         <section aria-labelledby="features-heading">
-          <Title id="features-heading" order={2} size="h2" c={headingColor} mb="md">
-            Why use TurNorge?
-          </Title>
+          <Box mb="md">
+            <Title id="features-heading" order={2} size="h2" c={headingColor}>
+              Why use TurNorge?
+            </Title>
+            <Text size="sm" c={bodyColor} mt={4}>
+              Built for outdoor enthusiasts who value open standards and local privacy.
+            </Text>
+          </Box>
 
           <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
             {FEATURES.map((feature) => (
               <Card
                 key={feature.title}
-                padding="lg"
+                padding="md"
                 radius="md"
                 withBorder
                 component="article"
                 style={{
                   backgroundColor: cardBackground,
                   border: `1px solid ${borderColor}`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-start',
                 }}
               >
-                <feature.icon size={24} color={isDark ? '#70c77a' : '#2d7a2f'} aria-hidden="true" />
+                <ThemeIcon
+                  size={44}
+                  radius="md"
+                  variant="light"
+                  color="teal"
+                  mb="md"
+                  aria-hidden="true"
+                >
+                  <feature.icon size={22} />
+                </ThemeIcon>
 
-                <Title order={3} mt="sm" size="h4" c={headingColor}>
+                <Title order={3} size="h4" c={headingColor} mb={8}>
                   {feature.title}
                 </Title>
 
-                <Text size="sm" mt="xs" c={bodyColor} lh={1.6}>
+                <Text size="sm" c={bodyColor} lh={1.6}>
                   {feature.body}
                 </Text>
               </Card>
@@ -206,7 +206,8 @@ export function HomePage() {
 
         <Card
           withBorder
-          padding="lg"
+          p="md"
+          radius="md"
           component="section"
           aria-labelledby="storage-status-heading"
           style={{
@@ -214,17 +215,34 @@ export function HomePage() {
             border: `1px solid ${borderColor}`,
           }}
         >
-          <Title order={2} id="storage-status-heading" size="h3" c={headingColor}>
-            Saved locally
-          </Title>
+          <Group justify="space-between" align="center" wrap="wrap" gap="md">
+            <Group gap="md">
+              <ThemeIcon size={40} radius="md" variant="light" color="teal" aria-hidden="true">
+                <Bookmark size={20} />
+              </ThemeIcon>
+              <div>
+                <Title order={2} id="storage-status-heading" size="h4" c={headingColor}>
+                  Local Storage Status
+                </Title>
+                <Text size="sm" c={bodyColor} mt={2}>
+                  {savedRoutes.length === 0
+                    ? 'No saved routes yet. Pin a trail or generate a plan to keep it on this device.'
+                    : `${savedRoutes.length} active route${savedRoutes.length === 1 ? '' : 's'} securely saved to browser storage.`}
+                </Text>
+              </div>
+            </Group>
 
-          <Text size="sm" mt="xs" c={bodyColor} lh={1.6}>
-            {savedRoutes.length === 0
-              ? 'No saved routes yet. Generate a plan or pin a trail and it will be stored in this browser only.'
-              : `${savedRoutes.length} saved route${
-                  savedRoutes.length === 1 ? '' : 's'
-                } on this device.`}
-          </Text>
+            <Button
+              component={Link}
+              to="/favorites"
+              variant="subtle"
+              color="teal"
+              size="sm"
+              rightSection={<ArrowRight size={14} />}
+            >
+              Manage Favorites
+            </Button>
+          </Group>
         </Card>
       </Stack>
     </Container>

@@ -1,9 +1,7 @@
-import { useMemo } from 'react';
-import { Card, SegmentedControl, Select, Stack } from '@mantine/core';
-
+import { Card, SegmentedControl, Stack, Text } from '@mantine/core';
 import type { KartverketPlace } from '@/types/schemas';
-import { NORWEGIAN_DESTINATIONS } from '@/types/schemas';
 import type { TrailDifficulty } from '@/types';
+import { RegionSearchBar } from '../RegionSearchBar';
 
 interface ExploreFiltersProps {
   destinations: KartverketPlace[];
@@ -39,75 +37,40 @@ export function ExploreFilters({
   duration,
   setDuration,
 }: ExploreFiltersProps) {
-  const destinationData = useMemo(() => {
-    const staticOptions = NORWEGIAN_DESTINATIONS.map((name) => ({
-      value: name,
-      label: name,
-    }));
-
-    const kartverketOptions = destinations
-      .filter((destination) => {
-        const destinationName = destination.name.toLocaleLowerCase('nb');
-        return !NORWEGIAN_DESTINATIONS.some(
-          (name) => name.toLocaleLowerCase('nb') === destinationName,
-        );
-      })
-      .map((destination) => ({
-        value: destination.name,
-        label: destination.municipality
-          ? `${destination.name} · ${destination.municipality}`
-          : destination.name,
-      }));
-
-    const destinationOptions = Array.from(
-      new Map(
-        [...staticOptions, ...kartverketOptions].map((option) => [
-          option.value.toLocaleLowerCase('nb'),
-          option,
-        ]),
-      ).values(),
-    ).sort((a, b) => a.label.localeCompare(b.label, 'nb'));
-
-    return [{ value: 'all', label: 'All destinations' }, ...destinationOptions];
-  }, [destinations]);
-
   return (
-    <Card withBorder padding="md">
+    <Card withBorder padding="md" component="aside" aria-label="Trail Explore Filters">
       <Stack gap="md">
-        <Select
-          label="Destination"
-          placeholder="Search Norwegian areas..."
-          value={region === 'all' ? null : region}
-          onChange={(value) => setRegion(value ?? 'all')}
-          data={destinationData}
-          searchable
-          clearable
-          nothingFoundMessage="No Norwegian destination found"
-          maxDropdownHeight={350}
-          comboboxProps={{
-            withinPortal: true,
-          }}
-        />
+        <RegionSearchBar destinations={destinations} region={region} setRegion={setRegion} />
 
-        <SegmentedControl
-          fullWidth
-          aria-label="Difficulty"
-          value={difficulty}
-          onChange={(value) => {
-            setDifficulty(value as TrailDifficulty | 'all');
-          }}
-          data={DIFFICULTY_OPTIONS}
-        />
+        <Stack gap={4}>
+          <Text size="sm" fw={500} component="label" id="difficulty-filter-label">
+            Filter by Difficulty
+          </Text>
+          <SegmentedControl
+            fullWidth
+            aria-labelledby="difficulty-filter-label"
+            value={difficulty}
+            onChange={(value) => {
+              setDifficulty(value as TrailDifficulty | 'all');
+            }}
+            data={DIFFICULTY_OPTIONS}
+          />
+        </Stack>
 
-        <SegmentedControl
-          fullWidth
-          aria-label="Duration"
-          value={duration}
-          onChange={(value) => {
-            setDuration(value as 'all' | 'half' | 'full' | 'long');
-          }}
-          data={DURATION_OPTIONS}
-        />
+        <Stack gap={4}>
+          <Text size="sm" fw={500} component="label" id="duration-filter-label">
+            Filter by Duration
+          </Text>
+          <SegmentedControl
+            fullWidth
+            aria-labelledby="duration-filter-label"
+            value={duration}
+            onChange={(value) => {
+              setDuration(value as 'all' | 'half' | 'full' | 'long');
+            }}
+            data={DURATION_OPTIONS}
+          />
+        </Stack>
       </Stack>
     </Card>
   );
