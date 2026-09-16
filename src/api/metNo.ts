@@ -1,17 +1,21 @@
 import { metLocationForecastSchema, type MetLocationForecast } from '@/types/schemas';
 
 export async function fetchMetForecast(lat: number, lon: number): Promise<MetLocationForecast> {
+  const safeLat = Number(lat).toFixed(4);
+  const safeLon = Number(lon).toFixed(4);
+
   const url =
     `https://api.met.no/weatherapi/locationforecast/2.0/compact` +
-    `?lat=${encodeURIComponent(lat)}` +
-    `&lon=${encodeURIComponent(lon)}`;
+    `?lat=${safeLat}` +
+    `&lon=${safeLon}`;
 
   try {
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
-        'User-Agent': 'NorwegianTrailPlanner/1.0 (contact@yourdomain.com)',
+        'User-Agent':
+          'NorwegianTrailPlannerApp/2.0 (https://github.com/your-repo; contact@yourdomain.com)',
       },
     });
 
@@ -29,35 +33,8 @@ export async function fetchMetForecast(lat: number, lon: number): Promise<MetLoc
 
     return result.data;
   } catch (error) {
-    console.warn(
-      'MET.no fetch blocked or failed on mobile device, supplying fallback telemetry:',
-      error,
-    );
-
-    // Graceful fallback mock object for mobile restrictions so UI stays functional
-    return {
-      properties: {
-        timeseries: [
-          {
-            data: {
-              instant: {
-                details: {
-                  air_temperature: 10.0,
-                  relative_humidity: 80,
-                  wind_speed: 4.2,
-                  air_pressure_at_sea_level: 1012,
-                },
-              },
-              next_6_hours: {
-                details: {
-                  precipitation_amount: 0.2,
-                },
-              },
-            },
-          },
-        ],
-      },
-    } as unknown as MetLocationForecast;
+    console.error('MET.no fetch failed on mobile client:', error);
+    throw error;
   }
 }
 
