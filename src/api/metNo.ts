@@ -14,8 +14,7 @@ export async function fetchMetForecast(lat: number, lon: number): Promise<MetLoc
       method: 'GET',
       headers: {
         Accept: 'application/json',
-        'User-Agent':
-          'NorwegianTrailPlannerApp/2.0 (https://github.com/your-repo; contact@yourdomain.com)',
+        // Removed custom 'User-Agent' header here to prevent Safari CORS preflight blocking
       },
     });
 
