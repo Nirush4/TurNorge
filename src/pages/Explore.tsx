@@ -304,7 +304,7 @@ export function ExplorePage() {
             {hasMoreTrails && (
               <Group justify="center" mt="md">
                 <Button
-                  variant="defalut"
+                  variant="default"
                   color="pine"
                   leftSection={<IconChevronDown size={16} />}
                   onClick={() => setVisibleTrailCount((prev) => prev + 10)}
@@ -329,6 +329,18 @@ export function ExplorePage() {
           </Text>
         }
         aria-label={`Details drawer for ${selectedPlace?.name ?? 'selected location'}`}
+        styles={{
+          content: {
+            display: 'flex',
+            flexDirection: 'column',
+            maxHeight: '100dvh',
+          },
+          body: {
+            flex: 1,
+            overflowY: 'auto',
+            paddingBottom: '2.5rem',
+          },
+        }}
       >
         {selectedPlace && selectedTrail ? (
           <Stack gap="md" role="region" aria-label="Selected trail information details">
