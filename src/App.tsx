@@ -9,6 +9,7 @@ import { PlannerPage } from '@/pages/Planner';
 import { ToolkitPage } from '@/pages/Toolkit';
 import { theme } from '@/theme/theme';
 import { Favorites } from './pages/Favorites';
+import { ArticleDetailPage } from './pages/ArticleDetailPage';
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
               <Route path="/planner" element={<PlannerPage />} />
               <Route path="/explore" element={<ExplorePage />} />
               <Route path="/favorites" element={<Favorites />} />
+              <Route path="/articles/:id" element={<ArticleDetailPage />} />
               <Route path="/toolkit" element={<ToolkitPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
