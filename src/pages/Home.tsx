@@ -16,6 +16,7 @@ import {
 import { Database, Landmark, ShieldCheck, Compass, ArrowRight, Bookmark } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAppState } from '@/context/AppStateContext';
+import { HikingArticlesSection } from '@/components/home/HikingArticlesSection';
 
 const FEATURES = [
   {
@@ -99,7 +100,7 @@ export function HomePage() {
                     component={Link}
                     to="/planner"
                     size="md"
-                    color="pine"
+                    color="teal"
                     rightSection={<ArrowRight size={16} />}
                     aria-label="Plan your custom trip with TurNorge"
                   >
@@ -203,6 +204,14 @@ export function HomePage() {
             ))}
           </SimpleGrid>
         </section>
+
+        {/* Hiking Articles / Guides Section */}
+        <HikingArticlesSection
+          headingColor={headingColor}
+          bodyColor={bodyColor}
+          cardBackground={cardBackground}
+          borderColor={borderColor}
+        />
 
         <Card
           withBorder
