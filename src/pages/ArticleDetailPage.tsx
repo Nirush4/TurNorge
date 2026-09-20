@@ -44,7 +44,7 @@ export function ArticleDetailPage() {
   }
 
   return (
-    <Container size="md" py="xl" component="main">
+    <Container size="md" py="xl" px={0} component="main">
       <Stack gap="lg">
         <Button
           component={Link}
@@ -87,7 +87,7 @@ export function ArticleDetailPage() {
         </Card>
 
         <Card
-          padding="xl"
+          p={{ base: 'md', sm: 'xl' }}
           radius="md"
           withBorder
           style={{ backgroundColor: cardBackground, borderColor }}
