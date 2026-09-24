@@ -37,7 +37,7 @@ export function AppLayout() {
           breakpoint: 'md',
           collapsed: { desktop: true, mobile: !mobileOpened },
         }}
-        padding="md"
+        padding={0}
       >
         <AppShell.Header>
           <Container size="lg" h="100%" px={{ base: 'md', lg: '0' }}>
@@ -96,14 +96,13 @@ export function AppLayout() {
         </AppShell.Navbar>
 
         <AppShell.Main id="main-content" tabIndex={-1}>
-          <Container
-            size="lg"
-            p={0}
+          <Box
             style={{
               minHeight: 'calc(100vh - 200px)',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
+              width: '100%',
               overflowX: 'hidden',
             }}
           >
@@ -113,21 +112,16 @@ export function AppLayout() {
             <Box
               component="footer"
               style={{
-                width: '100vw',
-                position: 'relative',
-                left: '50%',
-                right: '50%',
-                marginLeft: '-50vw',
-                marginRight: '-50vw',
+                width: '100%',
                 borderTop: '1px solid var(--mantine-color-default-border)',
-                overflowX: 'hidden',
+                marginTop: 'auto',
               }}
             >
-              <Container size="lg" px="md">
+              <Container size="lg" px="md" py="md">
                 <AppFooter />
               </Container>
             </Box>
-          </Container>
+          </Box>
         </AppShell.Main>
       </AppShell>
     </AccessibilityWrapper>

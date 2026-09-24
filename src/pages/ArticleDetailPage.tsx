@@ -8,6 +8,7 @@ import {
   Button,
   Card,
   Image,
+  Box,
   Stack,
   Divider,
   useMantineColorScheme,
@@ -82,9 +83,16 @@ export function ArticleDetailPage() {
           </Title>
         </Stack>
 
-        <Card padding={0} radius="md" withBorder style={{ overflow: 'hidden', borderColor }}>
-          <Image src={article.image} alt={article.title} height={360} fit="cover" />
-        </Card>
+        <Box
+          w="100%"
+          style={{
+            overflow: 'hidden',
+            borderRadius: '8px',
+            border: `1px solid ${borderColor}`,
+          }}
+        >
+          <Image src={article.image} alt={article.title} h={360} w="100%" fit="cover" />
+        </Box>
 
         <Card
           p={{ base: 'md', sm: 'xl' }}
