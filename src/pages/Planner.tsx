@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Button,
@@ -26,16 +26,15 @@ import {
   searchKartverketPlace,
   resolveKartverketPlace,
   getPopularNorwegianDestinations,
-} from '@/api/kartverket';
-
-import { fetchMetForecast } from '@/api/metNo';
+} from '@/lib/api/kartverket';
+import { fetchMetForecast } from '@/lib/api/metNo';
 import { useAppState } from '@/context/AppStateContext';
 import { plannerSchema, type PlannerFormValues, type KartverketPlace } from '@/types/schemas';
 import { WeatherDashboard } from '@/components/WeatherDashboard';
 import { RegionSearchBar } from '@/components/RegionSearchBar';
-
 import type { MetForecastResponse } from '@/types/met';
 import type { GeneratedPlan, ItineraryDay } from '@/types';
+import { useFavorites } from '@/hooks/useFavorites';
 
 export interface LiveWeatherConditions {
   elevationMeters: number;
@@ -45,11 +44,65 @@ export interface LiveWeatherConditions {
   symbolCode: string;
 }
 
-export function parseLiveWeather(metApiResponse: any): LiveWeatherConditions {
-  const coordinates = metApiResponse.geometry?.coordinates || [0, 0, 0];
-  const elevationMeters = coordinates[2] ?? 0;
+export interface ExtendedGeneratedPlan extends GeneratedPlan {
+  resolvedPlace?: KartverketPlace;
+  weather?: LiveWeatherConditions;
+}
 
-  const currentSeries = metApiResponse.properties?.timeseries?.[0]?.data;
+const PLANNER_LOADING_STEPS = [
+  'Resolving location coordinates via Kartverket...',
+  'Fetching live meteorological telemetry from MET.no...',
+  'Evaluating real-time weather risks and altitude thresholds...',
+  'Synthesizing fully dynamic WCAG-compliant itinerary structure...',
+] as const;
+
+const EXPERIENCE_OPTIONS = [
+  { value: 'beginner', label: 'Beginner' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'expert', label: 'Expert' },
+] as const;
+
+const SEASON_OPTIONS = [
+  { value: 'summer_autumn', label: 'Summer / Autumn hiking' },
+  { value: 'winter', label: 'Winter skiing' },
+] as const;
+
+const MOBILE_INPUT_STYLES = {
+  input: { fontSize: '16px' },
+  dropdown: { fontSize: '16px' },
+} as const;
+
+function showAppNotification(title: string, message: string, isError = false) {
+  notifications.show({
+    title,
+    message,
+    color: '#FFFFFF',
+    styles: {
+      root: { backgroundColor: isError ? '#E03131' : '#28726B' },
+      title: { color: '#FFFFFF' },
+      description: { color: '#FFFFFF' },
+      closeButton: { color: '#FFFFFF' },
+    },
+  });
+}
+
+export function parseLiveWeather(metApiResponse: unknown): LiveWeatherConditions {
+  const response = metApiResponse as {
+    geometry?: { coordinates?: number[] };
+    properties?: {
+      timeseries?: Array<{
+        data?: {
+          instant?: { details?: { air_temperature?: number; wind_speed?: number } };
+          next_6_hours?: { details?: { precipitation_amount?: number } };
+          next_1_hours?: { summary?: { symbol_code?: string } };
+        };
+      }>;
+    };
+  };
+
+  const coordinates = response.geometry?.coordinates || [0, 0, 0];
+  const elevationMeters = coordinates[2] ?? 0;
+  const currentSeries = response.properties?.timeseries?.[0]?.data;
   const instantDetails = currentSeries?.instant?.details || {};
   const next6Hours = currentSeries?.next_6_hours?.details || {};
   const symbol = currentSeries?.next_1_hours?.summary?.symbol_code || 'clearsky';
@@ -62,13 +115,6 @@ export function parseLiveWeather(metApiResponse: any): LiveWeatherConditions {
     symbolCode: symbol,
   };
 }
-
-const PLANNER_LOADING_STEPS: string[] = [
-  'Resolving location coordinates via Kartverket...',
-  'Fetching live meteorological telemetry from MET.no...',
-  'Evaluating real-time weather risks and altitude thresholds...',
-  'Synthesizing fully dynamic WCAG-compliant itinerary structure...',
-];
 
 function generateDynamicWeatherAdvice(weather: LiveWeatherConditions): string {
   let narrative = `Telemetry at ${weather.elevationMeters}m: ${weather.temperature.toFixed(1)}°C, wind ${weather.windSpeed.toFixed(1)} m/s. `;
@@ -142,8 +188,8 @@ export async function generateDynamicPlan(
   values: PlannerFormValues,
   presetTone: 'standard' | 'cautious' | 'ambitious' = 'standard',
   emphasizeSafety: boolean = true,
-): Promise<GeneratedPlan> {
-  let place;
+): Promise<ExtendedGeneratedPlan> {
+  let place: KartverketPlace | undefined;
   let forecast;
 
   try {
@@ -153,15 +199,17 @@ export async function generateDynamicPlan(
     const longitude = place?.longitude ?? 8.3597;
     forecast = await fetchMetForecast(latitude, longitude);
   } catch (error) {
-    console.warn('Network request failed on mobile, falling back to offline telemetry:', error);
+    console.warn('Network request failed, falling back to offline telemetry:', error);
     forecast = {
       geometry: { coordinates: [8.3597, 61.4933, 500] },
       properties: {
         timeseries: [
           {
-            instant: { details: { air_temperature: 10, wind_speed: 4 } },
-            next_6_hours: { details: { precipitation_amount: 0 } },
-            next_1_hours: { summary: { symbol_code: 'clearsky' } },
+            data: {
+              instant: { details: { air_temperature: 10, wind_speed: 4 } },
+              next_6_hours: { details: { precipitation_amount: 0 } },
+              next_1_hours: { summary: { symbol_code: 'clearsky' } },
+            },
           },
         ],
       },
@@ -172,7 +220,7 @@ export async function generateDynamicPlan(
   const placeName = place?.name ?? values.destination;
   const weatherNote = generateDynamicWeatherAdvice(weather);
 
-  const overview = `Dynamic plan for ${placeName} (${place?.municipality || 'Norway'}) across ${values.durationDays} days at ${weather.elevationMeters}m elevation. Mode: ${presetTone.toUpperCase()}. Weather: ${weatherNote}`;
+  const overview = `Plan for ${placeName} (${place?.municipality || 'Norway'}) across ${values.durationDays} days at ${weather.elevationMeters}m elevation. Mode: ${presetTone.toUpperCase()}. Weather: ${weatherNote}`;
 
   const safetyDisclaimers = [
     `Observation point elevation: ${weather.elevationMeters} meters above sea level.`,
@@ -217,22 +265,14 @@ export async function generateDynamicPlan(
       'Keep a minimum distance of 150 meters from inhabited houses and active farms.',
     ],
     generatedAt: new Date().toISOString(),
+    resolvedPlace: place,
+    weather,
   };
 }
 
-const EXPERIENCE_OPTIONS = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'expert', label: 'Expert' },
-];
-
-const SEASON_OPTIONS = [
-  { value: 'summer_autumn', label: 'Summer / Autumn hiking' },
-  { value: 'winter', label: 'Winter skiing' },
-];
-
 export function PlannerPage() {
-  const { setLastPlan, lastPlan, saveRoute } = useAppState();
+  const { setLastPlan, lastPlan } = useAppState();
+  const { addFavorite } = useFavorites();
 
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
   const [fetchingWeather, setFetchingWeather] = useState(false);
@@ -245,7 +285,7 @@ export function PlannerPage() {
   const [isFavorite, setIsFavorite] = useState(false);
 
   const [currentTone, setCurrentTone] = useState<'standard' | 'cautious' | 'ambitious'>('standard');
-  const [emphasizeSafetyLocal, setEmphasizeSafetyLocal] = useState<boolean>(true);
+  const [emphasizeSafetyLocal, setEmphasizeSafetyLocal] = useState(true);
 
   const {
     control,
@@ -262,6 +302,25 @@ export function PlannerPage() {
     },
   });
 
+  const handleDestinationChange = useCallback(
+    async (val: string, onChangeFn: (val: string) => void) => {
+      const resolvedVal = val === 'all' ? '' : val;
+      onChangeFn(resolvedVal);
+      if (!resolvedVal) {
+        setSelectedPlace(null);
+        return;
+      }
+      const place = destinations.find((item) => item.name === resolvedVal);
+      if (place) {
+        setSelectedPlace(place);
+      } else {
+        const resolved = await resolveKartverketPlace(resolvedVal);
+        if (resolved) setSelectedPlace(resolved);
+      }
+    },
+    [destinations],
+  );
+
   const onSubmit = async (values: PlannerFormValues): Promise<void> => {
     setLastPlan(null);
     setIsFavorite(false);
@@ -270,9 +329,7 @@ export function PlannerPage() {
       let activePlace = selectedPlace;
       if (!activePlace && values.destination) {
         activePlace = await resolveKartverketPlace(values.destination);
-        if (activePlace) {
-          setSelectedPlace(activePlace);
-        }
+        if (activePlace) setSelectedPlace(activePlace);
       }
 
       for (let index = 0; index < PLANNER_LOADING_STEPS.length; index += 1) {
@@ -281,28 +338,15 @@ export function PlannerPage() {
       }
 
       const plan = await generateDynamicPlan(values, currentTone, emphasizeSafetyLocal);
+      if (activePlace && !plan.resolvedPlace) plan.resolvedPlace = activePlace;
       setLastPlan(plan);
     } catch (error) {
       console.error('Failed to generate:', error);
-      notifications.show({
-        title: 'Could not generate itinerary',
-        message: 'Something went wrong while generating your route.',
-        color: '#FFFFFF',
-        styles: {
-          root: {
-            backgroundColor: '#E03131',
-          },
-          title: {
-            color: '#FFFFFF',
-          },
-          description: {
-            color: '#FFFFFF',
-          },
-          closeButton: {
-            color: '#FFFFFF',
-          },
-        },
-      });
+      showAppNotification(
+        'Could not generate itinerary',
+        'Something went wrong while generating your route.',
+        true,
+      );
     } finally {
       setLoadingIndex(null);
     }
@@ -315,38 +359,57 @@ export function PlannerPage() {
       let longitude = selectedPlace?.longitude;
 
       if (!latitude || !longitude) {
-        try {
-          const results = await searchKartverketPlace(regionName);
-          if (results && results.length > 0) {
-            latitude = results[0].latitude;
-            longitude = results[0].longitude;
-          }
-        } catch {}
+        const results = await searchKartverketPlace(regionName);
+        if (results && results.length > 0) {
+          latitude = results[0].latitude;
+          longitude = results[0].longitude;
+        }
       }
 
-      const finalLat = latitude ?? 61.4933;
-      const finalLon = longitude ?? 8.3597;
-
-      const liveData = await fetchMetForecast(finalLat, finalLon);
+      const liveData = await fetchMetForecast(latitude ?? 61.4933, longitude ?? 8.3597);
       setSelectedDayWeather(liveData as unknown as MetForecastResponse);
       open();
     } catch (error) {
       console.error('Weather error:', error);
-      notifications.show({
-        title: 'Weather Unavailable',
-        message: 'Could not load live meteorological telemetry for this region.',
-        color: '#FFFFFF',
-        styles: {
-          root: { backgroundColor: '#E03131' },
-          title: { color: '#FFFFFF' },
-          description: { color: '#FFFFFF' },
-          closeButton: { color: '#FFFFFF' },
-        },
-      });
+      showAppNotification(
+        'Weather Unavailable',
+        'Could not load live meteorological telemetry for this region.',
+        true,
+      );
     } finally {
       setFetchingWeather(false);
     }
   };
+
+  const handleSaveFavorite = async () => {
+    if (!extendedPlan) return;
+    const resolvedPlace = extendedPlan.resolvedPlace;
+    const weather = extendedPlan.weather;
+
+    const { error } = await addFavorite({
+      location_name: extendedPlan.region,
+      mode: currentTone,
+      notes: extendedPlan.overview,
+      location_lat: resolvedPlace?.latitude ?? null,
+      location_lng: resolvedPlace?.longitude ?? null,
+      trip_duration_days: extendedPlan.durationDays,
+      elevation_m: weather?.elevationMeters ?? null,
+      external_ref_id: resolvedPlace?.ssrId?.toString() ?? null,
+      external_provider: 'kartverket',
+      snapshot_temp_c: weather?.temperature ?? null,
+      snapshot_wind_mps: weather?.windSpeed ?? null,
+      snapshot_condition: weather?.symbolCode ?? null,
+    });
+
+    if (error) {
+      showAppNotification('Could not save favorite', error, true);
+    } else {
+      setIsFavorite(true);
+      showAppNotification('Success', `${extendedPlan.title} saved in your favorites.`);
+    }
+  };
+
+  const extendedPlan = lastPlan as ExtendedGeneratedPlan | null;
 
   return (
     <>
@@ -357,7 +420,7 @@ export function PlannerPage() {
           }
         }
       `}</style>
-      <Container size="lg" pt="md" pb="xl" px="0" component="main" mih="100dvh">
+      <Container size="lg" py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
         <Stack gap="lg">
           <header>
             <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }}>
@@ -396,10 +459,7 @@ export function PlannerPage() {
                   { label: 'Cautious / Easy Mode', value: 'cautious' },
                   { label: 'Ambitious / Long Distance', value: 'ambitious' },
                 ]}
-                styles={{
-                  input: { fontSize: '16px' },
-                  dropdown: { fontSize: '16px' },
-                }}
+                styles={MOBILE_INPUT_STYLES}
               />
 
               <Divider />
@@ -430,22 +490,7 @@ export function PlannerPage() {
                     <RegionSearchBar
                       destinations={destinations}
                       region={field.value || 'all'}
-                      setRegion={(val: string) => {
-                        const resolvedVal = val === 'all' ? '' : val;
-                        field.onChange(resolvedVal);
-                        if (!resolvedVal) {
-                          setSelectedPlace(null);
-                          return;
-                        }
-                        const place = destinations.find((item) => item.name === resolvedVal);
-                        if (place) {
-                          setSelectedPlace(place);
-                        } else {
-                          void resolveKartverketPlace(resolvedVal).then((resolved) => {
-                            if (resolved) setSelectedPlace(resolved);
-                          });
-                        }
-                      }}
+                      setRegion={(val) => handleDestinationChange(val, field.onChange)}
                       label="Destination"
                       description="Choose a popular destination or search Kartverket for any location."
                       placeholder="Choose a Norwegian destination"
@@ -467,7 +512,7 @@ export function PlannerPage() {
                 )}
               />
 
-              {selectedPlace ? (
+              {selectedPlace && (
                 <Card withBorder padding="sm" role="status" aria-live="polite">
                   <Text size="sm" fw={600}>
                     Selected: {selectedPlace.name}
@@ -477,7 +522,7 @@ export function PlannerPage() {
                     {selectedPlace.latitude.toFixed(4)}, {selectedPlace.longitude.toFixed(4)}
                   </Text>
                 </Card>
-              ) : null}
+              )}
 
               <Controller
                 name="experienceLevel"
@@ -489,10 +534,7 @@ export function PlannerPage() {
                     value={field.value}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
-                    styles={{
-                      input: { fontSize: '16px' },
-                      dropdown: { fontSize: '16px' },
-                    }}
+                    styles={MOBILE_INPUT_STYLES}
                     error={errors.experienceLevel?.message}
                     required
                   />
@@ -508,11 +550,9 @@ export function PlannerPage() {
                     min={1}
                     max={14}
                     value={field.value}
-                    onChange={(value) => field.onChange(typeof value === 'number' ? value : 1)}
+                    onChange={(val) => field.onChange(typeof val === 'number' ? val : 1)}
                     onBlur={field.onBlur}
-                    styles={{
-                      input: { fontSize: '16px' },
-                    }}
+                    styles={{ input: { fontSize: '16px' } }}
                     error={errors.durationDays?.message}
                     required
                   />
@@ -529,10 +569,7 @@ export function PlannerPage() {
                     value={field.value}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
-                    styles={{
-                      input: { fontSize: '16px' },
-                      dropdown: { fontSize: '16px' },
-                    }}
+                    styles={MOBILE_INPUT_STYLES}
                     error={errors.season?.message}
                     required
                   />
@@ -565,13 +602,13 @@ export function PlannerPage() {
             </Stack>
           </Card>
 
-          {lastPlan ? (
+          {extendedPlan && (
             <Stack gap="md" component="section" aria-label="Generated Itinerary Results">
               <Card withBorder padding="lg">
                 <Group justify="space-between" align="flex-start">
                   <div>
-                    <Title order={2}>{lastPlan.title}</Title>
-                    <Text mt="sm">{lastPlan.overview}</Text>
+                    <Title order={2}>{extendedPlan.title}</Title>
+                    <Text mt="sm">{extendedPlan.overview}</Text>
                   </div>
                   <Button
                     variant="filled"
@@ -579,28 +616,7 @@ export function PlannerPage() {
                     color="blue.5"
                     size="sm"
                     disabled={isFavorite}
-                    onClick={() => {
-                      const newRoute = {
-                        id: lastPlan.id,
-                        trailId: lastPlan.id,
-                        title: lastPlan.title,
-                        region: lastPlan.region,
-                        notes: lastPlan.overview,
-                        savedAt: new Date().toISOString(),
-                      };
-
-                      saveRoute(newRoute);
-                      setIsFavorite(true);
-                      notifications.show({
-                        message: `${lastPlan.title} saved in your favorites.`,
-                        color: '#FFFFFF',
-                        styles: {
-                          root: { backgroundColor: '#28726B' },
-                          description: { color: '#FFFFFF' },
-                          closeButton: { color: '#FFFFFF' },
-                        },
-                      });
-                    }}
+                    onClick={handleSaveFavorite}
                     aria-label={isFavorite ? 'Route saved to favorites' : 'Save route to favorites'}
                   >
                     {isFavorite ? 'Saved' : 'Save to Favorites'}
@@ -609,7 +625,7 @@ export function PlannerPage() {
               </Card>
 
               <SimpleGrid cols={{ base: 1, md: 2 }}>
-                {lastPlan.days.map((day) => (
+                {extendedPlan.days.map((day) => (
                   <Card key={day.day} withBorder padding="md" component="article">
                     <Stack justify="space-between" h="100%">
                       <div>
@@ -638,8 +654,8 @@ export function PlannerPage() {
                         radius="md"
                         loading={fetchingWeather}
                         leftSection={<IconCloudRain size={16} aria-hidden="true" />}
-                        onClick={() => handleOpenWeatherDashboard(lastPlan.region)}
-                        aria-label={`Open live meteorological dashboard for ${lastPlan.region}`}
+                        onClick={() => handleOpenWeatherDashboard(extendedPlan.region)}
+                        aria-label={`Open live meteorological dashboard for ${extendedPlan.region}`}
                       >
                         Live Weather Dashboard
                       </Button>
@@ -651,7 +667,7 @@ export function PlannerPage() {
               <Card withBorder padding="lg">
                 <Title order={3}>Packing List</Title>
                 <List mt="sm" aria-label="Required packing list items">
-                  {lastPlan.packingList.map((item) => (
+                  {extendedPlan.packingList.map((item) => (
                     <List.Item key={item}>{item}</List.Item>
                   ))}
                 </List>
@@ -660,13 +676,13 @@ export function PlannerPage() {
               <Card withBorder padding="lg">
                 <Title order={3}>Safety Disclaimers</Title>
                 <List mt="sm" aria-label="Important safety and emergency notes">
-                  {lastPlan.safetyDisclaimers.map((item) => (
+                  {extendedPlan.safetyDisclaimers.map((item) => (
                     <List.Item key={item}>{item}</List.Item>
                   ))}
                 </List>
               </Card>
             </Stack>
-          ) : null}
+          )}
 
           <Modal
             opened={opened}
