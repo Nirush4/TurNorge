@@ -17,6 +17,7 @@
     "@mantine/core": "^7.17.8",
     "@mantine/hooks": "^7.17.8",
     "@mantine/notifications": "^7.17.8",
+    "@supabase/supabase-js": "^2.117.1",
     "@tabler/icons-react": "^3.46.0",
     "chart.js": "^4.4.7",
     "lucide-react": "^1.40.0",
