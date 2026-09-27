@@ -90,7 +90,7 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
       y: { display: false, grid: { display: false } },
       x: {
         grid: { display: false },
-        ticks: { font: { size: 11, weight: 600 }, color: chartTickColor },
+        ticks: { font: { size: 14, weight: 600 }, color: chartTickColor },
       },
     },
   };
@@ -168,13 +168,13 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
             <div>
               <Group gap="xs" mb={6}>
                 <ThemeIcon size="md" radius="xl" color="teal" variant="light" aria-hidden="true">
-                  <IconSparkles size={16} />
+                  <IconSparkles size={24} />
                 </ThemeIcon>
                 <Title order={1} size="h3" fw={700} style={{ letterSpacing: '-0.5px' }}>
                   Meteorological Intelligence
                 </Title>
               </Group>
-              <Text size="sm" c="dimmed" fw={500}>
+              <Text size="md" c="dimmed" fw={500}>
                 Coordinates: {lat.toFixed(4)}°N, {lon.toFixed(4)}°E · Elevation: {alt}m · Synced:{' '}
                 {new Date(forecast.properties.meta.updated_at).toLocaleTimeString([], {
                   hour: '2-digit',
@@ -198,19 +198,19 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
           >
             <Group wrap="nowrap" gap="md" align="flex-start">
               <ThemeIcon color="red" variant="light" size="xl" radius="md" aria-hidden="true">
-                <IconAlertTriangle size={22} />
+                <IconAlertTriangle size={24} />
               </ThemeIcon>
               <Box>
                 <Text
                   fw={700}
-                  size="sm"
+                  size="lg"
                   c={isDark ? 'red.4' : 'red.7'}
                   tt="uppercase"
                   style={{ letterSpacing: '0.05em' }}
                 >
                   Freezing Environment Warning
                 </Text>
-                <Text size="sm" c="dimmed" mt={4}>
+                <Text size="md" c="dimmed" mt={4}>
                   Sub-zero conditions detected along active path profile. Confirm microspikes and
                   insulation layer readiness.
                 </Text>
@@ -224,7 +224,7 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
             <Group wrap="nowrap" justify="space-between">
               <div>
                 <Text
-                  size="11px"
+                  size="14px"
                   c="dimmed"
                   tt="uppercase"
                   fw={700}
@@ -246,7 +246,7 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
             <Group wrap="nowrap" justify="space-between">
               <Box style={{ flex: 1 }}>
                 <Text
-                  size="11px"
+                  size="14px"
                   c="dimmed"
                   tt="uppercase"
                   fw={700}
@@ -257,7 +257,7 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
                 <Group gap={6} align="center" mt={6}>
                   <Text fw={800} size="xl" lh={1.2}>
                     {instantDetails?.wind_speed}{' '}
-                    <Text span size="xs" c="dimmed" fw={500}>
+                    <Text span size="md" c="dimmed" fw={500}>
                       m/s
                     </Text>
                   </Text>
@@ -282,7 +282,7 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
             <Group wrap="nowrap" justify="space-between">
               <div>
                 <Text
-                  size="11px"
+                  size="14px"
                   c="dimmed"
                   tt="uppercase"
                   fw={700}
@@ -292,7 +292,7 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
                 </Text>
                 <Text fw={800} size="xl" lh={1.2} mt={6}>
                   {precipitation}{' '}
-                  <Text span size="xs" c="dimmed" fw={500}>
+                  <Text span size="md" c="dimmed" fw={500}>
                     mm
                   </Text>
                 </Text>
@@ -307,7 +307,7 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
             <Group wrap="nowrap" justify="space-between">
               <div>
                 <Text
-                  size="11px"
+                  size="14px"
                   c="dimmed"
                   tt="uppercase"
                   fw={700}
@@ -329,7 +329,7 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
             <Group wrap="nowrap" justify="space-between">
               <div>
                 <Text
-                  size="11px"
+                  size="14px"
                   c="dimmed"
                   tt="uppercase"
                   fw={700}
@@ -356,7 +356,7 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
             <Group justify="space-between" mb="xs">
               <Title
                 order={2}
-                size="sm"
+                size="lg"
                 fw={700}
                 tt="uppercase"
                 c="dimmed"
@@ -364,11 +364,11 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
               >
                 Temperature Trend (°C)
               </Title>
-              <Badge size="sm" variant="light" color="teal" radius="sm">
+              <Badge size="md" variant="light" color="teal" radius="sm">
                 12h Outlook
               </Badge>
             </Group>
-            <Text size="xs" c="dimmed" mb="md">
+            <Text size="md" c="dimmed" mb="md">
               Continuous hourly thermal progression across active terrain elevations.
             </Text>
             <Box
@@ -390,7 +390,7 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
             <Group justify="space-between" mb="xs">
               <Title
                 order={2}
-                size="sm"
+                size="lg"
                 fw={700}
                 tt="uppercase"
                 c="dimmed"
@@ -398,11 +398,11 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
               >
                 Wind Speed &amp; Gusts (m/s)
               </Title>
-              <Badge size="sm" variant="light" color="blue" radius="sm">
+              <Badge size="md" variant="light" color="blue" radius="sm">
                 12h Outlook
               </Badge>
             </Group>
-            <Text size="xs" c="dimmed" mb="md">
+            <Text size="md" c="dimmed" mb="md">
               Projected aerodynamic velocity variations along exposed regional coordinates.
             </Text>
             <Box
@@ -424,7 +424,7 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
         <Card withBorder padding="lg" radius="md" shadow="xs">
           <Title
             order={2}
-            size="sm"
+            size="lg"
             fw={700}
             tt="uppercase"
             c="dimmed"
@@ -441,22 +441,22 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
                     borderBottom: `1px solid ${isDark ? 'var(--mantine-color-dark-4)' : 'var(--mantine-color-gray-3)'}`,
                   }}
                 >
-                  <Table.Th fw={700} c="dimmed">
+                  <Table.Th fz="md" fw={700} c="dimmed">
                     Time
                   </Table.Th>
-                  <Table.Th fw={700} c="dimmed" ta="center">
+                  <Table.Th fz="md" fw={700} c="dimmed" ta="center">
                     Condition
                   </Table.Th>
-                  <Table.Th fw={700} c="dimmed" ta="right">
+                  <Table.Th fz="md" fw={700} c="dimmed" ta="right">
                     Precipitation
                   </Table.Th>
-                  <Table.Th fw={700} c="dimmed" ta="right">
+                  <Table.Th fz="md" fw={700} c="dimmed" ta="right">
                     Humidity
                   </Table.Th>
-                  <Table.Th fw={700} c="dimmed" ta="right">
+                  <Table.Th fz="md" fw={700} c="dimmed" ta="right">
                     Wind
                   </Table.Th>
-                  <Table.Th fw={700} c="dimmed" ta="right">
+                  <Table.Th fz="md" fw={700} c="dimmed" ta="right">
                     Temp
                   </Table.Th>
                 </Table.Tr>
@@ -487,16 +487,16 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
                       <Table.Td tt="capitalize" c="dimmed" fw={600} ta="center">
                         {symbol.replace('_', ' ')}
                       </Table.Td>
-                      <Table.Td ta="right" c="dimmed">
+                      <Table.Td fz="md" ta="right" c="dimmed">
                         🌧️ {precip} mm
                       </Table.Td>
-                      <Table.Td ta="right" c="dimmed">
+                      <Table.Td fz="md" ta="right" c="dimmed">
                         💧 {hum}%
                       </Table.Td>
-                      <Table.Td ta="right" c="dimmed">
+                      <Table.Td fz="md" ta="right" c="dimmed">
                         🌬️ {wind} m/s
                       </Table.Td>
-                      <Table.Td ta="right" fw={800}>
+                      <Table.Td fz="md" ta="right" fw={800}>
                         {temp}°C
                       </Table.Td>
                     </Table.Tr>
