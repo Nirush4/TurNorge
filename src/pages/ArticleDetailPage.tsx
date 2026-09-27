@@ -45,16 +45,15 @@ export function ArticleDetailPage() {
   }
 
   return (
-    <Container size="md" py="xl" px={0} component="main">
+    <Container size="lg" py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
       <Stack gap="lg">
         <Button
           component={Link}
           to="/"
-          variant="subtle"
+          variant="outline"
           color="teal"
           leftSection={<ArrowLeft size={16} />}
           w="fit-content"
-          p={0}
         >
           Back to Home
         </Button>
@@ -64,11 +63,11 @@ export function ArticleDetailPage() {
             <Badge variant="light" color="teal" size="lg" radius="sm">
               {article.category}
             </Badge>
-            <Group gap={4} c="dimmed" fz="sm" align="center">
+            <Group gap={4} c="dimmed" fz={{ base: 'sm', md: 'md' }} align="center">
               <MapPin size={14} />
               <span>{article.region}</span>
             </Group>
-            <Group gap={4} c="dimmed" fz="sm" align="center">
+            <Group gap={4} c="dimmed" fz={{ base: 'sm', md: 'md' }} align="center">
               <Calendar size={14} />
               <span>{article.date}</span>
             </Group>
@@ -91,7 +90,7 @@ export function ArticleDetailPage() {
             border: `1px solid ${borderColor}`,
           }}
         >
-          <Image src={article.image} alt={article.title} h={360} w="100%" fit="cover" />
+          <Image src={article.image} alt={article.title} h="auto" w="100%" fit="cover" />
         </Box>
 
         <Card
@@ -102,7 +101,14 @@ export function ArticleDetailPage() {
         >
           <Stack gap="md">
             {article.content.map((paragraph, index) => (
-              <Text key={index} size="md" c={bodyColor} lh={1.7} style={{ whiteSpace: 'pre-line' }}>
+              <Text
+                key={index}
+                size="md"
+
+                c={bodyColor}
+                lh={1.7}
+                style={{ whiteSpace: 'pre-line' }}
+              >
                 {paragraph}
               </Text>
             ))}
@@ -112,7 +118,7 @@ export function ArticleDetailPage() {
         <Divider my="md" />
 
         <Group justify="space-between" align="center" wrap="wrap" gap="md">
-          <Text size="sm" c="dimmed">
+          <Text size="md" c="dimmed">
             Ready to explore this destination? Check out our interactive route planner.
           </Text>
           <Button component={Link} to="/planner" color="teal">
