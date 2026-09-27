@@ -21,6 +21,8 @@ import {
   Landmark,
   ShieldCheck,
   CheckCircle2,
+  MapPin,
+  Sparkles,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { HikingArticlesSection } from '@/components/home/HikingArticlesSection';
@@ -41,8 +43,8 @@ const FEATURES = [
   },
   {
     icon: ShieldCheck,
-    title: 'Local-first favorites',
-    body: 'Saved routes stay in your browser. Nothing is required to log in; this is a free public utility, not a tracking product.',
+    title: 'Account synced favorites',
+    body: 'Log in to save your favorite routes and access them securely across any device, keeping your hiking plans backed up.',
     featured: false,
   },
 ] as const;
@@ -54,6 +56,8 @@ const POPULAR_REGIONS = [
     image:
       'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=1200&auto=format&fit=crop',
     tag: 'Alpine Ridges',
+    elevation: '2,469m peak',
+    routesCount: '42 trails',
     main: true,
   },
   {
@@ -62,6 +66,8 @@ const POPULAR_REGIONS = [
     image:
       'https://images.unsplash.com/photo-1601823984263-b87b59798b70?q=80&w=1000&auto=format&fit=crop',
     tag: 'Coastal Peaks',
+    elevation: 'Sea to Summit',
+    routesCount: '28 trails',
     main: false,
   },
   {
@@ -70,6 +76,8 @@ const POPULAR_REGIONS = [
     image:
       'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=800&auto=format&fit=crop',
     tag: 'Vast Plateaus',
+    elevation: 'High Plateau',
+    routesCount: '35 trails',
     main: false,
   },
 ] as const;
@@ -227,7 +235,7 @@ export function HomePage() {
         <Stack gap={120} pb={100}>
           <Box component="section" aria-labelledby="features-heading">
             <Box mb="xl" maw={600}>
-              <Badge variant="outline" color="teal" size="sm" radius="sm" mb="xs">
+              <Badge variant="outline" color="teal" size="md" radius="sm" mb="xs">
                 Platform Standards
               </Badge>
               <Title
@@ -235,7 +243,7 @@ export function HomePage() {
                 order={2}
                 size="h1"
                 c={headingColor}
-                fw={800}
+                fz={{ base: '1.7rem', sm: '2.5rem' }}
                 style={{ letterSpacing: '-0.02em' }}
               >
                 Why use TurNorge?
@@ -279,7 +287,7 @@ export function HomePage() {
                             <feature.icon size={28} />
                           </ThemeIcon>
                           {isFeatured && (
-                            <Badge variant="light" color="teal" size="sm">
+                            <Badge variant="light" color="teal" size="md">
                               Core Protocol
                             </Badge>
                           )}
@@ -289,13 +297,14 @@ export function HomePage() {
                           order={3}
                           size={isFeatured ? 'h2' : 'h3'}
                           c={headingColor}
+                          fz={{ base: '1.4rem', sm: '1.9rem' }}
                           mb={12}
                           fw={700}
                         >
                           {feature.title}
                         </Title>
 
-                        <Text size="md" c={bodyColor} lh={1.7}>
+                        <Text size={'lg'} c={bodyColor} lh={1.7}>
                           {feature.body}
                         </Text>
                       </div>
@@ -306,10 +315,18 @@ export function HomePage() {
             </Grid>
           </Box>
 
+          {/* Modernized Featured Regions Section */}
           <Box component="section" aria-labelledby="regions-heading">
-            <Group justify="space-between" align="flex-end" mb="xl">
+            <Group justify="space-between" align="flex-end" mb="xl" wrap="wrap" gap="md">
               <Box maw={600}>
-                <Badge variant="outline" color="teal" size="sm" radius="sm" mb="xs">
+                <Badge
+                  variant="light"
+                  color="teal"
+                  size="md"
+                  radius="sm"
+                  mb="xs"
+                  leftSection={<Sparkles size={14} />}
+                >
                   Destinations
                 </Badge>
                 <Title
@@ -317,7 +334,7 @@ export function HomePage() {
                   order={2}
                   size="h1"
                   c={headingColor}
-                  fw={800}
+                  fz={{ base: '1.7rem', sm: '2.5rem' }}
                   style={{ letterSpacing: '-0.02em' }}
                 >
                   Featured Regions
@@ -331,7 +348,7 @@ export function HomePage() {
                 to="/explore"
                 variant="subtle"
                 color="teal"
-                size="md"
+                size="lg"
                 rightSection={<ArrowRight size={16} />}
                 visibleFrom="sm"
                 style={{ fontWeight: 600 }}
@@ -343,46 +360,77 @@ export function HomePage() {
             <Grid gutter="lg">
               <Grid.Col span={{ base: 12, md: 7 }}>
                 <Card
-                  padding="xl"
+                  padding="lg"
                   radius="lg"
-                  withBorder
                   component={Link}
                   to="/explore"
                   style={{
-                    backgroundColor: cardBackground,
-                    height: '420px',
+                    backgroundColor: 'transparent',
+                    height: '460px',
                     display: 'flex',
                     flexDirection: 'column',
-                    justifyContent: 'flex-end',
-                    backgroundImage: `linear-gradient(to top, rgba(7,16,11,0.95) 0%, rgba(7,16,11,0.7) 45%, rgba(7,16,11,0.25) 75%, transparent 100%), url(${POPULAR_REGIONS[0].image})`,
+                    justifyContent: 'space-between',
+                    backgroundImage: `linear-gradient(to top, rgba(7,16,11,0.92) 0%, rgba(7,16,11,0.5) 50%, rgba(7,16,11,0.15) 100%), url(${POPULAR_REGIONS[0].image})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     textDecoration: 'none',
+                    border: `1px solid ${borderColor}`,
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                    boxShadow: isDark
+                      ? '0 12px 35px rgba(0,0,0,0.4)'
+                      : '0 12px 35px rgba(17,34,25,0.08)',
                   }}
                 >
-                  <Badge
-                    variant="filled"
-                    color="teal"
-                    size="sm"
-                    radius="sm"
-                    w="fit-content"
-                    mb="sm"
-                  >
-                    {POPULAR_REGIONS[0].tag}
-                  </Badge>
-                  <Title
-                    order={3}
-                    size="h1"
-                    c="#ffffff"
-                    mb={8}
-                    fw={800}
-                    style={{ letterSpacing: '-0.02em' }}
-                  >
-                    {POPULAR_REGIONS[0].title}
-                  </Title>
-                  <Text size="lg" c="rgba(255,255,255,0.85)">
-                    {POPULAR_REGIONS[0].subtitle}
-                  </Text>
+                  <Group justify="space-between" align="flex-start">
+                    <Badge
+                      variant="filled"
+                      color="teal"
+                      size="md"
+                      radius="sm"
+                      style={{ backdropFilter: 'blur(8px)' }}
+                    >
+                      {POPULAR_REGIONS[0].tag}
+                    </Badge>
+                    <Group
+                      gap={8}
+                      style={{
+                        backgroundColor: 'rgba(0,0,0,0.4)',
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        backdropFilter: 'blur(8px)',
+                      }}
+                    >
+                      <MapPin size={14} color="#38bdf8" />
+                      <Text size="sm" c="white" fw={600}>
+                        {POPULAR_REGIONS[0].routesCount}
+                      </Text>
+                    </Group>
+                  </Group>
+
+                  <Stack gap={6}>
+                    <Text
+                      size="sm"
+                      c="teal"
+                      fw={600}
+                      tt="uppercase"
+                      style={{ letterSpacing: '0.05em' }}
+                    >
+                      {POPULAR_REGIONS[0].elevation}
+                    </Text>
+                    <Title
+                      order={3}
+                      size="h1"
+                      c="#ffffff"
+
+                      style={{ letterSpacing: '-0.02em' }}
+                      fz={{ base: '1.4rem', sm: '1.9rem' }}
+                    >
+                      {POPULAR_REGIONS[0].title}
+                    </Title>
+                    <Text size="lg" c="rgba(255,255,255,0.85)" maw={500}>
+                      {POPULAR_REGIONS[0].subtitle}
+                    </Text>
+                  </Stack>
                 </Card>
               </Grid.Col>
 
@@ -393,43 +441,71 @@ export function HomePage() {
                       key={region.title}
                       padding="lg"
                       radius="lg"
-                      withBorder
                       component={Link}
                       to="/explore"
                       style={{
-                        backgroundColor: cardBackground,
-                        height: '194px',
+                        backgroundColor: 'transparent',
+                        height: '214px',
                         display: 'flex',
                         flexDirection: 'column',
-                        justifyContent: 'flex-end',
-                        backgroundImage: `linear-gradient(to top, rgba(7,16,11,0.95) 0%, rgba(7,16,11,0.7) 45%, rgba(7,16,11,0.2) 80%, transparent 100%), url(${region.image})`,
+                        justifyContent: 'space-between',
+                        backgroundImage: `linear-gradient(to top, rgba(7,16,11,0.92) 0%, rgba(7,16,11,0.5) 55%, rgba(7,16,11,0.15) 100%), url(${region.image})`,
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         textDecoration: 'none',
-                        boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                        border: `1px solid ${borderColor}`,
+                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                        boxShadow: isDark
+                          ? '0 8px 25px rgba(0,0,0,0.3)'
+                          : '0 8px 25px rgba(17,34,25,0.06)',
                       }}
                     >
-                      <Badge
-                        variant="filled"
-                        color="teal"
-                        size="xs"
-                        radius="sm"
-                        w="fit-content"
-                        mb="xs"
-                      >
-                        {region.tag}
-                      </Badge>
-                      <Title order={3} size="h3" c="#ffffff" mb={4} fw={700}>
-                        {region.title}
-                      </Title>
-                      <Text size="sm" c="rgba(255,255,255,0.8)">
-                        {region.subtitle}
-                      </Text>
+                      <Group justify="space-between" align="flex-start">
+                        <Badge variant="filled" color="teal" size="sm" radius="sm">
+                          {region.tag}
+                        </Badge>
+                        <Text
+                          size="sm"
+                          c="rgba(255,255,255,0.9)"
+                          fw={600}
+                          style={{
+                            backgroundColor: 'rgba(0,0,0,0.4)',
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                          }}
+                        >
+                          {region.routesCount}
+                        </Text>
+                      </Group>
+
+                      <Box>
+                        <Title order={3} size="h3" c="#ffffff" mb={2} fw={700}>
+                          {region.title}
+                        </Title>
+                        <Text size="md" c="rgba(255,255,255,0.8)" lineClamp={1}>
+                          {region.subtitle}
+                        </Text>
+                      </Box>
                     </Card>
                   ))}
                 </Stack>
               </Grid.Col>
             </Grid>
+
+            <Button
+              component={Link}
+              to="/explore"
+              variant="light"
+              color="teal"
+              size="md"
+              fullWidth
+              mt="xl"
+              hiddenFrom="sm"
+              rightSection={<ArrowRight size={16} />}
+              style={{ fontWeight: 600 }}
+            >
+              View all trails
+            </Button>
           </Box>
 
           <Box component="section">
@@ -461,10 +537,10 @@ export function HomePage() {
                   order={2}
                   size="h1"
                   c={headingColor}
-                  fw={800}
+                  fz={{ base: '1.7rem', sm: '2.5rem' }}
                   style={{ letterSpacing: '-0.02em' }}
                 >
-                  Fjellvettreglene for Safe Trips
+                  Mountain Safety Code for Safe Trips
                 </Title>
                 <Text size="lg" c={bodyColor} mt={12}>
                   Norway's historic code of conduct for safe mountain touring, adapted for modern
@@ -498,7 +574,7 @@ export function HomePage() {
                     <Title order={3} size="h3" c={headingColor} mb={10} fw={700}>
                       {tip.title}
                     </Title>
-                    <Text size="md" c={bodyColor} lh={1.7}>
+                    <Text size="lg" c={bodyColor} lh={1.7}>
                       {tip.description}
                     </Text>
                   </Card>
@@ -525,10 +601,16 @@ export function HomePage() {
                   <Bookmark size={26} />
                 </ThemeIcon>
                 <div>
-                  <Title order={2} id="storage-status-heading" size="h3" c={headingColor} fw={700}>
+                  <Title
+                    order={2}
+                    id="storage-status-heading"
+                    size="h3"
+                    c={headingColor}
+                    fz={{ base: '1.7rem', sm: '2.2rem' }}
+                  >
                     Local Storage Status
                   </Title>
-                  <Text size="md" c={bodyColor} mt={4}>
+                  <Text size="lg" c={bodyColor} mt={4}>
                     {savedRoutes.length === 0
                       ? 'No saved routes yet. Pin a trail or generate a plan to keep it on this device.'
                       : `${savedRoutes.length} active route${savedRoutes.length === 1 ? '' : 's'} securely saved to browser storage.`}
