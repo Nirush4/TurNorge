@@ -304,7 +304,7 @@ export function ExplorePage() {
           <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={isDark ? '#eef4f1' : 'dark.7'}>
             Live Norwegian Explore
           </Title>
-          <Text mt="xs" c={isDark ? 'gray.4' : 'dark.3'}>
+          <Text mt="xs" fz="lg" c={isDark ? 'gray.4' : 'dark.3'}>
             Direct integration with Kartverket maps, MET.no weather stations, and Entur live
             transport networks.
           </Text>
@@ -324,14 +324,14 @@ export function ExplorePage() {
           <Box role="status" aria-live="polite" py="md">
             <Group gap="xs">
               <Loader size="sm" color="teal" />
-              <Text size="sm" c="dimmed">
+              <Text size="md" c="dimmed">
                 Querying Kartverket database...
               </Text>
             </Group>
           </Box>
         ) : (
           <Stack gap="md" aria-live="polite">
-            <Text size="sm" c="dimmed" id="results-count-announcement">
+            <Text size="lg" c="dimmed" id="results-count-announcement">
               Showing {displayedTrails.length} of {filteredTrails.length} available trails
             </Text>
 
@@ -352,6 +352,7 @@ export function ExplorePage() {
                 <Button
                   variant="default"
                   color="pine"
+                  size="md"
                   leftSection={<IconChevronDown size={16} />}
                   onClick={() => setVisibleTrailCount((prev) => prev + 10)}
                   aria-label="Load more destination trails"
