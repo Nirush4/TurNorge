@@ -42,7 +42,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useFavorites } from '@/hooks/useFavorites';
 import { HikingLoader } from '@/components/HikingLoader';
 
-const COVER_HEIGHT = 220;
+const COVER_HEIGHT = 300;
 const AVATAR_SIZE = 120;
 
 interface FavoriteRoute {
@@ -231,8 +231,9 @@ export function Profile(): JSX.Element {
                 <Avatar
                   src={profile.avatar_url}
                   size={AVATAR_SIZE}
+                  bg="white"
                   radius={AVATAR_SIZE}
-                  style={{ border: `4px solid ${isDark ? '#0f1a15' : '#ffffff'}` }}
+                  style={{ border: `3px solid #ffffff` }}
                 >
                   {!profile.avatar_url && (profile.username?.[0] ?? user.email?.[0])}
                 </Avatar>
@@ -285,20 +286,20 @@ export function Profile(): JSX.Element {
             </Title>
             <Group gap={6} mt={4}>
               <Mail size={14} color="#82aca0" />
-              <Text size="sm" c={bodyColor}>
+              <Text size="md" c={bodyColor}>
                 {user.email}
               </Text>
             </Group>
             {profile.location && (
               <Group gap={6} mt={2}>
                 <MapPin size={14} color="#82aca0" />
-                <Text size="sm" c={bodyColor}>
+                <Text size="md" c={bodyColor}>
                   {profile.location}
                 </Text>
               </Group>
             )}
             {profile.bio && (
-              <Text size="sm" mt="xs" c={bodyColor} style={{ lineHeight: 1.5 }}>
+              <Text size="md" mt="xs" c={bodyColor} style={{ lineHeight: 1.5 }}>
                 {profile.bio}
               </Text>
             )}
@@ -307,7 +308,7 @@ export function Profile(): JSX.Element {
           <Button
             variant="outline"
             color="teal"
-            size="xs"
+            size="sm"
             leftSection={<Pencil size={14} />}
             onClick={() => setEditOpen(true)}
           >
@@ -317,15 +318,15 @@ export function Profile(): JSX.Element {
 
         {/* Saved favorites section */}
         <div>
-          <Group justify="space-between" mb="sm">
-            <Title order={4} c={headingColor}>
+          <Group justify="space-between" my="lg">
+            <Title order={4} fz={{ base: '1.5rem', sm: '2rem' }} c={headingColor}>
               Saved Favorites
             </Title>
             {favorites.length > 0 && (
               <Badge
                 variant="light"
                 color="teal"
-                size="sm"
+                size="xl"
                 leftSection={<BookmarkCheck size={12} />}
               >
                 {favorites.length}
@@ -338,7 +339,7 @@ export function Profile(): JSX.Element {
               <Loader color="teal" size="sm" />
             </Center>
           ) : favorites.length === 0 ? (
-            <Text size="sm" c={bodyColor}>
+            <Text size="md" c={bodyColor}>
               No saved routes yet. Explore trails to add some favorites!
             </Text>
           ) : (
@@ -367,7 +368,7 @@ export function Profile(): JSX.Element {
                       <div>
                         {fav.mode && (
                           <Badge
-                            size="sm"
+                            size="md"
                             variant="light"
                             color="teal"
                             radius="sm"
@@ -390,7 +391,7 @@ export function Profile(): JSX.Element {
                       <Button
                         variant="outline"
                         color="red"
-                        size="xs"
+                        size="sm"
                         radius="md"
                         leftSection={<Trash2 size={14} />}
                         onClick={() => handleRemoveFavorite(fav.id, fav.location_name)}
@@ -412,7 +413,7 @@ export function Profile(): JSX.Element {
                           border: `1px solid ${borderColor}`,
                         }}
                       >
-                        <Text size="sm" c={bodyColor} style={{ lineHeight: 1.6 }}>
+                        <Text size="md" c={bodyColor} style={{ lineHeight: 1.6 }}>
                           {fav.notes}
                         </Text>
                       </Box>
@@ -429,13 +430,13 @@ export function Profile(): JSX.Element {
                     {fav.location_lat != null && fav.location_lng != null && (
                       <Group gap={6} wrap="nowrap">
                         <ThemeIcon size={28} radius="sm" variant="light" color="teal">
-                          <MapPin size={14} />
+                          <MapPin size={24} />
                         </ThemeIcon>
                         <div>
-                          <Text size="10px" c="dimmed" tt="uppercase" fw={700}>
+                          <Text size="14px" c="dimmed" tt="uppercase" fw={700}>
                             Coords
                           </Text>
-                          <Text size="xs" c={headingColor} fw={600}>
+                          <Text size="md" c={headingColor} fw={600}>
                             {fav.location_lat.toFixed(1)}°, {fav.location_lng.toFixed(1)}°
                           </Text>
                         </div>
@@ -445,13 +446,13 @@ export function Profile(): JSX.Element {
                     {fav.trip_duration_days && (
                       <Group gap={6} wrap="nowrap">
                         <ThemeIcon size={28} radius="sm" variant="light" color="teal">
-                          <Compass size={14} />
+                          <Compass size={24} />
                         </ThemeIcon>
                         <div>
-                          <Text size="10px" c="dimmed" tt="uppercase" fw={700}>
+                          <Text size="14px" c="dimmed" tt="uppercase" fw={700}>
                             Duration
                           </Text>
-                          <Text size="xs" c={headingColor} fw={600}>
+                          <Text size="md" c={headingColor} fw={600}>
                             {fav.trip_duration_days} Day{fav.trip_duration_days === 1 ? '' : 's'}
                           </Text>
                         </div>
@@ -461,13 +462,13 @@ export function Profile(): JSX.Element {
                     {fav.elevation_m && (
                       <Group gap={6} wrap="nowrap">
                         <ThemeIcon size={28} radius="sm" variant="light" color="teal">
-                          <Mountain size={14} />
+                          <Mountain size={24} />
                         </ThemeIcon>
                         <div>
-                          <Text size="10px" c="dimmed" tt="uppercase" fw={700}>
+                          <Text size="14px" c="dimmed" tt="uppercase" fw={700}>
                             Elevation
                           </Text>
-                          <Text size="xs" c={headingColor} fw={600}>
+                          <Text size="md" c={headingColor} fw={600}>
                             {fav.elevation_m}m
                           </Text>
                         </div>
@@ -476,13 +477,13 @@ export function Profile(): JSX.Element {
 
                     <Group gap={6} wrap="nowrap">
                       <ThemeIcon size={28} radius="sm" variant="light" color="teal">
-                        <Calendar size={14} />
+                        <Calendar size={24} />
                       </ThemeIcon>
                       <div>
-                        <Text size="10px" c="dimmed" tt="uppercase" fw={700}>
+                        <Text size="14px" c="dimmed" tt="uppercase" fw={700}>
                           Saved
                         </Text>
-                        <Text size="xs" c={headingColor} fw={600}>
+                        <Text size="md" c={headingColor} fw={600}>
                           {fav.added_at ? new Date(fav.added_at).toLocaleDateString() : 'Recent'}
                         </Text>
                       </div>
