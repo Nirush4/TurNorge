@@ -40,14 +40,14 @@ export function ToolkitPage() {
   };
 
   return (
-    <Container size="lg" py="md" px="0" component="main" mih="100dvh">
+    <Container size="lg" py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
       <Stack gap="lg">
         <section aria-labelledby="toolkit-heading">
           <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={isDark ? '#eef4f1' : 'dark.7'}>
             Allemannsretten & Safety Toolkit
           </Title>
 
-          <Text mt="xs" c={isDark ? '#c3d1c9' : 'dimmed'}>
+          <Text mt="xs" size="lg" c={isDark ? '#c3d1c9' : 'dimmed'}>
             Norway’s Right to Roam gives you open access to nature, balanced by strict
             responsibilities to protect fragile wilderness, prevent wildfires, and ensure personal
             mountain safety.
@@ -57,12 +57,12 @@ export function ToolkitPage() {
         <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
           <Card withBorder padding="md" radius="md">
             <Group gap="xs" mb="xs">
-              <Compass size={18} color="#2d7a4f" aria-hidden="true" />
-              <Text fw={600} size="sm" c={isDark ? '#eef4f1' : 'dark.8'}>
+              <Compass size={24} color="#2d7a4f" aria-hidden="true" />
+              <Text fw={600} size="lg" c={isDark ? '#eef4f1' : 'dark.8'}>
                 Utmark vs. Innmark
               </Text>
             </Group>
-            <Text size="xs" c={isDark ? '#c3d1c9' : 'dimmed'}>
+            <Text size="md" c={isDark ? '#c3d1c9' : 'dimmed'}>
               Roam freely on uncultivated land (utmark). Keep clear of fenced pastures, private
               gardens, and active farmland (innmark).
             </Text>
@@ -70,12 +70,12 @@ export function ToolkitPage() {
 
           <Card withBorder padding="md" radius="md">
             <Group gap="xs" mb="xs">
-              <Flame size={18} color="#e07a5f" aria-hidden="true" />
-              <Text fw={600} size="sm" c={isDark ? '#eef4f1' : 'dark.8'}>
+              <Flame size={24} color="#e07a5f" aria-hidden="true" />
+              <Text fw={600} size="lg" c={isDark ? '#eef4f1' : 'dark.8'}>
                 Bålforbud Season
               </Text>
             </Group>
-            <Text size="xs" c={isDark ? '#c3d1c9' : 'dimmed'}>
+            <Text size="md" c={isDark ? '#c3d1c9' : 'dimmed'}>
               Strict general ban on open campfires in or near forests from April 15 to September 15.
               Use approved stoves on rock.
             </Text>
@@ -83,12 +83,12 @@ export function ToolkitPage() {
 
           <Card withBorder padding="md" radius="md">
             <Group gap="xs" mb="xs">
-              <ShieldAlert size={18} color="#d90429" aria-hidden="true" />
-              <Text fw={600} size="sm" c={isDark ? '#eef4f1' : 'dark.8'}>
+              <ShieldAlert size={24} color="#d90429" aria-hidden="true" />
+              <Text fw={600} size="lg" c={isDark ? '#eef4f1' : 'dark.8'}>
                 Weather Volatility
               </Text>
             </Group>
-            <Text size="xs" c={isDark ? '#c3d1c9' : 'dimmed'}>
+            <Text size="md" c={isDark ? '#c3d1c9' : 'dimmed'}>
               Mountain weather changes instantly. Fog, snow, and severe wind can set in even during
               summer months above the treeline.
             </Text>
@@ -98,14 +98,14 @@ export function ToolkitPage() {
         <Accordion variant="separated" defaultValue="roam">
           <Accordion.Item value="roam">
             <Accordion.Control
-              icon={<Compass size={16} color={isDark ? '#70c77a' : '#2d7a2f'} aria-hidden="true" />}
+              icon={<Compass size={24} color={isDark ? '#70c77a' : '#2d7a2f'} aria-hidden="true" />}
             >
-              <Text fw={600} c={isDark ? '#eef4f1' : 'dark.8'}>
+              <Text fw={600} size="lg" c={isDark ? '#eef4f1' : 'dark.8'}>
                 The Right to Roam (Allemannsretten)
               </Text>
             </Accordion.Control>
             <Accordion.Panel>
-              <Text size="sm" c={isDark ? '#c3d1c9' : 'dark.7'} style={{ lineHeight: 1.6 }}>
+              <Text size="md" c={isDark ? '#c3d1c9' : 'dark.7'} style={{ lineHeight: 1.6 }}>
                 Enshrined in the Outdoor Recreation Act of 1957, everyone can walk, ski, and cycle
                 on uncultivated land. You are permitted to forage for wild berries, mushrooms, and
                 flowers (except protected species). Always close farm gates behind you and respect
@@ -117,15 +117,15 @@ export function ToolkitPage() {
           <Accordion.Item value="camp">
             <Accordion.Control
               icon={
-                <Backpack size={16} color={isDark ? '#70c77a' : '#2d7a2f'} aria-hidden="true" />
+                <Backpack size={24} color={isDark ? '#70c77a' : '#2d7a2f'} aria-hidden="true" />
               }
             >
-              <Text fw={600} c={isDark ? '#eef4f1' : 'dark.8'}>
+              <Text fw={600} size="lg" c={isDark ? '#eef4f1' : 'dark.8'}>
                 Wild Camping Rules & Distance Limits
               </Text>
             </Accordion.Control>
             <Accordion.Panel>
-              <Text size="sm" c={isDark ? '#c3d1c9' : 'dark.7'} style={{ lineHeight: 1.6 }}>
+              <Text size="md" c={isDark ? '#c3d1c9' : 'dark.7'} style={{ lineHeight: 1.6 }}>
                 You may pitch a tent for up to two nights in the same spot on uncultivated land
                 without landowner permission. Tents must be placed at least{' '}
                 <strong style={{ color: isDark ? '#ffffff' : 'inherit' }}>150 metres</strong> away
@@ -137,18 +137,18 @@ export function ToolkitPage() {
 
           <Accordion.Item value="fire">
             <Accordion.Control
-              icon={<Flame size={16} color={isDark ? '#70c77a' : '#2d7a2f'} aria-hidden="true" />}
+              icon={<Flame size={24} color={isDark ? '#70c77a' : '#2d7a2f'} aria-hidden="true" />}
             >
-              <Text fw={600} c={isDark ? '#eef4f1' : 'dark.8'}>
+              <Text fw={600} size="lg" c={isDark ? '#eef4f1' : 'dark.8'}>
                 Campfires & Outdoor Cooking Regulations
               </Text>
             </Accordion.Control>
             <Accordion.Panel>
-              <Text size="sm" c={isDark ? '#c3d1c9' : 'dark.7'} style={{ lineHeight: 1.6 }}>
+              <Text size="md" c={isDark ? '#c3d1c9' : 'dark.7'} style={{ lineHeight: 1.6 }}>
                 Open fires are prohibited from{' '}
                 <strong style={{ color: isDark ? '#ffffff' : 'inherit' }}>
                   April 15 to September 15
-                </strong>{' '}
+                </strong>
                 near forests and woodlands. Gas and liquid-fueled camping stoves are generally
                 allowed unless conditions are exceptionally dry. If a fire is legally permitted, use
                 existing fire rings on mineral ground (rock/sand), never on moss or peat.
@@ -159,15 +159,15 @@ export function ToolkitPage() {
           <Accordion.Item value="waste">
             <Accordion.Control
               icon={
-                <Droplets size={16} color={isDark ? '#70c77a' : '#2d7a2f'} aria-hidden="true" />
+                <Droplets size={24} color={isDark ? '#70c77a' : '#2d7a2f'} aria-hidden="true" />
               }
             >
-              <Text fw={600} c={isDark ? '#eef4f1' : 'dark.8'}>
+              <Text fw={600} size="lg" c={isDark ? '#eef4f1' : 'dark.8'}>
                 Water Safety & Leave No Trace Waste
               </Text>
             </Accordion.Control>
             <Accordion.Panel>
-              <Text size="sm" c={isDark ? '#c3d1c9' : 'dark.7'} style={{ lineHeight: 1.6 }}>
+              <Text size="md" c={isDark ? '#c3d1c9' : 'dark.7'} style={{ lineHeight: 1.6 }}>
                 While Norwegian mountain water looks pristine, always check app advisories or
                 boil/filter water downstream from grazing animals. Pack out all trash, fruit peels,
                 and wet wipes. Human waste should be buried 15–20 cm deep at least 60 metres away
@@ -179,15 +179,15 @@ export function ToolkitPage() {
           <Accordion.Item value="emergency">
             <Accordion.Control
               icon={
-                <PhoneCall size={16} color={isDark ? '#70c77a' : '#2d7a2f'} aria-hidden="true" />
+                <PhoneCall size={24} color={isDark ? '#70c77a' : '#2d7a2f'} aria-hidden="true" />
               }
             >
-              <Text fw={600} c={isDark ? '#eef4f1' : 'dark.8'}>
+              <Text fw={600} size="lg" c={isDark ? '#eef4f1' : 'dark.8'}>
                 Emergency Contacts & Mountain Rescue
               </Text>
             </Accordion.Control>
             <Accordion.Panel>
-              <List size="sm" spacing="xs" c={isDark ? '#c3d1c9' : 'dark.7'}>
+              <List size="md" spacing="xs" c={isDark ? '#c3d1c9' : 'dark.7'}>
                 <List.Item>
                   <strong style={{ color: isDark ? '#ffffff' : 'inherit' }}>112</strong> — Police &
                   Main Rescue Coordination Centre (JRCC)
@@ -205,7 +205,7 @@ export function ToolkitPage() {
                   Non-emergency medical consultation (Legevakt)
                 </List.Item>
               </List>
-              <Text size="sm" mt="sm" c={isDark ? '#c3d1c9' : 'dark.7'} style={{ lineHeight: 1.6 }}>
+              <Text size="md" mt="sm" c={isDark ? '#c3d1c9' : 'dark.7'} style={{ lineHeight: 1.6 }}>
                 Cell coverage can be sparse in deep valleys. Note your precise coordinates using
                 Kartverket grids before calling.
               </Text>
@@ -224,14 +224,19 @@ export function ToolkitPage() {
           }}
         >
           <Group justify="space-between">
-            <Title order={3} id="checklist-heading" c={isDark ? '#eef4f1' : 'dark.7'}>
+            <Title
+              order={2}
+              fz={{ base: '1.4rem', sm: '1.9rem' }}
+              id="checklist-heading"
+              c={isDark ? '#eef4f1' : 'dark.7'}
+            >
               Pre-Hike Safety Checklist
             </Title>
             <Badge variant="light" color="forest" size="lg">
               {checked.length} / {CHECKLIST.length} ready
             </Badge>
           </Group>
-          <Text size="sm" mt="xs" mb="md" c={isDark ? '#c3d1c9' : 'dimmed'}>
+          <Text size="lg" mt="xs" mb="md" c={isDark ? '#c3d1c9' : 'dimmed'}>
             Your progress is saved automatically in your browser storage.
           </Text>
           <Stack gap="md">
@@ -239,7 +244,7 @@ export function ToolkitPage() {
               <Checkbox
                 key={item.id}
                 label={
-                  <Text size="sm" c={isDark ? '#eef4f1' : 'dark.8'}>
+                  <Text size="lg" c={isDark ? '#eef4f1' : 'dark.8'}>
                     {item.label}
                   </Text>
                 }

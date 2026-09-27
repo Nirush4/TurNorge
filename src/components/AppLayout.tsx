@@ -1,12 +1,37 @@
 import { useState } from 'react';
-import { AppShell, Burger, Group, NavLink, Stack, Container, Box } from '@mantine/core';
-import { Compass, Home, Shield, Sparkles, BookmarkCheck } from 'lucide-react';
-import { NavLink as RouterNavLink, Outlet } from 'react-router-dom';
+import {
+  AppShell,
+  Burger,
+  Group,
+  NavLink,
+  Stack,
+  Container,
+  Box,
+  Avatar,
+  Button,
+  Divider,
+  Text,
+  Menu,
+} from '@mantine/core';
+import {
+  Compass,
+  Home,
+  Shield,
+  Sparkles,
+  BookmarkCheck,
+  LogIn,
+  UserPlus,
+  User,
+  Pencil,
+  LogOut,
+} from 'lucide-react';
+import { NavLink as RouterNavLink, Outlet, useNavigate } from 'react-router-dom';
 import { AccessibilityWrapper } from '@/components/AccessibilityWrapper';
 import { AppFooter } from '@/components/AppFooter';
 import { BrandLogo } from '@/components/BrandLogo';
 import { ColorSchemeToggle } from '@/components/ColorSchemeToggle';
-import { useAppState } from '@/context/AppStateContext';
+import { useAuth } from '@/context/AuthContext';
+import { useFavorites } from '@/hooks/useFavorites';
 
 const BASE_NAV_ITEMS = [
   { to: '/', label: 'Home', icon: Home, end: true },
@@ -17,9 +42,11 @@ const BASE_NAV_ITEMS = [
 
 export function AppLayout() {
   const [mobileOpened, setMobileOpened] = useState(false);
-  const { savedRoutes } = useAppState();
+  const { user, profile, signOut } = useAuth();
+  const { favorites } = useFavorites();
+  const navigate = useNavigate();
 
-  const hasFavorites = Array.isArray(savedRoutes) && savedRoutes.length > 0;
+  const hasFavorites = favorites.length > 0;
 
   const navItems = [
     ...BASE_NAV_ITEMS,
@@ -46,16 +73,25 @@ export function AppLayout() {
                 <Burger
                   opened={mobileOpened}
                   onClick={() => setMobileOpened((open) => !open)}
-                  hiddenFrom="md"
+                  hiddenFrom="lg"
                   size="sm"
                   aria-label="Toggle navigation"
                 />
-                <BrandLogo />
+                <Box
+                  style={{
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  <BrandLogo />
+                </Box>
               </Group>
 
               <Group
                 gap="xs"
-                visibleFrom="md"
+                visibleFrom="lg"
                 component="nav"
                 aria-label="Primary"
                 wrap="nowrap"
@@ -68,17 +104,87 @@ export function AppLayout() {
                     to={item.to}
                     end={item.end}
                     label={item.label}
-                    leftSection={<item.icon size={16} aria-hidden="true" />}
-                    style={{ borderRadius: 8, width: 'auto', flexShrink: 0 }}
+                    leftSection={<item.icon size={18} aria-hidden="true" />}
+                    styles={{
+                      root: { borderRadius: 8, width: 'auto', flexShrink: 0 },
+                      label: { fontSize: '1rem', fontWeight: 500 },
+                    }}
                   />
                 ))}
               </Group>
 
-              <ColorSchemeToggle />
+              <Group gap="sm" wrap="nowrap">
+                {user ? (
+                  <Menu shadow="md" width={200} position="bottom-end" withArrow>
+                    <Menu.Target>
+                      <Avatar
+                        src={profile?.avatar_url}
+                        radius="xl"
+                        size={36}
+                        style={{ cursor: 'pointer' }}
+                        role="button"
+                        aria-label="Open user menu"
+                      >
+                        {!profile?.avatar_url && (profile?.username?.[0] ?? user.email?.[0])}
+                      </Avatar>
+                    </Menu.Target>
+
+                    <Menu.Dropdown>
+                      <Menu.Label style={{ fontSize: '1rem' }}>Account</Menu.Label>
+                      <Menu.Item
+                        leftSection={<Pencil size={16} />}
+                        onClick={() => navigate('/profile')}
+                        style={{ fontSize: '1rem', padding: '8px 12px' }}
+                      >
+                        View Profile
+                      </Menu.Item>
+                      <Menu.Divider />
+                      <Menu.Item
+                        color="red"
+                        leftSection={<LogOut size={16} />}
+                        onClick={() => signOut()}
+                        style={{ fontSize: '1rem', padding: '8px 12px' }}
+                      >
+                        Log Out
+                      </Menu.Item>
+                    </Menu.Dropdown>
+                  </Menu>
+                ) : (
+                  <Group gap={8} wrap="nowrap">
+                    <Button
+                      component={RouterNavLink}
+                      to="/login"
+                      variant="subtle"
+                      color="teal"
+                      size="sm"
+                      leftSection={<LogIn size={16} />}
+                      visibleFrom="xs"
+                      style={{ fontSize: '1rem', fontWeight: 500, height: '36px' }}
+                    >
+                      Log In
+                    </Button>
+                    <Button
+                      component={RouterNavLink}
+                      to="/register"
+                      variant="filled"
+                      color="teal"
+                      size="sm"
+                      leftSection={<UserPlus size={16} />}
+                      visibleFrom="xs"
+                      style={{ fontSize: '1rem', fontWeight: 500, height: '36px' }}
+                    >
+                      Sign Up
+                    </Button>
+                  </Group>
+                )}
+
+                <ColorSchemeToggle />
+              </Group>
             </Group>
           </Container>
         </AppShell.Header>
 
+        {/* Mobile Navigation Drawer */}
         <AppShell.Navbar p="sm">
           <Stack gap="xs" component="nav" aria-label="Mobile">
             {navItems.map((item) => (
@@ -88,10 +194,72 @@ export function AppLayout() {
                 to={item.to}
                 end={item.end}
                 label={item.label}
-                leftSection={<item.icon size={16} aria-hidden="true" />}
+                leftSection={<item.icon size={18} aria-hidden="true" />}
+                styles={{
+                  label: { fontSize: '1.05rem', fontWeight: 500 },
+                }}
                 onClick={() => setMobileOpened(false)}
               />
             ))}
+
+            <Divider my="xs" />
+
+            {user ? (
+              <Stack gap={4}>
+                <NavLink
+                  component={RouterNavLink}
+                  to="/profile"
+                  label={profile?.username || 'My Profile'}
+                  leftSection={
+                    <Avatar src={profile?.avatar_url} radius="xl" size={42}>
+                      {!profile?.avatar_url && <User size={12} />}
+                    </Avatar>
+                  }
+                  styles={{
+                    label: { fontSize: '1.05rem', fontWeight: 500 },
+                  }}
+                  onClick={() => setMobileOpened(false)}
+                />
+                <NavLink
+                  label="Log Out"
+                  content="red"
+                  leftSection={<LogOut size={16} aria-hidden="true" />}
+                  styles={{
+                    label: { fontSize: '1.05rem', fontWeight: 500 },
+                  }}
+                  onClick={() => {
+                    setMobileOpened(false);
+                    signOut();
+                  }}
+                />
+              </Stack>
+            ) : (
+              <Stack gap={6}>
+                <Text size="md" c="dimmed" px="xs">
+                  Sign in to save routes across devices
+                </Text>
+                <NavLink
+                  component={RouterNavLink}
+                  to="/login"
+                  label="Log In"
+                  leftSection={<LogIn size={16} aria-hidden="true" />}
+                  styles={{
+                    label: { fontSize: '1.05rem', fontWeight: 500 },
+                  }}
+                  onClick={() => setMobileOpened(false)}
+                />
+                <NavLink
+                  component={RouterNavLink}
+                  to="/register"
+                  label="Sign Up"
+                  leftSection={<UserPlus size={16} aria-hidden="true" />}
+                  styles={{
+                    label: { fontSize: '1.05rem', fontWeight: 500 },
+                  }}
+                  onClick={() => setMobileOpened(false)}
+                />
+              </Stack>
+            )}
           </Stack>
         </AppShell.Navbar>
 

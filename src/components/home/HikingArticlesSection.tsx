@@ -28,11 +28,17 @@ export function HikingArticlesSection({
             color="var(--mantine-color-teal-6)"
             aria-hidden="true"
           />
-          <Title id="famous-destinations-heading" order={2} size="h2" c={headingColor}>
+          <Title
+            id="famous-destinations-heading"
+            order={2}
+            size="h2"
+            fz={{ base: '1.7rem', sm: '2.5rem' }}
+            c={headingColor}
+          >
             Famous Norwegian Destinations
           </Title>
         </Group>
-        <Text size="sm" c={bodyColor}>
+        <Text size="lg" pb="md" c={bodyColor}>
           Discover iconic mountain ranges, coastal ridges, and legendary trails across Norway.
         </Text>
       </Box>
@@ -66,12 +72,12 @@ export function HikingArticlesSection({
               </Card.Section>
 
               <Group justify="space-between" mb="xs" wrap="nowrap">
-                <Badge size="sm" variant="light" color="teal" radius="sm">
+                <Badge size="md" variant="light" color="teal" radius="sm">
                   {article.category}
                 </Badge>
                 <Group gap={4} align="center">
                   <MapPin size={13} color="var(--mantine-color-dimmed)" aria-hidden="true" />
-                  <Text size="xs" c="dimmed" fw={500}>
+                  <Text size="sm" c="dimmed" fw={500}>
                     {article.region}
                   </Text>
                 </Group>
@@ -80,7 +86,7 @@ export function HikingArticlesSection({
               <Title
                 id={`destination-title-${article.id}`}
                 order={3}
-                size="h4"
+                size="h3"
                 c={headingColor}
                 mb={8}
                 lh={1.3}
@@ -88,7 +94,7 @@ export function HikingArticlesSection({
                 {article.title}
               </Title>
 
-              <Text size="sm" c={bodyColor} lh={1.6} mb="md">
+              <Text size="md" c={bodyColor} lh={1.6} mb="md">
                 {article.summary}
               </Text>
             </div>
@@ -98,7 +104,7 @@ export function HikingArticlesSection({
               to={`/articles/${article.id}`}
               variant="outline"
               color="teal"
-              size="xs"
+              size="sm"
               p={0}
               px="sm"
               rightSection={<ArrowRight size={14} aria-hidden="true" />}

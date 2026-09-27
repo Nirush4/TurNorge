@@ -75,8 +75,20 @@ export function RegionSearchBar({
         withinPortal: true,
       }}
       styles={{
+        label: {
+          fontSize: '1.05rem',
+          fontWeight: 600,
+          marginBottom: '6px',
+        },
+        description: {
+          fontSize: '1rem',
+        },
         input: {
           fontSize: '16px',
+        },
+        option: {
+          fontSize: '1rem',
+          padding: '10px 14px',
         },
       }}
       onKeyDown={(event) => {

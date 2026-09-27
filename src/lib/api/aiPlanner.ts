@@ -1,5 +1,5 @@
-import { fetchMetForecast } from '@/api/metNo';
-import { searchKartverketPlace } from '@/api/kartverket';
+import { fetchMetForecast } from '@/lib/api/metNo';
+import { searchKartverketPlace } from '@/lib/api/kartverket';
 
 import type { GeneratedPlan, ItineraryDay } from '@/types';
 import type { PlannerFormValues } from '@/types/schemas';

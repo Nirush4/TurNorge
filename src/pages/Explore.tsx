@@ -18,12 +18,11 @@ import {
 import { notifications } from '@mantine/notifications';
 import { IconShoppingBag, IconChevronDown } from '@tabler/icons-react';
 
-import { fetchDynamicNorwegianAreas } from '@/api/kartverket';
-import { fetchMetForecast } from '@/api/metNo';
-import { fetchNearestStationDepartures } from '@/api/enturDepartures';
-import { fetchNorwegianShops } from '@/api/shops';
+import { fetchDynamicNorwegianAreas } from '@/lib/api/kartverket';
+import { fetchMetForecast } from '@/lib/api/metNo';
+import { fetchNearestStationDepartures } from '@/lib/api/enturDepartures';
+import { fetchNorwegianShops } from '@/lib/api/shops';
 
-import { useAppState } from '@/context/AppStateContext';
 import type { KartverketPlace, MetLocationForecast } from '@/types/schemas';
 import type { TrailDifficulty, Trail } from '@/types';
 import type { ShopItem } from '@/types/shopItemSchema';
@@ -31,6 +30,7 @@ import type { ShopItem } from '@/types/shopItemSchema';
 import { ExploreFilters } from '@/components/explore/ExploreFilters';
 import { TrailGrid } from '@/components/explore/TrailGrid';
 import { TrailTransitBoard } from '@/components/explore/TrailTransitBoard';
+import { useFavorites } from '@/hooks/useFavorites';
 
 interface StopPlaceData {
   name: string;
@@ -92,7 +92,7 @@ const mapDestinationsToTrails = (destinations: KartverketPlace[]): Trail[] => {
 };
 
 export function ExplorePage() {
-  const { saveRoute } = useAppState();
+  const { addFavorite } = useFavorites();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -104,6 +104,8 @@ export function ExplorePage() {
   const [loadingDestinations, setLoadingDestinations] = useState(true);
 
   const [selectedPlace, setSelectedPlace] = useState<KartverketPlace | null>(null);
+  const [savingFavorite, setSavingFavorite] = useState(false);
+  const [savedFavorite, setSavedFavorite] = useState(false);
 
   const [forecast, setForecast] = useState<MetLocationForecast | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
@@ -138,7 +140,6 @@ export function ExplorePage() {
     };
   }, []);
 
-  // Reset pagination on filter change
   useEffect(() => {
     setVisibleTrailCount(10);
   }, [region, difficulty, duration]);
@@ -181,8 +182,9 @@ export function ExplorePage() {
     return mappedTrails.find((t) => t.id === selectedPlace.ssrId || t.name === selectedPlace.name);
   }, [selectedPlace, mappedTrails]);
 
-  // Load contextual data for the selected place drawer
   useEffect(() => {
+    setSavedFavorite(false);
+
     if (!selectedPlace) {
       setForecast(null);
       setStationData(null);
@@ -251,14 +253,58 @@ export function ExplorePage() {
   const displayedShops = useMemo(() => shops.slice(0, visibleShopCount), [shops, visibleShopCount]);
   const hasMoreShops = visibleShopCount < shops.length;
 
+  const handleSaveDestination = async () => {
+    if (!selectedPlace) return;
+    setSavingFavorite(true);
+
+    const { error } = await addFavorite({
+      location_name: selectedPlace.name,
+      location_lat: selectedPlace.latitude,
+      location_lng: selectedPlace.longitude,
+      elevation_m: null,
+      trip_duration_days: null,
+      mode: selectedTrail?.difficulty ? selectedTrail.difficulty.toUpperCase() : 'STANDARD',
+      external_ref_id: selectedPlace.ssrId ?? null,
+      external_provider: 'kartverket',
+      notes: `Saved destination at lat: ${selectedPlace.latitude}, lon: ${selectedPlace.longitude}`,
+      snapshot_temp_c: currentDetails?.air_temperature ?? null,
+      snapshot_wind_mps: currentDetails?.wind_speed ?? null,
+      snapshot_condition: null,
+    });
+
+    setSavingFavorite(false);
+
+    if (error) {
+      notifications.show({
+        message: `Could not save favorite: ${error}`,
+        styles: {
+          root: { backgroundColor: '#E03131' },
+          description: { color: '#FFFFFF' },
+          closeButton: { color: '#FFFFFF' },
+        },
+      });
+      return;
+    }
+
+    setSavedFavorite(true);
+    notifications.show({
+      message: `${selectedPlace.name} saved in your favorites`,
+      styles: {
+        root: { backgroundColor: '#28726B' },
+        description: { color: '#FFFFFF' },
+        closeButton: { color: '#FFFFFF' },
+      },
+    });
+  };
+
   return (
-    <Container size="lg" py="md" px="0" pb={70} component="main" mih="100dvh">
+    <Container size="lg" py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
       <Stack gap="lg">
         <div>
           <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={isDark ? '#eef4f1' : 'dark.7'}>
             Live Norwegian Explore
           </Title>
-          <Text mt="xs" c={isDark ? 'gray.4' : 'dark.3'}>
+          <Text mt="xs" fz="lg" c={isDark ? 'gray.4' : 'dark.3'}>
             Direct integration with Kartverket maps, MET.no weather stations, and Entur live
             transport networks.
           </Text>
@@ -278,14 +324,14 @@ export function ExplorePage() {
           <Box role="status" aria-live="polite" py="md">
             <Group gap="xs">
               <Loader size="sm" color="teal" />
-              <Text size="sm" c="dimmed">
+              <Text size="md" c="dimmed">
                 Querying Kartverket database...
               </Text>
             </Group>
           </Box>
         ) : (
           <Stack gap="md" aria-live="polite">
-            <Text size="sm" c="dimmed" id="results-count-announcement">
+            <Text size="lg" c="dimmed" id="results-count-announcement">
               Showing {displayedTrails.length} of {filteredTrails.length} available trails
             </Text>
 
@@ -306,6 +352,7 @@ export function ExplorePage() {
                 <Button
                   variant="default"
                   color="pine"
+                  size="md"
                   leftSection={<IconChevronDown size={16} />}
                   onClick={() => setVisibleTrailCount((prev) => prev + 10)}
                   aria-label="Load more destination trails"
@@ -521,25 +568,11 @@ export function ExplorePage() {
 
             <Button
               aria-label={`Save ${selectedPlace.name} to your favorites list`}
-              onClick={() => {
-                saveRoute({
-                  trailId: selectedPlace.ssrId,
-                  title: selectedPlace.name,
-                  region: selectedPlace.municipality,
-                  notes: `Saved destination at lat: ${selectedPlace.latitude}, lon: ${selectedPlace.longitude}`,
-                });
-
-                notifications.show({
-                  message: `${selectedPlace.name} saved in your favorites`,
-                  styles: {
-                    root: { backgroundColor: '#28726B' },
-                    description: { color: '#FFFFFF' },
-                    closeButton: { color: '#FFFFFF' },
-                  },
-                });
-              }}
+              loading={savingFavorite}
+              disabled={savedFavorite}
+              onClick={handleSaveDestination}
             >
-              Save Destination to Favorites
+              {savedFavorite ? 'Saved to Favorites' : 'Save Destination to Favorites'}
             </Button>
           </Stack>
         ) : null}

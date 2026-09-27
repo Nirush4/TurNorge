@@ -43,11 +43,12 @@ export function ExploreFilters({
         <RegionSearchBar destinations={destinations} region={region} setRegion={setRegion} />
 
         <Stack gap={4}>
-          <Text size="sm" fw={500} component="label" id="difficulty-filter-label">
+          <Text size="x" fw={500} component="label" id="difficulty-filter-label">
             Filter by Difficulty
           </Text>
           <SegmentedControl
             fullWidth
+            size="md"
             aria-labelledby="difficulty-filter-label"
             value={difficulty}
             onChange={(value) => {
@@ -58,11 +59,12 @@ export function ExploreFilters({
         </Stack>
 
         <Stack gap={4}>
-          <Text size="sm" fw={500} component="label" id="duration-filter-label">
+          <Text size="md" fw={500} component="label" id="duration-filter-label">
             Filter by Duration
           </Text>
           <SegmentedControl
             fullWidth
+            size="md"
             aria-labelledby="duration-filter-label"
             value={duration}
             onChange={(value) => {
