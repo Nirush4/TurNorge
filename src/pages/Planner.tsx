@@ -70,6 +70,11 @@ const SEASON_OPTIONS = [
 const MOBILE_INPUT_STYLES = {
   input: { fontSize: '16px' },
   dropdown: { fontSize: '16px' },
+  label: {
+    fontSize: '1.05rem',
+    fontWeight: 600,
+    marginBottom: '6px',
+  },
 } as const;
 
 function showAppNotification(title: string, message: string, isError = false) {
@@ -426,7 +431,7 @@ export function PlannerPage() {
             <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }}>
               Dynamic Route Planner
             </Title>
-            <Text mt="sm" c="dimmed">
+            <Text mt="sm" size="lg" c="dimmed">
               Fully dynamic client-side route compiler powered by live MET.no telemetry and
               Kartverket location search.
             </Text>
@@ -441,7 +446,7 @@ export function PlannerPage() {
           >
             <Stack gap="sm">
               <Group justify="space-between">
-                <Text size="sm" fw={600} id="settings-heading">
+                <Text size="lg" fw={600} id="settings-heading">
                   Walking Pace &amp; Preferences
                 </Text>
               </Group>
@@ -451,6 +456,7 @@ export function PlannerPage() {
                 label="How fast or far do you want to go?"
                 size="sm"
                 value={currentTone}
+
                 onChange={(val) => {
                   if (val) setCurrentTone(val as 'standard' | 'cautious' | 'ambitious');
                 }}
@@ -468,7 +474,7 @@ export function PlannerPage() {
                 label="Emphasize advanced emergency and alpine safety warnings"
                 checked={emphasizeSafetyLocal}
                 onChange={(e) => setEmphasizeSafetyLocal(e.currentTarget.checked)}
-                size="sm"
+                size="md"
               />
             </Stack>
           </Card>
@@ -514,10 +520,10 @@ export function PlannerPage() {
 
               {selectedPlace && (
                 <Card withBorder padding="sm" role="status" aria-live="polite">
-                  <Text size="sm" fw={600}>
+                  <Text size="md" fw={600}>
                     Selected: {selectedPlace.name}
                   </Text>
-                  <Text size="sm" c="dimmed" mt={4}>
+                  <Text size="md" c="dimmed" mt={4}>
                     {selectedPlace.municipality} · {selectedPlace.county} · Coordinates:{' '}
                     {selectedPlace.latitude.toFixed(4)}, {selectedPlace.longitude.toFixed(4)}
                   </Text>
@@ -552,7 +558,14 @@ export function PlannerPage() {
                     value={field.value}
                     onChange={(val) => field.onChange(typeof val === 'number' ? val : 1)}
                     onBlur={field.onBlur}
-                    styles={{ input: { fontSize: '16px' } }}
+                    styles={{
+                      input: { fontSize: '16px' },
+                      label: {
+                        fontSize: '1.05rem',
+                        fontWeight: 600,
+                        marginBottom: '6px',
+                      },
+                    }}
                     error={errors.durationDays?.message}
                     required
                   />
@@ -582,6 +595,7 @@ export function PlannerPage() {
                 render={({ field }) => (
                   <Checkbox
                     label="Include DNT / self-service cabin options"
+                    size="md"
                     checked={field.value}
                     onChange={(event) => field.onChange(event.currentTarget.checked)}
                   />
@@ -608,13 +622,15 @@ export function PlannerPage() {
                 <Group justify="space-between" align="flex-start">
                   <div>
                     <Title order={2}>{extendedPlan.title}</Title>
-                    <Text mt="sm">{extendedPlan.overview}</Text>
+                    <Text size="lg" mt="sm">
+                      {extendedPlan.overview}
+                    </Text>
                   </div>
                   <Button
                     variant="filled"
                     radius="md"
                     color="blue.5"
-                    size="sm"
+                    size="md"
                     disabled={isFavorite}
                     onClick={handleSaveFavorite}
                     aria-label={isFavorite ? 'Route saved to favorites' : 'Save route to favorites'}
@@ -629,19 +645,19 @@ export function PlannerPage() {
                   <Card key={day.day} withBorder padding="md" component="article">
                     <Stack justify="space-between" h="100%">
                       <div>
-                        <Title order={3}>
+                        <Title fz={{ base: '1.4rem', sm: '1.5rem' }} order={3}>
                           Day {day.day}: {day.title}
                         </Title>
-                        <Text size="sm" mt="sm">
+                        <Text size="lg" mt="sm">
                           {day.summary}
                         </Text>
-                        <Text size="sm" mt="sm" fw={500}>
+                        <Text size="lg" mt="sm" fw={500}>
                           {day.distanceKm} km · {day.elevationGainM} m elevation gain
                         </Text>
-                        <Text size="sm" mt={4}>
+                        <Text size="lg" mt={4}>
                           {day.overnight}
                         </Text>
-                        <Text size="sm" c="dimmed" mt={4}>
+                        <Text size="lg" c="dimmed" mt={4}>
                           {day.weatherNote}
                         </Text>
                       </div>
@@ -649,7 +665,7 @@ export function PlannerPage() {
                       <Button
                         variant="light"
                         color="pine"
-                        size="sm"
+                        size="md"
                         mt="md"
                         radius="md"
                         loading={fetchingWeather}
@@ -697,6 +713,7 @@ export function PlannerPage() {
                 maxWidth: '100%',
                 width: '100%',
               },
+              title: { fontSize: '1.3rem' },
               body: {
                 overflowY: 'auto',
                 flex: 1,
