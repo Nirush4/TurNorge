@@ -73,16 +73,25 @@ export function AppLayout() {
                 <Burger
                   opened={mobileOpened}
                   onClick={() => setMobileOpened((open) => !open)}
-                  hiddenFrom="md"
+                  hiddenFrom="lg"
                   size="sm"
                   aria-label="Toggle navigation"
                 />
-                <BrandLogo />
+                <Box
+                  style={{
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                >
+                  <BrandLogo />
+                </Box>
               </Group>
 
               <Group
                 gap="xs"
-                visibleFrom="md"
+                visibleFrom="lg"
                 component="nav"
                 aria-label="Primary"
                 wrap="nowrap"
@@ -95,8 +104,11 @@ export function AppLayout() {
                     to={item.to}
                     end={item.end}
                     label={item.label}
-                    leftSection={<item.icon size={16} aria-hidden="true" />}
-                    style={{ borderRadius: 8, width: 'auto', flexShrink: 0 }}
+                    leftSection={<item.icon size={18} aria-hidden="true" />}
+                    styles={{
+                      root: { borderRadius: 8, width: 'auto', flexShrink: 0 },
+                      label: { fontSize: '1rem', fontWeight: 500 },
+                    }}
                   />
                 ))}
               </Group>
@@ -118,33 +130,36 @@ export function AppLayout() {
                     </Menu.Target>
 
                     <Menu.Dropdown>
-                      <Menu.Label>Account</Menu.Label>
+                      <Menu.Label style={{ fontSize: '1rem' }}>Account</Menu.Label>
                       <Menu.Item
-                        leftSection={<Pencil size={14} />}
+                        leftSection={<Pencil size={16} />}
                         onClick={() => navigate('/profile')}
+                        style={{ fontSize: '1rem', padding: '8px 12px' }}
                       >
                         View Profile
                       </Menu.Item>
                       <Menu.Divider />
                       <Menu.Item
                         color="red"
-                        leftSection={<LogOut size={14} />}
+                        leftSection={<LogOut size={16} />}
                         onClick={() => signOut()}
+                        style={{ fontSize: '1rem', padding: '8px 12px' }}
                       >
                         Log Out
                       </Menu.Item>
                     </Menu.Dropdown>
                   </Menu>
                 ) : (
-                  <Group gap={6} wrap="nowrap">
+                  <Group gap={8} wrap="nowrap">
                     <Button
                       component={RouterNavLink}
                       to="/login"
                       variant="subtle"
                       color="teal"
                       size="sm"
-                      leftSection={<LogIn size={14} />}
+                      leftSection={<LogIn size={16} />}
                       visibleFrom="xs"
+                      style={{ fontSize: '1rem', fontWeight: 500, height: '36px' }}
                     >
                       Log In
                     </Button>
@@ -154,8 +169,9 @@ export function AppLayout() {
                       variant="filled"
                       color="teal"
                       size="sm"
-                      leftSection={<UserPlus size={14} />}
+                      leftSection={<UserPlus size={16} />}
                       visibleFrom="xs"
+                      style={{ fontSize: '1rem', fontWeight: 500, height: '36px' }}
                     >
                       Sign Up
                     </Button>
@@ -178,7 +194,10 @@ export function AppLayout() {
                 to={item.to}
                 end={item.end}
                 label={item.label}
-                leftSection={<item.icon size={16} aria-hidden="true" />}
+                leftSection={<item.icon size={18} aria-hidden="true" />}
+                styles={{
+                  label: { fontSize: '1.05rem', fontWeight: 500 },
+                }}
                 onClick={() => setMobileOpened(false)}
               />
             ))}
@@ -192,16 +211,22 @@ export function AppLayout() {
                   to="/profile"
                   label={profile?.username || 'My Profile'}
                   leftSection={
-                    <Avatar src={profile?.avatar_url} radius="xl" size={20}>
+                    <Avatar src={profile?.avatar_url} radius="xl" size={42}>
                       {!profile?.avatar_url && <User size={12} />}
                     </Avatar>
                   }
+                  styles={{
+                    label: { fontSize: '1.05rem', fontWeight: 500 },
+                  }}
                   onClick={() => setMobileOpened(false)}
                 />
                 <NavLink
                   label="Log Out"
-                  color="red"
+                  content="red"
                   leftSection={<LogOut size={16} aria-hidden="true" />}
+                  styles={{
+                    label: { fontSize: '1.05rem', fontWeight: 500 },
+                  }}
                   onClick={() => {
                     setMobileOpened(false);
                     signOut();
@@ -210,7 +235,7 @@ export function AppLayout() {
               </Stack>
             ) : (
               <Stack gap={6}>
-                <Text size="xs" c="dimmed" px="xs">
+                <Text size="md" c="dimmed" px="xs">
                   Sign in to save routes across devices
                 </Text>
                 <NavLink
@@ -218,6 +243,9 @@ export function AppLayout() {
                   to="/login"
                   label="Log In"
                   leftSection={<LogIn size={16} aria-hidden="true" />}
+                  styles={{
+                    label: { fontSize: '1.05rem', fontWeight: 500 },
+                  }}
                   onClick={() => setMobileOpened(false)}
                 />
                 <NavLink
@@ -225,6 +253,9 @@ export function AppLayout() {
                   to="/register"
                   label="Sign Up"
                   leftSection={<UserPlus size={16} aria-hidden="true" />}
+                  styles={{
+                    label: { fontSize: '1.05rem', fontWeight: 500 },
+                  }}
                   onClick={() => setMobileOpened(false)}
                 />
               </Stack>
