@@ -40,6 +40,7 @@ import { useAuth } from '@/context/AuthContext';
 
 import { supabase } from '@/lib/supabaseClient';
 import { useFavorites } from '@/hooks/useFavorites';
+import { HikingLoader } from '@/components/HikingLoader';
 
 const COVER_HEIGHT = 220;
 const AVATAR_SIZE = 120;
@@ -87,8 +88,15 @@ export function Profile(): JSX.Element {
 
   if (!user || !profile) {
     return (
-      <Container size="sm" py="xl" component="main" mih="100dvh">
-        <Text c="dimmed">Loading profile...</Text>
+      <Container
+        mih="100dvh"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <HikingLoader text="Loading your profile..." />
       </Container>
     );
   }
