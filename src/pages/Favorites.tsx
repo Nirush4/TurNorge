@@ -71,12 +71,12 @@ export function Favorites(): JSX.Element {
 
   if (!user) {
     return (
-      <Container size="lg" py="xl" component="main" mih="100dvh">
+      <Container size="lg" py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
         <Stack align="center" ta="center" py={80} maw={500} mx="auto">
           <ThemeIcon size={64} radius="xl" variant="light" color="teal">
             <BookmarkCheck size={32} />
           </ThemeIcon>
-          <Title order={1} fz={{ base: '1.8rem', sm: '2.4rem' }} c={headingColor} fw={800}>
+          <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={headingColor}>
             Saved Favorites
           </Title>
           <Text c={bodyColor} size="lg">
@@ -93,7 +93,7 @@ export function Favorites(): JSX.Element {
 
   if (loading) {
     return (
-      <Container size="lg" py="xl" component="main" mih="100dvh">
+      <Container size="lg" py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
         <Center py={120}>
           <Loader color="teal" size="lg" />
         </Center>
@@ -103,7 +103,7 @@ export function Favorites(): JSX.Element {
 
   if (favorites.length === 0) {
     return (
-      <Container size="lg" py="xl" component="main" mih="100dvh">
+      <Container size="lg" py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
         <Stack align="center" ta="center" py={80} maw={500} mx="auto">
           <ThemeIcon size={64} radius="xl" variant="light" color="teal">
             <Compass size={32} />
@@ -132,7 +132,7 @@ export function Favorites(): JSX.Element {
   }
 
   return (
-    <Container size="lg" py="xl" component="main" mih="100dvh">
+    <Container size="lg" py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
       {/* Header section */}
       <Group
         justify="space-between"
@@ -147,9 +147,8 @@ export function Favorites(): JSX.Element {
           </Badge>
           <Title
             order={1}
-            fz={{ base: '2rem', sm: '2.6rem' }}
+            fz={{ base: '1.7rem', sm: '2.5rem' }}
             c={headingColor}
-            fw={800}
             style={{ letterSpacing: '-0.02em' }}
           >
             Saved Favorites
@@ -162,9 +161,9 @@ export function Favorites(): JSX.Element {
           variant="light"
           color="teal"
           size="lg"
-          radius="md"
+          radius="sm"
           leftSection={<BookmarkCheck size={16} />}
-          py={16}
+          py="auto"
           px={14}
         >
           {favorites.length} Route{favorites.length === 1 ? '' : 's'} Saved
@@ -196,7 +195,7 @@ export function Favorites(): JSX.Element {
                 <div>
                   {fav.mode && (
                     <Badge
-                      size="sm"
+                      size="md"
                       variant="light"
                       color="teal"
                       radius="sm"
@@ -239,7 +238,7 @@ export function Favorites(): JSX.Element {
                     border: `1px solid ${borderColor}`,
                   }}
                 >
-                  <Text size="sm" c={bodyColor} style={{ lineHeight: 1.6 }}>
+                  <Text size="md" c={bodyColor} style={{ lineHeight: 1.6 }}>
                     {fav.notes}
                   </Text>
                 </Box>
@@ -258,14 +257,14 @@ export function Favorites(): JSX.Element {
                 fav.location_lng !== null &&
                 fav.location_lng !== undefined && (
                   <Group gap={6} wrap="nowrap">
-                    <ThemeIcon size={28} radius="sm" variant="light" color="teal">
+                    <ThemeIcon size={32} radius="sm" variant="light" color="teal">
                       <MapPin size={14} />
                     </ThemeIcon>
                     <div>
-                      <Text size="10px" c="dimmed" tt="uppercase" fw={700}>
+                      <Text size="12px" c="dimmed" tt="uppercase" fw={700}>
                         Coords
                       </Text>
-                      <Text size="xs" c={headingColor} fw={600}>
+                      <Text size="sm" c={headingColor} fw={600}>
                         {fav.location_lat.toFixed(1)}°, {fav.location_lng.toFixed(1)}°
                       </Text>
                     </div>
