@@ -25,7 +25,7 @@ export function AppFooter() {
           DNT
         </Anchor>
       </Group>
-      <Text size="sm" fw={600}>
+      <Text size="md" c="red" fw={600}>
         Emergency 112 / 113
       </Text>
     </Group>
