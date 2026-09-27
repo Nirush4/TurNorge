@@ -18,10 +18,10 @@ export function TrailGrid({ trails, onSelect }: TrailGridProps) {
           <Title order={3} mt="sm">
             {trail.name}
           </Title>
-          <Text size="sm" mt="xs">
+          <Text size="md" mt="xs">
             {trail.description}
           </Text>
-          <Text size="sm" mt="md">
+          <Text size="md" mt="md">
             {trail.distanceKm} km · {trail.durationLabel} · {trail.elevationGainM} m gain
           </Text>
           <Button mt="md" onClick={() => onSelect(trail)}>
