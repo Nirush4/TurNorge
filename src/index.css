@@ -137,3 +137,74 @@ h6 {
 .destination-marquee-text.is-scrolling:hover {
   animation-play-state: paused;
 }
+
+/* Loading animation */
+
+@keyframes legSwing1 {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(-25deg);
+  }
+}
+
+@keyframes legSwing2 {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(25deg);
+  }
+}
+
+@keyframes armSwing {
+
+  0%,
+  100% {
+    transform: rotate(-15deg);
+  }
+
+  50% {
+    transform: rotate(15deg);
+  }
+}
+
+@keyframes hikerMove {
+  0% {
+    transform: translateX(-15px);
+  }
+
+  50% {
+    transform: translateX(15px);
+  }
+
+  100% {
+    transform: translateX(-15px);
+  }
+}
+
+.hiker-container {
+  animation: hikerMove 2s infinite ease-in-out;
+}
+
+.leg-left {
+  transform-origin: 12px 12px;
+  animation: legSwing1 0.6s infinite ease-in-out alternate;
+}
+
+.leg-right {
+  transform-origin: 12px 12px;
+  animation: legSwing2 0.6s infinite ease-in-out alternate;
+}
+
+.arm {
+  transform-origin: 12px 9px;
+  animation: armSwing 0.6s infinite ease-in-out alternate;
+}
