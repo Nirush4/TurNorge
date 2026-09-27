@@ -11,13 +11,16 @@ import {
   Button,
   Anchor,
   Alert,
-  Avatar,
-  Group,
-  Box,
   useMantineColorScheme,
+  Box,
+  Group,
+  Divider,
+  Avatar,
 } from '@mantine/core';
-import { UserPlus, AlertCircle, CheckCircle2, Link2, AtSign } from 'lucide-react';
+import { UserPlus, AlertCircle, Mountain, Link2, AtSign } from 'lucide-react';
+import { notifications } from '@mantine/notifications';
 import { useAuth } from '@/context/AuthContext';
+import { HikingLoader } from '@/components/HikingLoader';
 
 export function Register(): JSX.Element {
   const { signUp } = useAuth();
@@ -30,9 +33,7 @@ export function Register(): JSX.Element {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
-
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -53,50 +54,102 @@ export function Register(): JSX.Element {
     setLoading(false);
 
     if (signUpError) {
-      setError(
+      const friendlyError =
         signUpError.includes('duplicate key') || signUpError.includes('unique')
           ? 'That username is already taken.'
-          : signUpError,
-      );
-    } else {
-      setSuccess(true);
-      setTimeout(() => navigate('/login'), 2500);
+          : signUpError;
+
+      setError(friendlyError);
+      notifications.show({
+        message: `Registration failed: ${friendlyError}`,
+        styles: {
+          root: { backgroundColor: '#E03131' },
+          description: { color: '#FFFFFF' },
+          closeButton: { color: '#FFFFFF' },
+        },
+      });
+      return;
     }
+
+    notifications.show({
+      message: 'Account created! Check your email to confirm, then log in.',
+      styles: {
+        root: { backgroundColor: '#28726B' },
+        description: { color: '#FFFFFF' },
+        closeButton: { color: '#FFFFFF' },
+      },
+    });
+
+    setTimeout(() => navigate('/login'), 2500);
   };
 
   return (
-    <Container size="xs" py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
-      <Title order={1} fz="2rem" ta="center" mb="xs" c={isDark ? '#eef4f1' : 'dark.7'}>
+    <Container size={540} py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
+      <Group justify="center" mb="md">
+        <Box
+          p="sm"
+          style={{
+            borderRadius: '50%',
+            backgroundColor: isDark ? 'rgba(40, 114, 107, 0.2)' : 'rgba(40, 114, 107, 0.1)',
+            color: '#28726B',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Mountain size={32} aria-hidden="true" />
+        </Box>
+      </Group>
+
+      <Title
+        order={1}
+        fz={{ base: '1.7rem', sm: '2.5rem' }}
+        ta="center"
+        fw={700}
+        mb={6}
+        c={isDark ? '#eef4f1' : 'dark.7'}
+      >
         Create Account
       </Title>
-      <Text c="dimmed" ta="center" mb="lg">
+      <Text c="dimmed" ta="center" mb="xl" size="lg">
         Save routes, plan trips, and build your hiking profile.
       </Text>
 
       <Card
-        padding="xl"
-        radius="md"
+        p={{ base: 'md', sm: 'lg' }}
+        radius="lg"
+        shadow="md"
         style={{
-          backgroundColor: isDark ? '#182c23' : '#f4f8f5',
+          backgroundColor: isDark ? '#14231c' : '#ffffff',
           border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
         }}
       >
-        {success ? (
-          <Alert color="forest" icon={<CheckCircle2 size={16} />} variant="light">
-            Account created! Check your email to confirm, then log in.
-          </Alert>
+        {loading ? (
+          <HikingLoader text="Registering your account..." />
         ) : (
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <Stack gap="md">
               {error && (
-                <Alert color="red" icon={<AlertCircle size={16} />} variant="light">
+                <Alert
+                  color="red"
+                  icon={<AlertCircle size={16} aria-hidden="true" />}
+                  variant="light"
+                  role="alert"
+                  aria-live="assertive"
+                >
                   {error}
                 </Alert>
               )}
 
               {/* Optional avatar preview from URL */}
               <Box style={{ alignSelf: 'center', textAlign: 'center' }}>
-                <Avatar src={avatarUrl || null} size={96} radius={96}>
+                <Avatar
+                  src={avatarUrl || null}
+                  size={88}
+                  radius={88}
+                  alt={username ? `${username}'s avatar preview` : 'User avatar placeholder'}
+                  style={{ border: '2px solid #28726B' }}
+                >
                   {!avatarUrl &&
                     (username?.[0]?.toUpperCase() ?? <Link2 size={24} color="#82aca0" />)}
                 </Avatar>
@@ -104,29 +157,44 @@ export function Register(): JSX.Element {
 
               <TextInput
                 label="Username"
-                placeholder="e.g. trollstigen_trekker"
-                leftSection={<AtSign size={14} />}
+                placeholder="trollstigen_trekker"
+                leftSection={<AtSign size={16} />}
                 value={username}
                 onChange={(e) => setUsername(e.currentTarget.value)}
                 required
+                aria-required="true"
+                styles={{
+                  label: { fontSize: '0.95rem', fontWeight: 600, marginBottom: '4px' },
+                  input: { fontSize: '15px' },
+                }}
               />
 
               <TextInput
-                label="Email"
+                label="Email Address"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="hiker@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.currentTarget.value)}
                 required
+                aria-required="true"
+                styles={{
+                  label: { fontSize: '0.95rem', fontWeight: 600, marginBottom: '4px' },
+                  input: { fontSize: '15px' },
+                }}
               />
 
               <TextInput
                 label="Avatar URL"
                 placeholder="https://example.com/your-photo.jpg"
-                leftSection={<Link2 size={14} />}
+                leftSection={<Link2 size={16} />}
                 value={avatarUrl}
                 onChange={(e) => setAvatarUrl(e.currentTarget.value)}
-                description="Optional — paste a link to an image. You can change this anytime from your profile."
+                description="Optional — paste a link to your profile picture."
+                styles={{
+                  label: { fontSize: '0.95rem', fontWeight: 600, marginBottom: '4px' },
+                  input: { fontSize: '15px' },
+                  description: { fontSize: '0.85rem' },
+                }}
               />
 
               <PasswordInput
@@ -135,6 +203,11 @@ export function Register(): JSX.Element {
                 value={password}
                 onChange={(e) => setPassword(e.currentTarget.value)}
                 required
+                aria-required="true"
+                styles={{
+                  label: { fontSize: '0.95rem', fontWeight: 600, marginBottom: '4px' },
+                  input: { fontSize: '15px' },
+                }}
               />
 
               <PasswordInput
@@ -143,14 +216,21 @@ export function Register(): JSX.Element {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.currentTarget.value)}
                 required
+                aria-required="true"
+                styles={{
+                  label: { fontSize: '0.95rem', fontWeight: 600, marginBottom: '4px' },
+                  input: { fontSize: '15px' },
+                }}
               />
 
               <Button
                 type="submit"
-                color="forest"
+                color="teal"
                 fullWidth
-                loading={loading}
-                leftSection={<UserPlus size={16} />}
+                size="md"
+                mt="sm"
+                leftSection={<UserPlus size={18} aria-hidden="true" />}
+                style={{ fontWeight: 600 }}
               >
                 Sign Up
               </Button>
@@ -159,14 +239,21 @@ export function Register(): JSX.Element {
         )}
       </Card>
 
-      <Group justify="center" mt="md">
-        <Text size="sm" c="dimmed">
-          Already have an account?{' '}
-          <Anchor component={Link} to="/login" c="forest.5">
-            Log in
-          </Anchor>
-        </Text>
-      </Group>
+      <Divider
+        my="lg"
+        label="Already have an account?"
+        labelPosition="center"
+        styles={{
+          label: { fontSize: '0.95rem', fontWeight: 500 },
+        }}
+      />
+
+      <Text ta="center" size="md" c="dimmed">
+        Ready to get back on the path?{' '}
+        <Anchor component={Link} to="/login" fw={600} fz={{ base: 'md', md: 'lg' }} c="teal.6">
+          Log in
+        </Anchor>
+      </Text>
     </Container>
   );
 }

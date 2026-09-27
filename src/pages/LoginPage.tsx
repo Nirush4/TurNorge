@@ -67,7 +67,7 @@ export function Login(): JSX.Element {
   };
 
   return (
-    <Container size={440} py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
+    <Container size={540} py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
       {/* Brand Header Icon */}
       <Group justify="center" mb="md">
         <Box
@@ -100,7 +100,7 @@ export function Login(): JSX.Element {
       </Text>
 
       <Card
-        padding="xl"
+        p={{ base: 'md', sm: 'lg' }}
         radius="lg"
         shadow="md"
         style={{
