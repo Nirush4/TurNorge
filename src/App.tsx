@@ -16,6 +16,7 @@ import { Login } from './pages/LoginPage';
 import { Register } from './pages/RegisterPage';
 import { Profile } from './pages/ProfilePage';
 import { ProtectedRoute } from './components/Protectedroute';
+import { TermsPage } from './pages/TermsPage';
 
 export default function App() {
   return (
@@ -32,6 +33,7 @@ export default function App() {
                 <Route path="/favorites" element={<Favorites />} />
                 <Route path="/articles/:id" element={<ArticleDetailPage />} />
                 <Route path="/toolkit" element={<ToolkitPage />} />
+                <Route path="/terms" element={<TermsPage />} />
 
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
