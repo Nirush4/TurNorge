@@ -87,7 +87,7 @@ export function Login(): JSX.Element {
 
       <Title
         order={1}
-        fz={{ base: '1.7rem', sm: '2.5rem' }}
+        fz={{ base: '1.5rem', sm: '2rem' }}
         ta="center"
         fw={700}
         mb={6}
