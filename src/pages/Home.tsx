@@ -606,7 +606,7 @@ export function HomePage() {
                     id="storage-status-heading"
                     size="h3"
                     c={headingColor}
-                    fz={{ base: '1.7rem', sm: '2.2rem' }}
+                    fz={{ base: '1.7rem', sm: '2rem' }}
                   >
                     Local Storage Status
                   </Title>
