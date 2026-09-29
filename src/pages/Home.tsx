@@ -27,6 +27,8 @@ import {
 import { Link } from 'react-router-dom';
 import { HikingArticlesSection } from '@/components/home/HikingArticlesSection';
 import { useAppState } from '@/context/AppStateContext';
+import { useAuth } from '@/context/AuthContext';
+import { useFavorites } from '@/hooks/useFavorites';
 
 const FEATURES = [
   {
@@ -99,6 +101,8 @@ const SAFETY_TIPS = [
 
 export function HomePage() {
   const { savedRoutes } = useAppState();
+  const { user } = useAuth();
+  const { favorites } = useFavorites();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -106,6 +110,8 @@ export function HomePage() {
   const bodyColor = isDark ? '#cbd5ce' : '#4a5d53';
   const cardBackground = isDark ? '#112219' : '#ffffff';
   const borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)';
+
+  const activeCount = user ? favorites.length : savedRoutes.length;
 
   return (
     <Box
@@ -229,7 +235,7 @@ export function HomePage() {
       </Box>
 
       <Container size="lg" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
-        <Stack gap={120} pb={100}>
+        <Stack gap={100} pb={100}>
           <Box component="section" aria-labelledby="features-heading">
             <Stack align="center" ta="center" mb={50} maw={700} mx="auto">
               <Badge variant="light" color="teal" size="md" radius="sm">
@@ -267,9 +273,6 @@ export function HomePage() {
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    boxShadow: isDark
-                      ? '0 10px 30px rgba(0,0,0,0.3)'
-                      : '0 10px 30px rgba(17,34,25,0.02)',
                   }}
                 >
                   <Stack gap="md">
@@ -367,10 +370,11 @@ export function HomePage() {
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     textDecoration: 'none',
+                    borderTop: `1px solid ${borderColor}`,
+                    borderBottom: `1px solid ${borderColor}`,
+                    borderLeft: `1px solid ${borderColor}`,
+                    borderRight: `1px solid ${borderColor}`,
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                    boxShadow: isDark
-                      ? '0 10px 30px rgba(0,0,0,0.4)'
-                      : '0 10px 30px rgba(17,34,25,0.06)',
                   }}
                 >
                   <Group justify="space-between" align="flex-start">
@@ -498,9 +502,6 @@ export function HomePage() {
                       borderBottom: `1px solid ${borderColor}`,
                       borderLeft: `1px solid ${borderColor}`,
                       borderRight: `1px solid ${borderColor}`,
-                      boxShadow: isDark
-                        ? '0 4px 20px rgba(0,0,0,0.2)'
-                        : '0 4px 20px rgba(0,0,0,0.02)',
                     }}
                   >
                     <Group gap="sm" mb="lg">
@@ -528,51 +529,85 @@ export function HomePage() {
             p="xl"
             radius="lg"
             component="section"
-            aria-labelledby="storage-status-heading"
+            aria-labelledby="favorites-status-heading"
             style={{
               backgroundColor: cardBackground,
               borderTop: `1px solid ${borderColor}`,
               borderBottom: `1px solid ${borderColor}`,
               borderLeft: `1px solid ${borderColor}`,
               borderRight: `1px solid ${borderColor}`,
-              boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.3)' : '0 10px 30px rgba(17,34,25,0.03)',
+              position: 'relative',
+              overflow: 'hidden',
             }}
           >
-            <Group justify="space-between" align="center" wrap="wrap" gap="lg">
-              <Group gap="lg">
-                <ThemeIcon size={54} radius="md" variant="light" color="teal" aria-hidden="true">
-                  <Bookmark size={26} />
+            <Box
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                borderTop: '4px solid #28726B',
+                borderBottom: `1px solid ${borderColor}`,
+                borderLeft: `1px solid ${borderColor}`,
+                borderRight: `1px solid ${borderColor}`,
+              }}
+            />
+
+            <Group justify="space-between" align="center" wrap="wrap" gap="xl">
+              <Group gap="md" align="flex-start">
+                <ThemeIcon size={52} radius="md" variant="light" color="teal" aria-hidden="true">
+                  <Bookmark size={24} />
                 </ThemeIcon>
-                <div>
-                  <Title
-                    order={2}
-                    id="storage-status-heading"
-                    size="h3"
-                    c={headingColor}
-                    fz={{ base: '1.2rem', sm: '1.4rem' }}
-                  >
-                    Local Storage Status
-                  </Title>
-                  <Text size="md" c={bodyColor} mt={4}>
-                    {savedRoutes.length === 0
-                      ? 'No saved routes yet. Pin a trail or generate a plan to keep it on this device.'
-                      : `${savedRoutes.length} active route${savedRoutes.length === 1 ? '' : 's'} securely saved to browser storage.`}
+                <Stack gap={4}>
+                  <Group gap="sm" align="center">
+                    <Title
+                      order={2}
+                      id="favorites-status-heading"
+                      size="h3"
+                      c={headingColor}
+                      fz={{ base: '1.2rem', sm: '1.35rem' }}
+                      fw={700}
+                    >
+                      {user ? 'Your Saved Adventures' : 'Sign in to see your favorite list'}
+                    </Title>
+                    <Badge
+                      variant="light"
+                      color={user ? (activeCount > 0 ? 'teal' : 'gray') : 'blue'}
+                      size="md"
+                      radius="sm"
+                    >
+                      {user
+                        ? activeCount > 0
+                          ? 'Ready to View'
+                          : 'No Trips Saved'
+                        : 'Account Required'}
+                    </Badge>
+                  </Group>
+                  <Text size="md" c={bodyColor} maw={550} lh={1.5}>
+                    {user
+                      ? activeCount === 0
+                        ? 'You have no saved trails yet. Explore our maps or use the trip planner to bookmark your favorite hiking routes.'
+                        : `You have ${activeCount} saved hike${activeCount === 1 ? '' : 's'} safely stored in your cloud account.`
+                      : 'Log in to your account to save your preferred trails, view your personalized bookmark list, and keep your hiking plans synced.'}
                   </Text>
-                </div>
+                </Stack>
               </Group>
 
-              <Button
-                component={Link}
-                to="/favorites"
-                variant="light"
-                color="teal"
-                size="md"
-                radius="md"
-                style={{ fontWeight: 600 }}
-                rightSection={<ArrowRight size={16} />}
-              >
-                Manage Favorites
-              </Button>
+              <Group gap="sm">
+                <Button
+                  component={Link}
+                  to={user ? '/favorites' : '/login'}
+                  variant="light"
+                  color={user ? 'teal' : 'blue'}
+                  size="md"
+                  radius="md"
+                  style={{ fontWeight: 600 }}
+                  rightSection={<ArrowRight size={16} />}
+                >
+                  {user ? 'View Saved Trips' : 'Log In Now'}
+                </Button>
+              </Group>
             </Group>
           </Card>
         </Stack>
