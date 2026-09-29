@@ -32,13 +32,13 @@ export function HikingArticlesSection({
             id="famous-destinations-heading"
             order={2}
             size="h2"
-            fz={{ base: '1.7rem', sm: '2.5rem' }}
+            fz={{ base: '1.6rem', sm: '2.5rem' }}
             c={headingColor}
           >
             Famous Norwegian Destinations
           </Title>
         </Group>
-        <Text size="lg" pb="md" c={bodyColor}>
+        <Text size="md" pb="md" c={bodyColor}>
           Discover iconic mountain ranges, coastal ridges, and legendary trails across Norway.
         </Text>
       </Box>
@@ -86,7 +86,7 @@ export function HikingArticlesSection({
               <Title
                 id={`destination-title-${article.id}`}
                 order={3}
-                size="h3"
+                size="h4"
                 c={headingColor}
                 mb={8}
                 lh={1.3}

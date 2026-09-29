@@ -23,6 +23,8 @@ import {
   CheckCircle2,
   MapPin,
   Sparkles,
+  Store,
+  Bus,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { HikingArticlesSection } from '@/components/home/HikingArticlesSection';
@@ -246,12 +248,12 @@ export function HomePage() {
                 order={2}
                 size="h1"
                 c={headingColor}
-                fz={{ base: '1.8rem', sm: '2.5rem' }}
+                fz={{ base: '1.6rem', sm: '2.5rem' }}
                 style={{ letterSpacing: '-0.02em' }}
               >
                 Why use TurNorge?
               </Title>
-              <Text size="lg" c={bodyColor}>
+              <Text size="md" c={bodyColor}>
                 Built for outdoor enthusiasts who value open standards, safety, and local privacy.
               </Text>
             </Stack>
@@ -260,7 +262,7 @@ export function HomePage() {
               {FEATURES.map((feature) => (
                 <Card
                   key={feature.title}
-                  padding="xl"
+                  padding="lg"
                   radius="lg"
                   withBorder={false}
                   component="article"
@@ -295,7 +297,7 @@ export function HomePage() {
                       order={3}
                       size="h3"
                       c={headingColor}
-                      fz={{ base: '1.3rem', sm: '1.5rem' }}
+                      fz={{ base: '1.2rem', sm: '1.5rem' }}
                       fw={700}
                     >
                       {feature.title}
@@ -328,12 +330,12 @@ export function HomePage() {
                   order={2}
                   size="h1"
                   c={headingColor}
-                  fz={{ base: '1.7rem', sm: '2.5rem' }}
+                  fz={{ base: '1.6rem', sm: '2.5rem' }}
                   style={{ letterSpacing: '-0.02em' }}
                 >
                   Featured Regions
                 </Title>
-                <Text size="lg" c={bodyColor} mt={12}>
+                <Text size="md" c={bodyColor} mt={12}>
                   Discover breathtaking landscapes mapped for hikers and nature lovers.
                 </Text>
               </Box>
@@ -370,10 +372,6 @@ export function HomePage() {
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     textDecoration: 'none',
-                    borderTop: `1px solid ${borderColor}`,
-                    borderBottom: `1px solid ${borderColor}`,
-                    borderLeft: `1px solid ${borderColor}`,
-                    borderRight: `1px solid ${borderColor}`,
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                   }}
                 >
@@ -446,6 +444,119 @@ export function HomePage() {
             </Button>
           </Box>
 
+          <Box
+            component="section"
+            aria-labelledby="logistics-heading"
+            style={{
+              backgroundColor: isDark ? 'rgba(17, 34, 25, 0.4)' : 'rgba(235, 245, 239, 0.5)',
+              borderRadius: '24px',
+              borderTop: `1px solid ${borderColor}`,
+              borderBottom: `1px solid ${borderColor}`,
+              borderLeft: `1px solid ${borderColor}`,
+              borderRight: `1px solid ${borderColor}`,
+            }}
+            p="lg"
+          >
+            <Stack gap="xl">
+              <Box ta="center" maw={700} mx="auto">
+                <Badge variant="light" color="teal" size="md" radius="sm" mb="sm">
+                  Live Field Data
+                </Badge>
+                <Title
+                  id="logistics-heading"
+                  order={2}
+                  size="h1"
+                  c={headingColor}
+                  fz={{ base: '1.6rem', sm: '2.3rem' }}
+                  style={{ letterSpacing: '-0.02em' }}
+                >
+                  Supplies & Real-Time Transit
+                </Title>
+                <Text size="md" c={bodyColor} mt={10}>
+                  Seamlessly connect your hiking destination with nearby local shops, gear
+                  suppliers, and live public transport updates.
+                </Text>
+              </Box>
+
+              <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+                <Card
+                  padding="xl"
+                  radius="lg"
+                  withBorder={false}
+                  style={{
+                    backgroundColor: cardBackground,
+                    borderTop: '4px solid #28726B',
+                    borderBottom: `1px solid ${borderColor}`,
+                    borderLeft: `1px solid ${borderColor}`,
+                    borderRight: `1px solid ${borderColor}`,
+                  }}
+                >
+                  <Stack gap="md">
+                    <Group justify="space-between" align="center">
+                      <ThemeIcon size={46} radius="md" variant="light" color="teal">
+                        <Store size={22} />
+                      </ThemeIcon>
+                      <Badge variant="outline" color="teal" size="sm">
+                        Provisions & Gear
+                      </Badge>
+                    </Group>
+                    <Title
+                      order={3}
+                      size="h3"
+                      c={headingColor}
+                      fz={{ base: '1.2rem', sm: '1.35rem' }}
+                      fw={700}
+                    >
+                      Nearby Supplies & Shops
+                    </Title>
+                    <Text size="md" c={bodyColor} lh={1.6}>
+                      Locate nearest grocery stores, mountain gear outlets, and gas stations
+                      relative to your selected destination so you never run out of food, fuel, or
+                      emergency provisions.
+                    </Text>
+                  </Stack>
+                </Card>
+
+                <Card
+                  padding="xl"
+                  radius="lg"
+                  withBorder={false}
+                  style={{
+                    backgroundColor: cardBackground,
+                    borderTop: '4px solid #28726B',
+                    borderBottom: `1px solid ${borderColor}`,
+                    borderLeft: `1px solid ${borderColor}`,
+                    borderRight: `1px solid ${borderColor}`,
+                  }}
+                >
+                  <Stack gap="md">
+                    <Group justify="space-between" align="center">
+                      <ThemeIcon size={46} radius="md" variant="light" color="teal">
+                        <Bus size={22} />
+                      </ThemeIcon>
+                      <Badge variant="outline" color="teal" size="sm">
+                        Entur Real-Time API
+                      </Badge>
+                    </Group>
+                    <Title
+                      order={3}
+                      size="h3"
+                      c={headingColor}
+                      fz={{ base: '1.2rem', sm: '1.35rem' }}
+                      fw={700}
+                    >
+                      Public Transport & Platform Board (Entur)
+                    </Title>
+                    <Text size="md" c={bodyColor} lh={1.6}>
+                      Check live platform departures, regional buses, and train schedules in real
+                      time for trailheads and mountain transit hubs across Norway.
+                    </Text>
+                  </Stack>
+                </Card>
+              </SimpleGrid>
+            </Stack>
+          </Box>
+
           <Box component="section">
             <HikingArticlesSection
               headingColor={headingColor}
@@ -465,12 +576,12 @@ export function HomePage() {
               borderBottom: `1px solid ${borderColor}`,
               borderLeft: `1px solid ${borderColor}`,
               borderRight: `1px solid ${borderColor}`,
-              padding: '4rem 2.5rem',
             }}
+            p="lg"
           >
             <Stack gap="xl">
               <Box ta="center" maw={700} mx="auto">
-                <Badge variant="light" color="teal" size="lg" radius="sm" mb="sm">
+                <Badge variant="light" color="teal" size="md" radius="sm" mb="sm">
                   Mountain Code
                 </Badge>
                 <Title
@@ -478,12 +589,12 @@ export function HomePage() {
                   order={2}
                   size="h1"
                   c={headingColor}
-                  fz={{ base: '1.7rem', sm: '2.5rem' }}
+                  fz={{ base: '1.6rem', sm: '2.5rem' }}
                   style={{ letterSpacing: '-0.02em' }}
                 >
                   Mountain Safety Code for Safe Trips
                 </Title>
-                <Text size="lg" c={bodyColor} mt={12}>
+                <Text size="md" c={bodyColor} mt={12}>
                   Norway's historic code of conduct for safe mountain touring, adapted for modern
                   explorers.
                 </Text>
@@ -508,14 +619,21 @@ export function HomePage() {
                       <ThemeIcon size={40} radius="md" variant="light" color="teal">
                         <CheckCircle2 size={22} />
                       </ThemeIcon>
-                      <Text fw={700} size="lg" c={headingColor}>
+                      <Text fw={700} size="md" c={headingColor}>
                         Rule 0{idx + 1}
                       </Text>
                     </Group>
-                    <Title order={3} size="h3" c={headingColor} mb={10} fw={700}>
+                    <Title
+                      order={3}
+                      size="h3"
+                      c={headingColor}
+                      mb={10}
+                      fz={{ base: '1.2rem', sm: '1.5rem' }}
+                      fw={700}
+                    >
                       {tip.title}
                     </Title>
-                    <Text size="lg" c={bodyColor} lh={1.7}>
+                    <Text size="md" c={bodyColor} lh={1.7}>
                       {tip.description}
                     </Text>
                   </Card>
