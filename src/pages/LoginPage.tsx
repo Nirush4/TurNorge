@@ -19,13 +19,18 @@ import {
 import { LogIn, AlertCircle, Mountain } from 'lucide-react';
 import { notifications } from '@mantine/notifications';
 import { useAuth } from '@/context/AuthContext';
+import { useAppState } from '@/context/AppStateContext';
 import { HikingLoader } from '@/components/HikingLoader';
 
 export function Login(): JSX.Element {
   const { signIn } = useAuth();
+  const { setSavedRoutes } = useAppState();
   const navigate = useNavigate();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
+
+  const headingColor = isDark ? '#f1f5f2' : '#112219';
+  const textColor = isDark ? '#cbd5ce' : '#4a5d53';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -54,6 +59,18 @@ export function Login(): JSX.Element {
       return;
     }
 
+    try {
+      const storedRoutes = localStorage.getItem('nordictrail-saved-routes');
+      if (storedRoutes) {
+        const parsedRoutes = JSON.parse(storedRoutes);
+        if (Array.isArray(parsedRoutes)) {
+          setSavedRoutes(parsedRoutes);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load saved routes from storage:', err);
+    }
+
     notifications.show({
       message: 'Successfully logged in! Trail map loaded.',
       styles: {
@@ -67,45 +84,48 @@ export function Login(): JSX.Element {
   };
 
   return (
-    <Container size={540} py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
-      {/* Brand Header Icon */}
+    <Container size={500} py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
       <Group justify="center" mb="md">
         <Box
-          p="sm"
+          p="md"
           style={{
             borderRadius: '50%',
-            backgroundColor: isDark ? 'rgba(40, 114, 107, 0.2)' : 'rgba(40, 114, 107, 0.1)',
+            backgroundColor: isDark ? 'rgba(40, 114, 107, 0.25)' : 'rgba(40, 114, 107, 0.12)',
             color: '#28726B',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Mountain size={32} aria-hidden="true" />
+          <Mountain size={30} aria-hidden="true" />
         </Box>
       </Group>
 
       <Title
         order={1}
-        fz={{ base: '1.7rem', sm: '2.5rem' }}
+        fz={{ base: '1.5rem', sm: '2.1rem' }}
         ta="center"
         fw={700}
-        mb={6}
-        c={isDark ? '#eef4f1' : 'dark.7'}
+        mb={8}
+        c={headingColor}
+        style={{ letterSpacing: '-0.02em' }}
       >
         Trailhead Login
       </Title>
-      <Text c="dimmed" ta="center" mb="xl" size="lg">
+      <Text c={textColor} ta="center" mb="xl" size="md" lh={1.5} maw={420} mx="auto">
         Sign in to track your hikes, sync routes, and access offline maps.
       </Text>
 
       <Card
-        p={{ base: 'md', sm: 'lg' }}
+        p={{ base: 'lg', sm: 'xl' }}
         radius="lg"
-        shadow="md"
+        withBorder={false}
         style={{
-          backgroundColor: isDark ? '#14231c' : '#ffffff',
-          border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
+          backgroundColor: isDark ? '#112219' : '#ffffff',
+          borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
+          borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
+          borderLeft: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
+          borderRight: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
         }}
       >
         {loading ? (
@@ -134,8 +154,13 @@ export function Login(): JSX.Element {
                 required
                 aria-required="true"
                 styles={{
-                  label: { fontSize: '0.95rem', fontWeight: 600, marginBottom: '4px' },
-                  input: { fontSize: '15px' },
+                  label: {
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    marginBottom: '6px',
+                    color: headingColor,
+                  },
+                  input: { fontSize: '15px', minHeight: '44px' },
                 }}
               />
 
@@ -147,8 +172,13 @@ export function Login(): JSX.Element {
                 required
                 aria-required="true"
                 styles={{
-                  label: { fontSize: '0.95rem', fontWeight: 600, marginBottom: '4px' },
-                  input: { fontSize: '15px' },
+                  label: {
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    marginBottom: '6px',
+                    color: headingColor,
+                  },
+                  input: { fontSize: '15px', minHeight: '44px' },
                 }}
               />
 
@@ -157,9 +187,9 @@ export function Login(): JSX.Element {
                 color="teal"
                 fullWidth
                 size="md"
-                mt="sm"
+                mt="xs"
                 leftSection={<LogIn size={18} aria-hidden="true" />}
-                style={{ fontWeight: 600 }}
+                style={{ fontWeight: 600, minHeight: '44px' }}
               >
                 Start Journey
               </Button>
@@ -169,17 +199,24 @@ export function Login(): JSX.Element {
       </Card>
 
       <Divider
-        my="lg"
+        my="xl"
         label="New to the trails?"
         labelPosition="center"
         styles={{
-          label: { fontSize: '0.95rem', fontWeight: 500 },
+          label: { fontSize: '0.9rem', fontWeight: 500, color: textColor },
         }}
       />
 
-      <Text ta="center" size="md" c="dimmed">
+      <Text ta="center" size="sm" c={textColor}>
         Don&apos;t have an account?{' '}
-        <Anchor component={Link} to="/register" fw={600} fz={{ base: 'md', md: 'lg' }} c="teal.6">
+        <Anchor
+          component={Link}
+          to="/register"
+          fw={600}
+          c="teal.6"
+          fz="md"
+          style={{ textDecoration: 'underline' }}
+        >
           Create account
         </Anchor>
       </Text>

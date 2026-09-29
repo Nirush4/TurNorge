@@ -13,7 +13,7 @@ import {
   Divider,
   useMantineColorScheme,
 } from '@mantine/core';
-import { ArrowLeft, Clock, Calendar, MapPin } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin } from 'lucide-react';
 import { HIKING_ARTICLES } from '@/data/hikingArticles';
 
 export function ArticleDetailPage() {
@@ -50,8 +50,10 @@ export function ArticleDetailPage() {
         <Button
           component={Link}
           to="/"
+          p={{ base: 'xs', sm: 'sm' }}
           variant="outline"
           color="teal"
+          fz={{ base: 'xs', sm: 'sm' }}
           leftSection={<ArrowLeft size={16} />}
           w="fit-content"
         >
@@ -71,13 +73,9 @@ export function ArticleDetailPage() {
               <Calendar size={14} />
               <span>{article.date}</span>
             </Group>
-            <Group gap={4} c="dimmed" fz="sm" align="center">
-              <Clock size={14} />
-              <span>{article.readTime}</span>
-            </Group>
           </Group>
 
-          <Title order={1} c={headingColor} fz={{ base: '2rem', sm: '2.5rem' }} lh={1.2}>
+          <Title order={1} c={headingColor} fz={{ base: '1.6rem', sm: '2.5rem' }} lh={1.2}>
             {article.title}
           </Title>
         </Stack>

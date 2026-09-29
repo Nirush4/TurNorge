@@ -3,7 +3,6 @@ export interface HikingArticle {
   title: string;
   region: string;
   category: string;
-  readTime: string;
   date: string;
   image: string;
   summary: string;
@@ -16,7 +15,6 @@ export const HIKING_ARTICLES: Record<string, HikingArticle> = {
     title: 'Lofoten Islands: Jagged Peaks Above the Arctic Sea',
     region: 'Nordland, Norway',
     category: 'Coastal Alpine',
-    readTime: '12 min read',
     date: 'June 12, 2026',
     image:
       'https://images.unsplash.com/photo-1663428520845-056989f8a664?q=80&w=1471&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
@@ -36,7 +34,6 @@ export const HIKING_ARTICLES: Record<string, HikingArticle> = {
     title: 'Jotunheimen: Crossing the Legendary Besseggen Ridge',
     region: 'Innlandet, Norway',
     category: 'High Mountain',
-    readTime: '14 min read',
     date: 'July 04, 2026',
     image:
       'https://jotunheimen.com/media/tvzcm3xz/img.jpg?rmode=max&width=1920&height=1920&upscale=false&v=1dabae4529d47c0',
@@ -56,7 +53,6 @@ export const HIKING_ARTICLES: Record<string, HikingArticle> = {
     title: 'Trolltunga: The Ultimate Fjord Cliff Adventure',
     region: 'Vestland, Norway',
     category: 'Expedition',
-    readTime: '16 min read',
     date: 'August 19, 2026',
     image:
       'https://images.unsplash.com/photo-1502021680532-838cfc650323?q=80&w=1471&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
