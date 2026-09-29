@@ -262,7 +262,7 @@ export function HomePage() {
               {FEATURES.map((feature) => (
                 <Card
                   key={feature.title}
-                  padding="lg"
+                  p="lg"
                   radius="lg"
                   withBorder={false}
                   component="article"
@@ -480,7 +480,7 @@ export function HomePage() {
 
               <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
                 <Card
-                  padding="xl"
+                  p="lg"
                   radius="lg"
                   withBorder={false}
                   style={{
@@ -604,7 +604,7 @@ export function HomePage() {
                 {SAFETY_TIPS.map((tip, idx) => (
                   <Card
                     key={tip.title}
-                    padding="xl"
+                    p="lg"
                     radius="lg"
                     withBorder={false}
                     style={{
@@ -644,7 +644,7 @@ export function HomePage() {
 
           <Card
             withBorder={false}
-            p="xl"
+            p="lg"
             radius="lg"
             component="section"
             aria-labelledby="favorites-status-heading"
