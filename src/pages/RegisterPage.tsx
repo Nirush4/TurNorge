@@ -28,6 +28,9 @@ export function Register(): JSX.Element {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
 
+  const headingColor = isDark ? '#f1f5f2' : '#112219';
+  const textColor = isDark ? '#cbd5ce' : '#4a5d53';
+
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -84,44 +87,48 @@ export function Register(): JSX.Element {
   };
 
   return (
-    <Container size={540} py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
+    <Container size={500} py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
       <Group justify="center" mb="md">
         <Box
-          p="sm"
+          p="md"
           style={{
             borderRadius: '50%',
-            backgroundColor: isDark ? 'rgba(40, 114, 107, 0.2)' : 'rgba(40, 114, 107, 0.1)',
+            backgroundColor: isDark ? 'rgba(40, 114, 107, 0.25)' : 'rgba(40, 114, 107, 0.12)',
             color: '#28726B',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Mountain size={32} aria-hidden="true" />
+          <Mountain size={30} aria-hidden="true" />
         </Box>
       </Group>
 
       <Title
         order={1}
-        fz={{ base: '1.5rem', sm: '2rem' }}
+        fz={{ base: '1.5rem', sm: '2.1rem' }}
         ta="center"
         fw={700}
-        mb={6}
-        c={isDark ? '#eef4f1' : 'dark.7'}
+        mb={8}
+        c={headingColor}
+        style={{ letterSpacing: '-0.02em' }}
       >
-        Create Account
+        Join TurNorge
       </Title>
-      <Text c="dimmed" ta="center" mb="xl" size="lg">
-        Save routes, plan trips, and build your hiking profile.
+      <Text c={textColor} ta="center" mb="xl" size="md" lh={1.5} maw={420} mx="auto">
+        Create an account to save custom routes, sync your hiking preferences, and explore safely.
       </Text>
 
       <Card
-        p={{ base: 'md', sm: 'lg' }}
+        p={{ base: 'lg', sm: 'xl' }}
         radius="lg"
-        shadow="md"
+        withBorder={false}
         style={{
-          backgroundColor: isDark ? '#14231c' : '#ffffff',
-          border: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
+          backgroundColor: isDark ? '#112219' : '#ffffff',
+          borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
+          borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
+          borderLeft: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
+          borderRight: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
         }}
       >
         {loading ? (
@@ -141,14 +148,13 @@ export function Register(): JSX.Element {
                 </Alert>
               )}
 
-              {/* Optional avatar preview from URL */}
               <Box style={{ alignSelf: 'center', textAlign: 'center' }}>
                 <Avatar
                   src={avatarUrl || null}
                   size={88}
                   radius={88}
                   alt={username ? `${username}'s avatar preview` : 'User avatar placeholder'}
-                  style={{ border: '2px solid #28726B' }}
+                  style={{ border: '2px solid white' }}
                 >
                   {!avatarUrl &&
                     (username?.[0]?.toUpperCase() ?? <Link2 size={24} color="#82aca0" />)}
@@ -164,8 +170,13 @@ export function Register(): JSX.Element {
                 required
                 aria-required="true"
                 styles={{
-                  label: { fontSize: '0.95rem', fontWeight: 600, marginBottom: '4px' },
-                  input: { fontSize: '15px' },
+                  label: {
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    marginBottom: '6px',
+                    color: headingColor,
+                  },
+                  input: { fontSize: '15px', minHeight: '44px' },
                 }}
               />
 
@@ -178,8 +189,13 @@ export function Register(): JSX.Element {
                 required
                 aria-required="true"
                 styles={{
-                  label: { fontSize: '0.95rem', fontWeight: 600, marginBottom: '4px' },
-                  input: { fontSize: '15px' },
+                  label: {
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    marginBottom: '6px',
+                    color: headingColor,
+                  },
+                  input: { fontSize: '15px', minHeight: '44px' },
                 }}
               />
 
@@ -191,9 +207,14 @@ export function Register(): JSX.Element {
                 onChange={(e) => setAvatarUrl(e.currentTarget.value)}
                 description="Optional — paste a link to your profile picture."
                 styles={{
-                  label: { fontSize: '0.95rem', fontWeight: 600, marginBottom: '4px' },
-                  input: { fontSize: '15px' },
-                  description: { fontSize: '0.85rem' },
+                  label: {
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    marginBottom: '6px',
+                    color: headingColor,
+                  },
+                  input: { fontSize: '15px', minHeight: '44px' },
+                  description: { fontSize: '0.85rem', color: textColor },
                 }}
               />
 
@@ -205,8 +226,13 @@ export function Register(): JSX.Element {
                 required
                 aria-required="true"
                 styles={{
-                  label: { fontSize: '0.95rem', fontWeight: 600, marginBottom: '4px' },
-                  input: { fontSize: '15px' },
+                  label: {
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    marginBottom: '6px',
+                    color: headingColor,
+                  },
+                  input: { fontSize: '15px', minHeight: '44px' },
                 }}
               />
 
@@ -218,8 +244,13 @@ export function Register(): JSX.Element {
                 required
                 aria-required="true"
                 styles={{
-                  label: { fontSize: '0.95rem', fontWeight: 600, marginBottom: '4px' },
-                  input: { fontSize: '15px' },
+                  label: {
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    marginBottom: '6px',
+                    color: headingColor,
+                  },
+                  input: { fontSize: '15px', minHeight: '44px' },
                 }}
               />
 
@@ -228,9 +259,9 @@ export function Register(): JSX.Element {
                 color="teal"
                 fullWidth
                 size="md"
-                mt="sm"
+                mt="xs"
                 leftSection={<UserPlus size={18} aria-hidden="true" />}
-                style={{ fontWeight: 600 }}
+                style={{ fontWeight: 600, minHeight: '44px' }}
               >
                 Sign Up
               </Button>
@@ -240,17 +271,24 @@ export function Register(): JSX.Element {
       </Card>
 
       <Divider
-        my="lg"
+        my="xl"
         label="Already have an account?"
         labelPosition="center"
         styles={{
-          label: { fontSize: '0.95rem', fontWeight: 500 },
+          label: { fontSize: '0.9rem', fontWeight: 500, color: textColor },
         }}
       />
 
-      <Text ta="center" size="md" c="dimmed">
+      <Text ta="center" size="sm" c={textColor}>
         Ready to get back on the path?{' '}
-        <Anchor component={Link} to="/login" fw={600} fz={{ base: 'md', md: 'lg' }} c="teal.6">
+        <Anchor
+          component={Link}
+          to="/login"
+          fw={600}
+          c="teal.6"
+          fz="md"
+          style={{ textDecoration: 'underline' }}
+        >
           Log in
         </Anchor>
       </Text>
