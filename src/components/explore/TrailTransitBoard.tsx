@@ -1,5 +1,5 @@
 import { formatDepartureCountdown } from '@/utils/formatDepartureCountdown';
-import { Badge, Card, Group, Stack, Text, Title } from '@mantine/core';
+import { Badge, Card, Group, Stack, Text, Title, useMantineColorScheme } from '@mantine/core';
 
 interface StopPlaceData {
   name: string;
@@ -50,19 +50,33 @@ function getTransportModeBadge(mode: string) {
 }
 
 export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitBoardProps) {
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const headingColor = isDark ? '#ffffff' : '#112219';
+  const bodyColor = isDark ? '#cbd5ce' : '#4a5d53';
+  const cardBackground = isDark ? '#0d1c14' : '#ffffff';
+  const borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)';
+
   return (
-    <Card withBorder>
-      <Title order={4} mb="xs">
+    <Card
+      withBorder={false}
+      style={{
+        backgroundColor: cardBackground,
+        border: `1px solid ${borderColor}`,
+      }}
+    >
+      <Title order={4} mb="xs" c={headingColor}>
         Public Transport & Platform Board (Entur)
       </Title>
       {loadingTransit ? (
-        <Text size="sm" mt="xs" c="dimmed">
+        <Text size="sm" mt="xs" c={bodyColor}>
           Locating nearby station departures and platform feeds...
         </Text>
       ) : stationData ? (
         <Stack gap="md" mt="xs">
           <Group justify="space-between">
-            <Text size="md" c="lime" fw={600}>
+            <Text size="md" c={headingColor} fw={600}>
               Station: {stationData.name}
             </Text>
           </Group>
@@ -115,6 +129,7 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                             size="sm"
                             className={`destination-marquee-text ${isLong ? 'is-scrolling' : ''}`}
                             fw={500}
+                            c={headingColor}
                           >
                             {destinationText}
                           </Text>
@@ -133,7 +148,7 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                             Pl. {call.quay.publicCode}
                           </Badge>
                         ) : (
-                          <Text size="xs" c="dimmed">
+                          <Text size="xs" c={bodyColor}>
                             -
                           </Text>
                         )}
@@ -146,12 +161,17 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                           textAlign: 'left',
                         }}
                       >
-                        <Text fw={600} size="md" style={{ whiteSpace: 'nowrap', lineHeight: 1.2 }}>
+                        <Text
+                          fw={600}
+                          size="md"
+                          c={headingColor}
+                          style={{ whiteSpace: 'nowrap', lineHeight: 1.2 }}
+                        >
                           {timeStr}
                         </Text>
                         <Text
                           size="xs"
-                          c={isPast ? 'dimmed' : isUrgent ? 'red' : 'green'}
+                          c={isPast ? bodyColor : isUrgent ? 'red' : 'green'}
                           fw={isUrgent || !isPast ? 600 : 400}
                           style={{ whiteSpace: 'nowrap', lineHeight: 1.2 }}
                         >
@@ -187,6 +207,7 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                           size="sm"
                           className={`destination-marquee-text ${isLong ? 'is-scrolling' : ''}`}
                           fw={500}
+                          c={headingColor}
                         >
                           {destinationText}
                         </Text>
@@ -198,12 +219,12 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                         wrap="wrap"
                         style={{ width: '100%' }}
                       >
-                        <Text fw={600} size="md">
+                        <Text fw={600} size="md" c={headingColor}>
                           {timeStr}
                         </Text>
                         <Text
                           size="sm"
-                          c={isPast ? 'dimmed' : isUrgent ? 'red' : 'green'}
+                          c={isPast ? bodyColor : isUrgent ? 'red' : 'green'}
                           fw={isUrgent || !isPast ? 600 : 500}
                         >
                           {countdownStr}
@@ -215,13 +236,13 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
               })}
             </div>
           ) : (
-            <Text size="md" c="dimmed">
+            <Text size="md" c={bodyColor}>
               No upcoming departures available for this station right now.
             </Text>
           )}
         </Stack>
       ) : (
-        <Text size="md" mt="xs" c="dimmed">
+        <Text size="md" mt="xs" c={bodyColor}>
           No public transport station found within range of this trail.
         </Text>
       )}

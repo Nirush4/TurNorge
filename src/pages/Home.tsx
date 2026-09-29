@@ -108,10 +108,12 @@ export function HomePage() {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const headingColor = isDark ? '#f1f5f2' : '#112219';
+  const headingColor = isDark ? '#ffffff' : '#112219';
   const bodyColor = isDark ? '#cbd5ce' : '#4a5d53';
-  const cardBackground = isDark ? '#112219' : '#ffffff';
+  const cardBackground = isDark ? '#0d1c14' : '#ffffff';
   const borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)';
+
+  const pageBg = isDark ? '#07120d' : '#ffffff';
 
   const activeCount = user ? favorites.length : savedRoutes.length;
 
@@ -123,25 +125,22 @@ export function HomePage() {
         margin: 0,
         padding: 0,
         overflowX: 'hidden',
+        backgroundColor: pageBg,
       }}
     >
       <Box
         component="section"
         aria-labelledby="hero-title"
         style={{
-          width: '100vw',
+          width: '100%',
           minHeight: '100vh',
           position: 'relative',
-          left: '50%',
-          right: '50%',
-          marginLeft: '-50vw',
-          marginRight: '-50vw',
-          backgroundImage: `linear-gradient(to bottom, rgba(7,16,11,0.2) 0%, rgba(7,16,11,0.6) 70%, rgba(7,16,11,0.85) 100%), url('https://images.unsplash.com/photo-1752350180629-89eedb2f31cd?q=80&w=1470&auto=format&fit=crop')`,
+          backgroundImage: `linear-gradient(to bottom, rgba(7,18,13,0.2) 0%, rgba(7,18,13,0.65) 60%, ${pageBg} 100%), url('https://images.unsplash.com/photo-1752350180629-89eedb2f31cd?q=80&w=1470&auto=format&fit=crop')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           display: 'flex',
           alignItems: 'center',
-          marginBottom: '6rem',
+          marginBottom: '4rem',
         }}
       >
         <Container
@@ -448,7 +447,7 @@ export function HomePage() {
             component="section"
             aria-labelledby="logistics-heading"
             style={{
-              backgroundColor: isDark ? 'rgba(17, 34, 25, 0.4)' : 'rgba(235, 245, 239, 0.5)',
+              backgroundColor: isDark ? 'rgba(11, 28, 20, 0.5)' : 'rgba(235, 245, 239, 0.5)',
               borderRadius: '24px',
               borderTop: `1px solid ${borderColor}`,
               borderBottom: `1px solid ${borderColor}`,
@@ -570,7 +569,7 @@ export function HomePage() {
             component="section"
             aria-labelledby="safety-heading"
             style={{
-              backgroundColor: isDark ? 'rgba(17, 34, 25, 0.4)' : 'rgba(235, 245, 239, 0.5)',
+              backgroundColor: isDark ? 'rgba(11, 28, 20, 0.5)' : 'rgba(235, 245, 239, 0.5)',
               borderRadius: '24px',
               borderTop: `1px solid ${borderColor}`,
               borderBottom: `1px solid ${borderColor}`,
