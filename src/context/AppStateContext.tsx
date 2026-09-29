@@ -6,6 +6,7 @@ interface AppStateContextValue {
   aiSettings: AiSettings;
   setAiSettings: (settings: AiSettings) => void;
   savedRoutes: SavedRoute[];
+  setSavedRoutes: (routes: SavedRoute[] | ((current: SavedRoute[]) => SavedRoute[])) => void;
   saveRoute: (route: Omit<SavedRoute, 'id' | 'savedAt'>) => void;
   removeRoute: (id: string) => void;
   lastPlan: GeneratedPlan | null;
@@ -78,12 +79,13 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       aiSettings,
       setAiSettings,
       savedRoutes,
+      setSavedRoutes,
       saveRoute,
       removeRoute,
       lastPlan,
       setLastPlan,
     }),
-    [aiSettings, lastPlan, removeRoute, saveRoute, savedRoutes, setAiSettings],
+    [aiSettings, lastPlan, removeRoute, saveRoute, savedRoutes, setAiSettings, setSavedRoutes],
   );
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
