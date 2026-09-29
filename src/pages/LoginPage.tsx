@@ -1,3 +1,4 @@
+// src/pages/LoginPage.tsx
 import { useState, type JSX, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
@@ -19,10 +20,12 @@ import {
 import { LogIn, AlertCircle, Mountain } from 'lucide-react';
 import { notifications } from '@mantine/notifications';
 import { useAuth } from '@/context/AuthContext';
+import { useAppState } from '@/context/AppStateContext';
 import { HikingLoader } from '@/components/HikingLoader';
 
 export function Login(): JSX.Element {
   const { signIn } = useAuth();
+  const { setSavedRoutes } = useAppState();
   const navigate = useNavigate();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
@@ -52,6 +55,19 @@ export function Login(): JSX.Element {
         },
       });
       return;
+    }
+
+    // Load saved favorites from local storage using key "nordictrail-saved-routes" upon successful login
+    try {
+      const storedRoutes = localStorage.getItem('nordictrail-saved-routes');
+      if (storedRoutes) {
+        const parsedRoutes = JSON.parse(storedRoutes);
+        if (Array.isArray(parsedRoutes)) {
+          setSavedRoutes(parsedRoutes);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load saved routes from storage:', err);
     }
 
     notifications.show({
