@@ -50,8 +50,10 @@ export function ArticleDetailPage() {
         <Button
           component={Link}
           to="/"
+          p={{ base: 'xs', sm: 'sm' }}
           variant="outline"
           color="teal"
+          fz={{ base: 'xs', sm: 'sm' }}
           leftSection={<ArrowLeft size={16} />}
           w="fit-content"
         >
@@ -77,7 +79,7 @@ export function ArticleDetailPage() {
             </Group>
           </Group>
 
-          <Title order={1} c={headingColor} fz={{ base: '2rem', sm: '2.5rem' }} lh={1.2}>
+          <Title order={1} c={headingColor} fz={{ base: '1.6rem', sm: '2.5rem' }} lh={1.2}>
             {article.title}
           </Title>
         </Stack>
