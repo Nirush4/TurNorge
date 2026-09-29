@@ -103,7 +103,7 @@ export function Login(): JSX.Element {
 
       <Title
         order={1}
-        fz={{ base: '1.75rem', sm: '2.1rem' }}
+        fz={{ base: '1.5rem', sm: '2.1rem' }}
         ta="center"
         fw={700}
         mb={8}
@@ -126,7 +126,6 @@ export function Login(): JSX.Element {
           borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
           borderLeft: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
           borderRight: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
-          boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.5)' : '0 10px 30px rgba(17,34,25,0.06)',
         }}
       >
         {loading ? (
@@ -215,6 +214,7 @@ export function Login(): JSX.Element {
           to="/register"
           fw={600}
           c="teal.6"
+          fz="md"
           style={{ textDecoration: 'underline' }}
         >
           Create account
