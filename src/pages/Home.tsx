@@ -33,19 +33,19 @@ const FEATURES = [
     icon: Database,
     title: 'Open public data',
     body: 'Trip advice is structured around MET.no locationforecast fields and Kartverket place metadata so plans stay grounded in Norwegian open data.',
-    featured: true,
+    badge: 'Core Protocol',
   },
   {
     icon: Landmark,
     title: 'Allemannsretten, taught well',
     body: 'The Right to Roam is a civic duty as much as a freedom. Learn campfire rules, distance-to-houses, and how to leave no trace.',
-    featured: false,
+    badge: 'Civic Standard',
   },
   {
     icon: ShieldCheck,
     title: 'Account synced favorites',
     body: 'Log in to save your favorite routes and access them securely across any device, keeping your hiking plans backed up.',
-    featured: false,
+    badge: 'Cloud Synced',
   },
 ] as const;
 
@@ -54,11 +54,10 @@ const POPULAR_REGIONS = [
     title: 'Jotunheimen National Park',
     subtitle: 'Home to Galdhøpiggen & Besseggen ridge trails',
     image:
-      'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=1200&auto=format&fit=crop',
+      'https://jotunheimen.com/media/rygha0hw/i-veodalen.jpg?rmode=max&width=1920&height=1920&upscale=false&v=1dacfa2a4980a10',
     tag: 'Alpine Ridges',
     elevation: '2,469m peak',
     routesCount: '42 trails',
-    main: true,
   },
   {
     title: 'Lofoten Islands',
@@ -68,7 +67,6 @@ const POPULAR_REGIONS = [
     tag: 'Coastal Peaks',
     elevation: 'Sea to Summit',
     routesCount: '28 trails',
-    main: false,
   },
   {
     title: 'Hardangervidda',
@@ -78,7 +76,6 @@ const POPULAR_REGIONS = [
     tag: 'Vast Plateaus',
     elevation: 'High Plateau',
     routesCount: '35 trails',
-    main: false,
   },
 ] as const;
 
@@ -234,8 +231,8 @@ export function HomePage() {
       <Container size="lg" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
         <Stack gap={120} pb={100}>
           <Box component="section" aria-labelledby="features-heading">
-            <Box mb="xl" maw={600}>
-              <Badge variant="outline" color="teal" size="md" radius="sm" mb="xs">
+            <Stack align="center" ta="center" mb={50} maw={700} mx="auto">
+              <Badge variant="light" color="teal" size="md" radius="sm">
                 Platform Standards
               </Badge>
               <Title
@@ -243,79 +240,73 @@ export function HomePage() {
                 order={2}
                 size="h1"
                 c={headingColor}
-                fz={{ base: '1.7rem', sm: '2.5rem' }}
+                fz={{ base: '1.8rem', sm: '2.5rem' }}
                 style={{ letterSpacing: '-0.02em' }}
               >
                 Why use TurNorge?
               </Title>
-              <Text size="lg" c={bodyColor} mt={12}>
-                Built for outdoor enthusiasts who value open standards and local privacy.
+              <Text size="lg" c={bodyColor}>
+                Built for outdoor enthusiasts who value open standards, safety, and local privacy.
               </Text>
-            </Box>
+            </Stack>
 
-            <Grid gutter="lg">
-              {FEATURES.map((feature) => {
-                const isFeatured = feature.featured;
-                return (
-                  <Grid.Col key={feature.title} span={{ base: 12, md: isFeatured ? 7 : 5 }}>
-                    <Card
-                      padding="xl"
-                      radius="lg"
-                      withBorder
-                      component="article"
-                      style={{
-                        backgroundColor: cardBackground,
-                        border: `1px solid ${borderColor}`,
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        boxShadow: isDark
-                          ? '0 10px 30px rgba(0,0,0,0.3)'
-                          : '0 10px 30px rgba(17,34,25,0.02)',
-                      }}
+            <SimpleGrid cols={{ base: 1, md: 3 }} spacing="lg">
+              {FEATURES.map((feature) => (
+                <Card
+                  key={feature.title}
+                  padding="xl"
+                  radius="lg"
+                  withBorder={false}
+                  component="article"
+                  style={{
+                    backgroundColor: cardBackground,
+                    borderTop: '4px solid #28726B',
+                    borderBottom: `1px solid ${borderColor}`,
+                    borderLeft: `1px solid ${borderColor}`,
+                    borderRight: `1px solid ${borderColor}`,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    boxShadow: isDark
+                      ? '0 10px 30px rgba(0,0,0,0.3)'
+                      : '0 10px 30px rgba(17,34,25,0.02)',
+                  }}
+                >
+                  <Stack gap="md">
+                    <Group justify="space-between" align="center">
+                      <ThemeIcon
+                        size={50}
+                        radius="md"
+                        variant="light"
+                        color="teal"
+                        aria-hidden="true"
+                      >
+                        <feature.icon size={24} />
+                      </ThemeIcon>
+                      <Badge variant="outline" color="teal" size="sm">
+                        {feature.badge}
+                      </Badge>
+                    </Group>
+
+                    <Title
+                      order={3}
+                      size="h3"
+                      c={headingColor}
+                      fz={{ base: '1.3rem', sm: '1.5rem' }}
+                      fw={700}
                     >
-                      <div>
-                        <Group justify="space-between" align="flex-start" mb="xl">
-                          <ThemeIcon
-                            size={56}
-                            radius="md"
-                            variant="light"
-                            color="teal"
-                            aria-hidden="true"
-                          >
-                            <feature.icon size={28} />
-                          </ThemeIcon>
-                          {isFeatured && (
-                            <Badge variant="light" color="teal" size="md">
-                              Core Protocol
-                            </Badge>
-                          )}
-                        </Group>
+                      {feature.title}
+                    </Title>
 
-                        <Title
-                          order={3}
-                          size={isFeatured ? 'h2' : 'h3'}
-                          c={headingColor}
-                          fz={{ base: '1.4rem', sm: '1.9rem' }}
-                          mb={12}
-                          fw={700}
-                        >
-                          {feature.title}
-                        </Title>
-
-                        <Text size={'lg'} c={bodyColor} lh={1.7}>
-                          {feature.body}
-                        </Text>
-                      </div>
-                    </Card>
-                  </Grid.Col>
-                );
-              })}
-            </Grid>
+                    <Text size="md" c={bodyColor} lh={1.7}>
+                      {feature.body}
+                    </Text>
+                  </Stack>
+                </Card>
+              ))}
+            </SimpleGrid>
           </Box>
 
-          {/* Modernized Featured Regions Section */}
           <Box component="section" aria-labelledby="regions-heading">
             <Group justify="space-between" align="flex-end" mb="xl" wrap="wrap" gap="md">
               <Box maw={600}>
@@ -357,140 +348,83 @@ export function HomePage() {
               </Button>
             </Group>
 
-            <Grid gutter="lg">
-              <Grid.Col span={{ base: 12, md: 7 }}>
+            <SimpleGrid cols={{ base: 1, md: 3 }} spacing="lg">
+              {POPULAR_REGIONS.map((region) => (
                 <Card
+                  key={region.title}
                   padding="lg"
                   radius="lg"
                   component={Link}
                   to="/explore"
+                  withBorder={false}
                   style={{
                     backgroundColor: 'transparent',
-                    height: '460px',
+                    height: '400px',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    backgroundImage: `linear-gradient(to top, rgba(7,16,11,0.92) 0%, rgba(7,16,11,0.5) 50%, rgba(7,16,11,0.15) 100%), url(${POPULAR_REGIONS[0].image})`,
+                    backgroundImage: `linear-gradient(to top, rgba(7,16,11,0.92) 0%, rgba(7,16,11,0.15) 50%), url(${region.image})`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     textDecoration: 'none',
-                    border: `1px solid ${borderColor}`,
                     transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                     boxShadow: isDark
-                      ? '0 12px 35px rgba(0,0,0,0.4)'
-                      : '0 12px 35px rgba(17,34,25,0.08)',
+                      ? '0 10px 30px rgba(0,0,0,0.4)'
+                      : '0 10px 30px rgba(17,34,25,0.06)',
                   }}
                 >
                   <Group justify="space-between" align="flex-start">
                     <Badge
                       variant="filled"
                       color="teal"
-                      size="md"
+                      size="sm"
                       radius="sm"
                       style={{ backdropFilter: 'blur(8px)' }}
                     >
-                      {POPULAR_REGIONS[0].tag}
+                      {region.tag}
                     </Badge>
                     <Group
-                      gap={8}
+                      gap={6}
                       style={{
-                        backgroundColor: 'rgba(0,0,0,0.4)',
-                        padding: '6px 12px',
-                        borderRadius: '8px',
+                        backgroundColor: 'rgba(0,0,0,0.45)',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
                         backdropFilter: 'blur(8px)',
                       }}
                     >
-                      <MapPin size={14} color="#38bdf8" />
-                      <Text size="sm" c="white" fw={600}>
-                        {POPULAR_REGIONS[0].routesCount}
+                      <MapPin size={13} color="#38bdf8" />
+                      <Text size="xs" c="white" fw={600}>
+                        {region.routesCount}
                       </Text>
                     </Group>
                   </Group>
 
                   <Stack gap={6}>
                     <Text
-                      size="sm"
+                      size="md"
                       c="teal"
                       fw={600}
                       tt="uppercase"
                       style={{ letterSpacing: '0.05em' }}
                     >
-                      {POPULAR_REGIONS[0].elevation}
+                      {region.elevation}
                     </Text>
                     <Title
                       order={3}
-                      size="h1"
+                      size="h3"
                       c="#ffffff"
-
                       style={{ letterSpacing: '-0.02em' }}
-                      fz={{ base: '1.4rem', sm: '1.9rem' }}
+                      fz={{ base: '1.25rem', sm: '1.4rem' }}
                     >
-                      {POPULAR_REGIONS[0].title}
+                      {region.title}
                     </Title>
-                    <Text size="lg" c="rgba(255,255,255,0.85)" maw={500}>
-                      {POPULAR_REGIONS[0].subtitle}
+                    <Text size="md" c="rgba(255,255,255,0.85)" lineClamp={2}>
+                      {region.subtitle}
                     </Text>
                   </Stack>
                 </Card>
-              </Grid.Col>
-
-              <Grid.Col span={{ base: 12, md: 5 }}>
-                <Stack h="100%" justify="space-between" gap="lg">
-                  {POPULAR_REGIONS.slice(1).map((region) => (
-                    <Card
-                      key={region.title}
-                      padding="lg"
-                      radius="lg"
-                      component={Link}
-                      to="/explore"
-                      style={{
-                        backgroundColor: 'transparent',
-                        height: '214px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        justifyContent: 'space-between',
-                        backgroundImage: `linear-gradient(to top, rgba(7,16,11,0.92) 0%, rgba(7,16,11,0.5) 55%, rgba(7,16,11,0.15) 100%), url(${region.image})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        textDecoration: 'none',
-                        border: `1px solid ${borderColor}`,
-                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                        boxShadow: isDark
-                          ? '0 8px 25px rgba(0,0,0,0.3)'
-                          : '0 8px 25px rgba(17,34,25,0.06)',
-                      }}
-                    >
-                      <Group justify="space-between" align="flex-start">
-                        <Badge variant="filled" color="teal" size="sm" radius="sm">
-                          {region.tag}
-                        </Badge>
-                        <Text
-                          size="sm"
-                          c="rgba(255,255,255,0.9)"
-                          fw={600}
-                          style={{
-                            backgroundColor: 'rgba(0,0,0,0.4)',
-                            padding: '4px 8px',
-                            borderRadius: '6px',
-                          }}
-                        >
-                          {region.routesCount}
-                        </Text>
-                      </Group>
-
-                      <Box>
-                        <Title order={3} size="h3" c="#ffffff" mb={2} fw={700}>
-                          {region.title}
-                        </Title>
-                        <Text size="md" c="rgba(255,255,255,0.8)" lineClamp={1}>
-                          {region.subtitle}
-                        </Text>
-                      </Box>
-                    </Card>
-                  ))}
-                </Stack>
-              </Grid.Col>
-            </Grid>
+              ))}
+            </SimpleGrid>
 
             <Button
               component={Link}
@@ -523,7 +457,10 @@ export function HomePage() {
             style={{
               backgroundColor: isDark ? 'rgba(17, 34, 25, 0.4)' : 'rgba(235, 245, 239, 0.5)',
               borderRadius: '24px',
-              border: `1px solid ${borderColor}`,
+              borderTop: `1px solid ${borderColor}`,
+              borderBottom: `1px solid ${borderColor}`,
+              borderLeft: `1px solid ${borderColor}`,
+              borderRight: `1px solid ${borderColor}`,
               padding: '4rem 2.5rem',
             }}
           >
@@ -554,10 +491,13 @@ export function HomePage() {
                     key={tip.title}
                     padding="xl"
                     radius="lg"
-                    withBorder
+                    withBorder={false}
                     style={{
                       backgroundColor: cardBackground,
-                      border: `1px solid ${borderColor}`,
+                      borderTop: `1px solid ${borderColor}`,
+                      borderBottom: `1px solid ${borderColor}`,
+                      borderLeft: `1px solid ${borderColor}`,
+                      borderRight: `1px solid ${borderColor}`,
                       boxShadow: isDark
                         ? '0 4px 20px rgba(0,0,0,0.2)'
                         : '0 4px 20px rgba(0,0,0,0.02)',
@@ -584,14 +524,17 @@ export function HomePage() {
           </Box>
 
           <Card
-            withBorder
+            withBorder={false}
             p="xl"
             radius="lg"
             component="section"
             aria-labelledby="storage-status-heading"
             style={{
               backgroundColor: cardBackground,
-              border: `1px solid ${borderColor}`,
+              borderTop: `1px solid ${borderColor}`,
+              borderBottom: `1px solid ${borderColor}`,
+              borderLeft: `1px solid ${borderColor}`,
+              borderRight: `1px solid ${borderColor}`,
               boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.3)' : '0 10px 30px rgba(17,34,25,0.03)',
             }}
           >
@@ -606,11 +549,11 @@ export function HomePage() {
                     id="storage-status-heading"
                     size="h3"
                     c={headingColor}
-                    fz={{ base: '1.7rem', sm: '2rem' }}
+                    fz={{ base: '1.2rem', sm: '1.4rem' }}
                   >
                     Local Storage Status
                   </Title>
-                  <Text size="lg" c={bodyColor} mt={4}>
+                  <Text size="md" c={bodyColor} mt={4}>
                     {savedRoutes.length === 0
                       ? 'No saved routes yet. Pin a trail or generate a plan to keep it on this device.'
                       : `${savedRoutes.length} active route${savedRoutes.length === 1 ? '' : 's'} securely saved to browser storage.`}
