@@ -42,6 +42,7 @@ TurNorge is built with a robust, scalable client-side architecture leveraging mo
 ````bash
 git clone [https://github.com/Nirush4/TurNorge](https://github.com/Nirush4/TurNorge)
 cd TurNorge
+```
 
 ```bash
 npm install
