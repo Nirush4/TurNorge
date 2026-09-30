@@ -17,7 +17,7 @@ export function BrandLogo(): JSX.Element {
           <Text fw={700} lh={1.1} c="pine.4" size="xl">
             TurNorge
           </Text>
-          <Text size="xs" c="dimmed" lh={1.2}>
+          <Text size="sm" c="dimmed" lh={1.2}>
             Norway hiking guide
           </Text>
         </div>
