@@ -11,7 +11,6 @@ import {
   Badge,
   List,
   ThemeIcon,
-  useMantineColorScheme,
   Loader,
   Box,
 } from '@mantine/core';
@@ -31,6 +30,7 @@ import { ExploreFilters } from '@/components/explore/ExploreFilters';
 import { TrailGrid } from '@/components/explore/TrailGrid';
 import { TrailTransitBoard } from '@/components/explore/TrailTransitBoard';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface StopPlaceData {
   name: string;
@@ -92,13 +92,12 @@ const mapDestinationsToTrails = (destinations: KartverketPlace[]): Trail[] => {
 
 export function ExplorePage() {
   const { addFavorite } = useFavorites();
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { isDark, headingColor, bodyColor, cardBackground, borderColor } = useThemeColors();
 
-  const headingColor = isDark ? '#ffffff' : '#112219';
-  const bodyColor = isDark ? '#cbd5ce' : '#4a5d53';
-  const cardBackground = isDark ? '#0d1c14' : '#ffffff';
-  const borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)';
+  const simpleCardStyle = {
+    backgroundColor: cardBackground,
+    border: `1px solid ${borderColor}`,
+  };
 
   const [region, setRegion] = useState<string>('all');
   const [difficulty, setDifficulty] = useState<TrailDifficulty | 'all'>('all');
@@ -296,7 +295,14 @@ export function ExplorePage() {
       styles: {
         root: { backgroundColor: '#28726B' },
         description: { color: '#FFFFFF' },
-        closeButton: { color: '#FFFFFF' },
+        closeButton: {
+          color: '#FFFFFF',
+          backgroundColor: 'transparent',
+          transition: 'background-color 0.2s ease',
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+          },
+        },
       },
     });
   };
@@ -433,13 +439,7 @@ export function ExplorePage() {
               </div>
             </Card>
 
-            <Card
-              withBorder={false}
-              style={{
-                backgroundColor: cardBackground,
-                border: `1px solid ${borderColor}`,
-              }}
-            >
+            <Card withBorder={false} style={simpleCardStyle}>
               <Group justify="space-between" mb="xs">
                 <Title order={4} c={headingColor}>
                   Trail Overview
@@ -483,16 +483,7 @@ export function ExplorePage() {
               </Group>
             </Card>
 
-            <Card
-              withBorder={false}
-              radius="md"
-              p="md"
-              shadow="sm"
-              style={{
-                backgroundColor: cardBackground,
-                border: `1px solid ${borderColor}`,
-              }}
-            >
+            <Card withBorder={false} radius="md" p="md" shadow="sm" style={simpleCardStyle}>
               <Group justify="space-between" mb="sm">
                 <Group gap="xs">
                   <ThemeIcon color="teal" variant="light" size="lg" radius="md">
@@ -578,13 +569,7 @@ export function ExplorePage() {
               )}
             </Card>
 
-            <Card
-              withBorder={false}
-              style={{
-                backgroundColor: cardBackground,
-                border: `1px solid ${borderColor}`,
-              }}
-            >
+            <Card withBorder={false} style={simpleCardStyle}>
               <Title order={4} c={headingColor}>
                 MET.no Live Weather Forecast
               </Title>
