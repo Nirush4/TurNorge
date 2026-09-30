@@ -19,7 +19,6 @@ import {
   ThemeIcon,
   SimpleGrid,
   Menu,
-  useMantineColorScheme,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
@@ -37,10 +36,10 @@ import {
   Calendar,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-
 import { supabase } from '@/lib/supabaseClient';
 import { useFavorites } from '@/hooks/useFavorites';
 import { HikingLoader } from '@/components/HikingLoader';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 const COVER_HEIGHT = 300;
 const AVATAR_SIZE = 120;
@@ -60,13 +59,8 @@ interface FavoriteRoute {
 export function Profile(): JSX.Element {
   const { user, profile, refreshProfile, signOut } = useAuth();
   const { favorites, loading: favoritesLoading, removeFavorite } = useFavorites();
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
 
-  const headingColor = isDark ? '#f1f5f2' : '#112219';
-  const bodyColor = isDark ? '#cbd5ce' : '#4a5d53';
-  const cardBackground = isDark ? '#112219' : '#ffffff';
-  const borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)';
+  const { isDark, headingColor, bodyColor, cardBackground, borderColor } = useThemeColors();
 
   const [editOpen, setEditOpen] = useState(false);
   const [username, setUsername] = useState(profile?.username ?? '');
@@ -96,7 +90,9 @@ export function Profile(): JSX.Element {
           justifyContent: 'center',
         }}
       >
-        <HikingLoader text="Loading your profile..." />
+        <div role="status" aria-live="polite">
+          <HikingLoader text="Loading your profile..." />
+        </div>
       </Container>
     );
   }
@@ -191,6 +187,16 @@ export function Profile(): JSX.Element {
     setEditOpen(false);
   };
 
+  const cardStyle = {
+    backgroundColor: cardBackground,
+    border: `1px solid ${borderColor}`,
+    borderRadius: '16px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    justifyContent: 'space-between',
+    boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.3)' : '0 10px 30px rgba(17,34,25,0.03)',
+  };
+
   return (
     <Container size="lg" py="md" px="0" pb={70} component="main" mih="100dvh">
       <Box
@@ -203,6 +209,8 @@ export function Profile(): JSX.Element {
           backgroundPosition: 'center',
           borderRadius: 12,
         }}
+        role="region"
+        aria-label="Profile cover banner"
       >
         <FileButton onChange={handleCoverChange} accept="image/png,image/jpeg,image/webp">
           {(props) => (
@@ -213,10 +221,11 @@ export function Profile(): JSX.Element {
               color="dark"
               radius="xl"
               loading={uploadingCover}
-              leftSection={<Camera size={14} />}
+              leftSection={<Camera size={14} aria-hidden="true" />}
               pos="absolute"
               top={12}
               right={12}
+              style={{ minHeight: '36px' }}
             >
               Change Cover
             </Button>
@@ -233,7 +242,12 @@ export function Profile(): JSX.Element {
                   size={AVATAR_SIZE}
                   bg="white"
                   radius={AVATAR_SIZE}
-                  style={{ border: `3px solid #ffffff` }}
+                  alt={
+                    profile.username
+                      ? `${profile.username}'s profile avatar`
+                      : 'User profile avatar'
+                  }
+                  style={{ border: `3px solid ${cardBackground}` }}
                 >
                   {!profile.avatar_url && (profile.username?.[0] ?? user.email?.[0])}
                 </Avatar>
@@ -242,11 +256,18 @@ export function Profile(): JSX.Element {
 
             <Menu.Dropdown>
               <Menu.Label>Account</Menu.Label>
-              <Menu.Item leftSection={<Pencil size={14} />} onClick={() => setEditOpen(true)}>
+              <Menu.Item
+                leftSection={<Pencil size={14} aria-hidden="true" />}
+                onClick={() => setEditOpen(true)}
+              >
                 Edit Profile
               </Menu.Item>
               <Menu.Divider />
-              <Menu.Item color="red" leftSection={<LogOut size={14} />} onClick={() => signOut()}>
+              <Menu.Item
+                color="red"
+                leftSection={<LogOut size={14} aria-hidden="true" />}
+                onClick={() => signOut()}
+              >
                 Log Out
               </Menu.Item>
             </Menu.Dropdown>
@@ -266,9 +287,10 @@ export function Profile(): JSX.Element {
                 pos="absolute"
                 bottom={0}
                 right={0}
-                style={{ width: 32, height: 32, zIndex: 10 }}
+                aria-label="Upload new profile picture"
+                style={{ width: 32, height: 32, zIndex: 10, minHeight: '32px' }}
               >
-                <Camera size={14} />
+                <Camera size={14} aria-hidden="true" />
               </Button>
             )}
           </FileButton>
@@ -279,20 +301,25 @@ export function Profile(): JSX.Element {
       <Box h={AVATAR_SIZE / 2 + 16} />
 
       <Stack gap="lg" px="md">
-        <Group justify="space-between" align="flex-start">
+        <Group
+          justify="space-between"
+          align="flex-start"
+          component="section"
+          aria-labelledby="profile-user-info"
+        >
           <div>
-            <Title order={2} c={headingColor}>
+            <Title order={2} c={headingColor} id="profile-user-info">
               {profile.username || 'Unnamed Hiker'}
             </Title>
             <Group gap={6} mt={4}>
-              <Mail size={14} color="#82aca0" />
+              <Mail size={14} color="#82aca0" aria-hidden="true" />
               <Text size="md" c={bodyColor}>
                 {user.email}
               </Text>
             </Group>
             {profile.location && (
               <Group gap={6} mt={2}>
-                <MapPin size={14} color="#82aca0" />
+                <MapPin size={14} color="#82aca0" aria-hidden="true" />
                 <Text size="md" c={bodyColor}>
                   {profile.location}
                 </Text>
@@ -309,17 +336,23 @@ export function Profile(): JSX.Element {
             variant="outline"
             color="teal"
             size="sm"
-            leftSection={<Pencil size={14} />}
+            leftSection={<Pencil size={14} aria-hidden="true" />}
             onClick={() => setEditOpen(true)}
+            style={{ minHeight: '40px' }}
           >
             Edit Profile
           </Button>
         </Group>
 
         {/* Saved favorites section */}
-        <div>
+        <section aria-labelledby="saved-favorites-heading">
           <Group justify="space-between" my="lg">
-            <Title order={4} fz={{ base: '1.5rem', sm: '2rem' }} c={headingColor}>
+            <Title
+              order={3}
+              fz={{ base: '1.5rem', sm: '2rem' }}
+              c={headingColor}
+              id="saved-favorites-heading"
+            >
               Saved Favorites
             </Title>
             {favorites.length > 0 && (
@@ -327,7 +360,7 @@ export function Profile(): JSX.Element {
                 variant="light"
                 color="teal"
                 size="xl"
-                leftSection={<BookmarkCheck size={12} />}
+                leftSection={<BookmarkCheck size={12} aria-hidden="true" />}
               >
                 {favorites.length}
               </Badge>
@@ -335,7 +368,7 @@ export function Profile(): JSX.Element {
           </Group>
 
           {favoritesLoading ? (
-            <Center py="md">
+            <Center py="md" role="status" aria-live="polite">
               <Loader color="teal" size="sm" />
             </Center>
           ) : favorites.length === 0 ? (
@@ -351,16 +384,8 @@ export function Profile(): JSX.Element {
                   radius="lg"
                   withBorder
                   component="article"
-                  style={{
-                    backgroundColor: cardBackground,
-                    border: `1px solid ${borderColor}`,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    boxShadow: isDark
-                      ? '0 10px 30px rgba(0,0,0,0.3)'
-                      : '0 10px 30px rgba(17,34,25,0.03)',
-                  }}
+                  aria-label={`Favorite route: ${fav.location_name}`}
+                  style={cardStyle}
                 >
                   <div>
                     {/* Card Top Row */}
@@ -379,7 +404,7 @@ export function Profile(): JSX.Element {
                           </Badge>
                         )}
                         <Title
-                          order={3}
+                          order={4}
                           size="h3"
                           c={headingColor}
                           fw={700}
@@ -393,9 +418,9 @@ export function Profile(): JSX.Element {
                         color="red"
                         size="sm"
                         radius="md"
-                        leftSection={<Trash2 size={14} />}
+                        leftSection={<Trash2 size={14} aria-hidden="true" />}
                         onClick={() => handleRemoveFavorite(fav.id, fav.location_name)}
-                        style={{ fontWeight: 600 }}
+                        style={{ fontWeight: 600, minHeight: '38px' }}
                       >
                         Remove
                       </Button>
@@ -430,7 +455,7 @@ export function Profile(): JSX.Element {
                     {fav.location_lat != null && fav.location_lng != null && (
                       <Group gap={6} wrap="nowrap">
                         <ThemeIcon size={28} radius="sm" variant="light" color="teal">
-                          <MapPin size={24} />
+                          <MapPin size={24} aria-hidden="true" />
                         </ThemeIcon>
                         <div>
                           <Text size="14px" c="dimmed" tt="uppercase" fw={700}>
@@ -446,7 +471,7 @@ export function Profile(): JSX.Element {
                     {fav.trip_duration_days && (
                       <Group gap={6} wrap="nowrap">
                         <ThemeIcon size={28} radius="sm" variant="light" color="teal">
-                          <Compass size={24} />
+                          <Compass size={24} aria-hidden="true" />
                         </ThemeIcon>
                         <div>
                           <Text size="14px" c="dimmed" tt="uppercase" fw={700}>
@@ -462,7 +487,7 @@ export function Profile(): JSX.Element {
                     {fav.elevation_m && (
                       <Group gap={6} wrap="nowrap">
                         <ThemeIcon size={28} radius="sm" variant="light" color="teal">
-                          <Mountain size={24} />
+                          <Mountain size={24} aria-hidden="true" />
                         </ThemeIcon>
                         <div>
                           <Text size="14px" c="dimmed" tt="uppercase" fw={700}>
@@ -477,7 +502,7 @@ export function Profile(): JSX.Element {
 
                     <Group gap={6} wrap="nowrap">
                       <ThemeIcon size={28} radius="sm" variant="light" color="teal">
-                        <Calendar size={24} />
+                        <Calendar size={24} aria-hidden="true" />
                       </ThemeIcon>
                       <div>
                         <Text size="14px" c="dimmed" tt="uppercase" fw={700}>
@@ -493,7 +518,7 @@ export function Profile(): JSX.Element {
               ))}
             </SimpleGrid>
           )}
-        </div>
+        </section>
       </Stack>
 
       {/* Edit Profile modal */}
@@ -504,9 +529,16 @@ export function Profile(): JSX.Element {
         centered
         radius="md"
       >
-        <Stack gap="md">
+        <Stack
+          gap="md"
+          component="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSave();
+          }}
+        >
           {error && (
-            <Text size="sm" c="red">
+            <Text size="sm" c="red" role="alert" aria-live="assertive">
               {error}
             </Text>
           )}
@@ -514,9 +546,20 @@ export function Profile(): JSX.Element {
           <TextInput
             label="Username"
             placeholder="Your username"
-            leftSection={<UserIcon size={14} />}
+            leftSection={<UserIcon size={14} aria-hidden="true" />}
             value={username}
             onChange={(e) => setUsername(e.currentTarget.value)}
+            required
+            aria-required="true"
+            styles={{
+              label: {
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                marginBottom: '6px',
+                color: headingColor,
+              },
+              input: { fontSize: '15px', minHeight: '44px' },
+            }}
           />
 
           <TextInput
@@ -524,14 +567,33 @@ export function Profile(): JSX.Element {
             value={user.email ?? ''}
             disabled
             description="Email cannot be changed here."
+            styles={{
+              label: {
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                marginBottom: '6px',
+                color: headingColor,
+              },
+              input: { fontSize: '15px', minHeight: '44px', opacity: 0.8 },
+              description: { fontSize: '0.85rem', color: bodyColor },
+            }}
           />
 
           <TextInput
             label="Location"
             placeholder="e.g. Oslo, Norway"
-            leftSection={<MapPin size={14} />}
+            leftSection={<MapPin size={14} aria-hidden="true" />}
             value={location}
             onChange={(e) => setLocation(e.currentTarget.value)}
+            styles={{
+              label: {
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                marginBottom: '6px',
+                color: headingColor,
+              },
+              input: { fontSize: '15px', minHeight: '44px' },
+            }}
           />
 
           <Textarea
@@ -543,17 +605,33 @@ export function Profile(): JSX.Element {
             maxLength={300}
             description={`${bio.length}/300`}
             autosize
+            styles={{
+              label: {
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                marginBottom: '6px',
+                color: headingColor,
+              },
+              input: { fontSize: '15px' },
+              description: { fontSize: '0.85rem', color: bodyColor },
+            }}
           />
 
           <Group justify="flex-end" mt="sm">
-            <Button variant="subtle" color="gray" onClick={() => setEditOpen(false)}>
+            <Button
+              variant="subtle"
+              color="gray"
+              onClick={() => setEditOpen(false)}
+              style={{ minHeight: '40px' }}
+            >
               Cancel
             </Button>
             <Button
+              type="submit"
               color="teal"
-              leftSection={<Save size={16} />}
+              leftSection={<Save size={16} aria-hidden="true" />}
               loading={saving}
-              onClick={handleSave}
+              style={{ minHeight: '40px', fontWeight: 600 }}
             >
               Save Changes
             </Button>
