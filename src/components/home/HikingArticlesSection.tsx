@@ -1,5 +1,6 @@
 import { Card, SimpleGrid, Title, Text, Badge, Group, Button, Box, Image } from '@mantine/core';
 import { Compass, ArrowRight, MapPin } from 'lucide-react';
+import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { HIKING_ARTICLES } from '@/data/hikingArticles';
 
@@ -17,6 +18,18 @@ export function HikingArticlesSection({
   borderColor,
 }: HikingArticlesSectionProps) {
   const articlesList = Object.values(HIKING_ARTICLES);
+
+  const cardStyle: CSSProperties = {
+    backgroundColor: cardBackground,
+    borderTop: '4px solid #28726B',
+    borderBottom: `1px solid ${borderColor}`,
+    borderLeft: `1px solid ${borderColor}`,
+    borderRight: `1px solid ${borderColor}`,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+  };
 
   return (
     <Box component="section" aria-labelledby="famous-destinations-heading">
@@ -49,17 +62,10 @@ export function HikingArticlesSection({
             key={article.id}
             padding="lg"
             radius="md"
-            withBorder
+            withBorder={false}
             component="article"
             aria-labelledby={`destination-title-${article.id}`}
-            style={{
-              backgroundColor: cardBackground,
-              border: `1px solid ${borderColor}`,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              overflow: 'hidden',
-            }}
+            style={cardStyle}
           >
             <div>
               <Card.Section mb="sm">
