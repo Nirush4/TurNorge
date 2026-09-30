@@ -16,7 +16,6 @@ import {
   Text,
   Title,
   Divider,
-  useMantineColorScheme,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -36,6 +35,7 @@ import { RegionSearchBar } from '@/components/RegionSearchBar';
 import type { MetForecastResponse } from '@/types/met';
 import type { GeneratedPlan, ItineraryDay } from '@/types';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export interface LiveWeatherConditions {
   elevationMeters: number;
@@ -279,13 +279,7 @@ export async function generateDynamicPlan(
 export function PlannerPage() {
   const { setLastPlan, lastPlan } = useAppState();
   const { addFavorite } = useFavorites();
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
-
-  const headingColor = isDark ? '#ffffff' : '#112219';
-  const bodyColor = isDark ? '#cbd5ce' : '#4a5d53';
-  const cardBackground = isDark ? '#0d1c14' : '#ffffff';
-  const borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)';
+  const { isDark, headingColor, bodyColor, cardBackground, borderColor } = useThemeColors();
 
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
   const [fetchingWeather, setFetchingWeather] = useState(false);
@@ -299,6 +293,19 @@ export function PlannerPage() {
 
   const [currentTone, setCurrentTone] = useState<'standard' | 'cautious' | 'ambitious'>('standard');
   const [emphasizeSafetyLocal, setEmphasizeSafetyLocal] = useState(true);
+
+  const accentCardStyle = {
+    backgroundColor: cardBackground,
+    borderTop: '4px solid #28726B',
+    borderBottom: `1px solid ${borderColor}`,
+    borderLeft: `1px solid ${borderColor}`,
+    borderRight: `1px solid ${borderColor}`,
+  };
+
+  const simpleCardStyle = {
+    backgroundColor: cardBackground,
+    border: `1px solid ${borderColor}`,
+  };
 
   const {
     control,
@@ -430,11 +437,11 @@ export function PlannerPage() {
         <Stack gap="lg">
           <header>
             <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={headingColor}>
-              Dynamic Route Planner
+              Smart Route Planner
             </Title>
             <Text mt="sm" size="lg" c={bodyColor}>
-              Fully dynamic client-side route compiler powered by live MET.no telemetry and
-              Kartverket location search.
+              Instantly plans your route and updates you with live weather and location search as
+              you go.
             </Text>
           </header>
 
@@ -444,13 +451,7 @@ export function PlannerPage() {
             radius="md"
             role="region"
             aria-label="Planner Configuration Options"
-            style={{
-              backgroundColor: cardBackground,
-              borderTop: '4px solid #28726B',
-              borderBottom: `1px solid ${borderColor}`,
-              borderLeft: `1px solid ${borderColor}`,
-              borderRight: `1px solid ${borderColor}`,
-            }}
+            style={accentCardStyle}
           >
             <Stack gap="sm">
               <Group justify="space-between">
@@ -494,13 +495,7 @@ export function PlannerPage() {
             onSubmit={handleSubmit(onSubmit)}
             role="region"
             aria-label="Trip Configuration Form"
-            style={{
-              backgroundColor: cardBackground,
-              borderTop: `1px solid ${borderColor}`,
-              borderBottom: `1px solid ${borderColor}`,
-              borderLeft: `1px solid ${borderColor}`,
-              borderRight: `1px solid ${borderColor}`,
-            }}
+            style={simpleCardStyle}
           >
             <Stack gap="md">
               <Controller
@@ -643,17 +638,7 @@ export function PlannerPage() {
 
           {extendedPlan && (
             <Stack gap="md" component="section" aria-label="Generated Itinerary Results">
-              <Card
-                withBorder={false}
-                padding="lg"
-                style={{
-                  backgroundColor: cardBackground,
-                  borderTop: '4px solid #28726B',
-                  borderBottom: `1px solid ${borderColor}`,
-                  borderLeft: `1px solid ${borderColor}`,
-                  borderRight: `1px solid ${borderColor}`,
-                }}
-              >
+              <Card withBorder={false} padding="lg" style={accentCardStyle}>
                 <Group justify="space-between" align="flex-start">
                   <div>
                     <Title order={2} c={headingColor}>
@@ -684,26 +669,20 @@ export function PlannerPage() {
                     withBorder={false}
                     padding="md"
                     component="article"
-                    style={{
-                      backgroundColor: cardBackground,
-                      borderTop: `1px solid ${borderColor}`,
-                      borderBottom: `1px solid ${borderColor}`,
-                      borderLeft: `1px solid ${borderColor}`,
-                      borderRight: `1px solid ${borderColor}`,
-                    }}
+                    style={simpleCardStyle}
                   >
                     <Stack justify="space-between" h="100%">
                       <div>
                         <Title fz={{ base: '1.4rem', sm: '1.5rem' }} order={3} c={headingColor}>
                           Day {day.day}: {day.title}
                         </Title>
-                        <Text size="lg" mt="sm" c={bodyColor}>
+                        <Text size="md" mt="sm" c={bodyColor}>
                           {day.summary}
                         </Text>
                         <Text size="lg" mt="sm" fw={500} c={headingColor}>
                           {day.distanceKm} km · {day.elevationGainM} m elevation gain
                         </Text>
-                        <Text size="lg" mt={4} c={bodyColor}>
+                        <Text size="md" mt={4} c={bodyColor}>
                           {day.overnight}
                         </Text>
                         <Text size="lg" c="dimmed" mt={4}>
@@ -729,22 +708,13 @@ export function PlannerPage() {
                 ))}
               </SimpleGrid>
 
-              <Card
-                withBorder={false}
-                padding="lg"
-                style={{
-                  backgroundColor: cardBackground,
-                  borderTop: `1px solid ${borderColor}`,
-                  borderBottom: `1px solid ${borderColor}`,
-                  borderLeft: `1px solid ${borderColor}`,
-                  borderRight: `1px solid ${borderColor}`,
-                }}
-              >
+              <Card withBorder={false} padding="lg" style={simpleCardStyle}>
                 <Title order={3} c={headingColor}>
                   Packing List
                 </Title>
                 <List
                   mt="sm"
+                  fz="lg"
                   aria-label="Required packing list items"
                   styles={{ item: { color: bodyColor } }}
                 >
@@ -754,22 +724,13 @@ export function PlannerPage() {
                 </List>
               </Card>
 
-              <Card
-                withBorder={false}
-                padding="lg"
-                style={{
-                  backgroundColor: cardBackground,
-                  borderTop: `1px solid ${borderColor}`,
-                  borderBottom: `1px solid ${borderColor}`,
-                  borderLeft: `1px solid ${borderColor}`,
-                  borderRight: `1px solid ${borderColor}`,
-                }}
-              >
+              <Card withBorder={false} padding="lg" style={simpleCardStyle}>
                 <Title order={3} c={headingColor}>
                   Safety Disclaimers
                 </Title>
                 <List
                   mt="sm"
+                  fz="lg"
                   aria-label="Important safety and emergency notes"
                   styles={{ item: { color: bodyColor } }}
                 >
