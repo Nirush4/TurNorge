@@ -1,14 +1,6 @@
-import {
-  Badge,
-  Button,
-  Card,
-  Group,
-  SimpleGrid,
-  Text,
-  Title,
-  useMantineColorScheme,
-} from '@mantine/core';
+import { Badge, Button, Card, Group, SimpleGrid, Text, Title } from '@mantine/core';
 import type { Trail } from '@/types';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface TrailGridProps {
   trails: Trail[];
@@ -16,26 +8,17 @@ interface TrailGridProps {
 }
 
 export function TrailGrid({ trails, onSelect }: TrailGridProps) {
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { headingColor, bodyColor, cardBackground, borderColor } = useThemeColors();
 
-  const headingColor = isDark ? '#ffffff' : '#112219';
-  const bodyColor = isDark ? '#cbd5ce' : '#4a5d53';
-  const cardBackground = isDark ? '#0d1c14' : '#ffffff';
-  const borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)';
+  const simpleCardStyle = {
+    backgroundColor: cardBackground,
+    border: `1px solid ${borderColor}`,
+  };
 
   return (
     <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
       {trails.map((trail) => (
-        <Card
-          key={trail.id}
-          withBorder={false}
-          padding="lg"
-          style={{
-            backgroundColor: cardBackground,
-            border: `1px solid ${borderColor}`,
-          }}
-        >
+        <Card key={trail.id} withBorder={false} padding="lg" style={simpleCardStyle}>
           <Group justify="space-between">
             <Badge color="pine">{trail.region}</Badge>
             <Badge variant="light" color="teal" tt="capitalize">
