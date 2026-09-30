@@ -1,4 +1,4 @@
-# TurNorge (TrailApp) — [WIP]
+# TurNorge
 
 A modern, privacy-focused Norwegian hiking and outdoor guide application featuring a matte Scandinavian forest aesthetic, secure Supabase cloud sync, interactive trip planning, and full WCAG accessibility compliance.
 
