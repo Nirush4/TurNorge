@@ -36,11 +36,37 @@ import {
 } from 'chart.js';
 import type { ScriptableContext } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import type { ReactNode } from 'react';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
 interface WeatherDashboardProps {
   forecast: MetForecastResponse;
+}
+
+interface MetricCardProps {
+  title: string;
+  value: ReactNode;
+  icon: ReactNode;
+  color: string;
+}
+
+function MetricCard({ title, value, icon, color }: MetricCardProps) {
+  return (
+    <Card withBorder padding="lg" radius="md" shadow="xs">
+      <Group wrap="nowrap" justify="space-between" align="flex-start">
+        <div>
+          <Text size="14px" c="dimmed" tt="uppercase" fw={700} style={{ letterSpacing: '0.05em' }}>
+            {title}
+          </Text>
+          <div style={{ marginTop: '6px' }}>{value}</div>
+        </div>
+        <ThemeIcon color={color} size="xl" radius="md" variant="light" aria-hidden="true">
+          {icon}
+        </ThemeIcon>
+      </Group>
+    </Card>
+  );
 }
 
 export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
@@ -95,63 +121,42 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
     },
   };
 
-  const tempChartConfig = {
+  const createChartConfig = (
+    dataKey: 'temperature' | 'windSpeed',
+    borderColorDark: string,
+    borderColorLight: string,
+  ) => ({
     labels: chartDataSlots.map((d) => d.time),
     datasets: [
       {
         fill: true,
-        data: chartDataSlots.map((d) => d.temperature),
-        borderColor: isDark ? '#38d9a9' : '#2b8a3e',
+        data: chartDataSlots.map((d) => d[dataKey]),
+        borderColor: isDark ? borderColorDark : borderColorLight,
         backgroundColor: (context: ScriptableContext<'line'>) => {
           const { ctx, chartArea } = context.chart;
-          if (!chartArea) return isDark ? 'rgba(56, 217, 169, 0.15)' : 'rgba(43, 138, 62, 0.15)';
+          const baseColor = isDark ? borderColorDark : borderColorLight;
+          if (!chartArea) return `${baseColor}26`;
           const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-          gradient.addColorStop(0, isDark ? 'rgba(56, 217, 169, 0.35)' : 'rgba(43, 138, 62, 0.35)');
-          gradient.addColorStop(1, 'rgba(43, 138, 62, 0.0)');
+          gradient.addColorStop(0, `${baseColor}59`);
+          gradient.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
           return gradient;
         },
         tension: 0.4,
         borderWidth: 3,
         pointRadius: 0,
         pointHoverRadius: 6,
-        pointHoverBackgroundColor: isDark ? '#38d9a9' : '#2b8a3e',
+        pointHoverBackgroundColor: isDark ? borderColorDark : borderColorLight,
         pointHoverBorderColor: '#fff',
         pointHoverBorderWidth: 2,
       },
     ],
-  };
+  });
 
-  const windChartConfig = {
-    labels: chartDataSlots.map((d) => d.time),
-    datasets: [
-      {
-        fill: true,
-        data: chartDataSlots.map((d) => d.windSpeed),
-        borderColor: isDark ? '#74c0fc' : '#1971c2',
-        backgroundColor: (context: ScriptableContext<'line'>) => {
-          const { ctx, chartArea } = context.chart;
-          if (!chartArea) return isDark ? 'rgba(116, 192, 252, 0.15)' : 'rgba(25, 113, 194, 0.15)';
-          const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-          gradient.addColorStop(
-            0,
-            isDark ? 'rgba(116, 192, 252, 0.35)' : 'rgba(25, 113, 194, 0.35)',
-          );
-          gradient.addColorStop(1, 'rgba(25, 113, 194, 0.0)');
-          return gradient;
-        },
-        tension: 0.4,
-        borderWidth: 3,
-        pointRadius: 0,
-        pointHoverRadius: 6,
-        pointHoverBackgroundColor: isDark ? '#74c0fc' : '#1971c2',
-        pointHoverBorderColor: '#fff',
-        pointHoverBorderWidth: 2,
-      },
-    ],
-  };
+  const tempChartConfig = createChartConfig('temperature', '#38d9a9', '#2b8a3e');
+  const windChartConfig = createChartConfig('windSpeed', '#74c0fc', '#1971c2');
 
   return (
-    <Container fluid px={{ base: 'xs', sm: 'md', lg: 'xl' }} py="md">
+    <Container fluid px={{ base: 'xs', sm: 'md', lg: 'xl' }} py="md" component="main">
       <Stack gap="lg" maw={1500} mx="auto">
         <Paper
           withBorder
@@ -162,6 +167,7 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
               ? 'linear-gradient(135deg, var(--mantine-color-dark-6) 0%, rgba(27, 67, 50, 0.25) 100%)'
               : 'linear-gradient(135deg, var(--mantine-color-body) 0%, rgba(27, 67, 50, 0.06) 100%)',
             boxShadow: 'var(--mantine-shadow-sm)',
+            borderTop: '4px solid #28726B',
           }}
         >
           <Group justify="space-between" align="center" wrap="wrap" gap="md">
@@ -220,135 +226,76 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
         )}
 
         <SimpleGrid cols={{ base: 1, sm: 2, md: 5 }} spacing="md">
-          <Card withBorder padding="lg" radius="md" shadow="xs">
-            <Group wrap="nowrap" justify="space-between">
-              <div>
-                <Text
-                  size="14px"
-                  c="dimmed"
-                  tt="uppercase"
-                  fw={700}
-                  style={{ letterSpacing: '0.05em' }}
-                >
-                  Temperature
-                </Text>
-                <Text fw={800} size="xl" lh={1.2} mt={6}>
-                  {airTemp}°C
-                </Text>
-              </div>
-              <ThemeIcon color="teal" size="xl" radius="md" variant="light" aria-hidden="true">
-                <IconTemperature size={24} />
-              </ThemeIcon>
-            </Group>
-          </Card>
-
-          <Card withBorder padding="lg" radius="md" shadow="xs">
-            <Group wrap="nowrap" justify="space-between">
-              <Box style={{ flex: 1 }}>
-                <Text
-                  size="14px"
-                  c="dimmed"
-                  tt="uppercase"
-                  fw={700}
-                  style={{ letterSpacing: '0.05em' }}
-                >
-                  Wind & Direction
-                </Text>
-                <Group gap={6} align="center" mt={6}>
-                  <Text fw={800} size="xl" lh={1.2}>
-                    {instantDetails?.wind_speed}{' '}
-                    <Text span size="md" c="dimmed" fw={500}>
-                      m/s
-                    </Text>
-                  </Text>
-                  <IconCompass
-                    size={20}
-                    style={{
-                      transform: `rotate(${windDirection}deg)`,
-                      transition: 'transform 0.4s ease',
-                      color: isDark ? '#74c0fc' : 'var(--mantine-color-blue-6)',
-                    }}
-                    aria-label={`Wind direction ${windDirection} degrees`}
-                  />
-                </Group>
-              </Box>
-              <ThemeIcon color="blue" size="xl" radius="md" variant="light" aria-hidden="true">
-                <IconWind size={24} />
-              </ThemeIcon>
-            </Group>
-          </Card>
-
-          <Card withBorder padding="lg" radius="md" shadow="xs">
-            <Group wrap="nowrap" justify="space-between">
-              <div>
-                <Text
-                  size="14px"
-                  c="dimmed"
-                  tt="uppercase"
-                  fw={700}
-                  style={{ letterSpacing: '0.05em' }}
-                >
-                  Precipitation
-                </Text>
-                <Text fw={800} size="xl" lh={1.2} mt={6}>
-                  {precipitation}{' '}
+          <MetricCard
+            title="Temperature"
+            color="teal"
+            icon={<IconTemperature size={24} />}
+            value={
+              <Text fw={800} size="xl" lh={1.2}>
+                {airTemp}°C
+              </Text>
+            }
+          />
+          <MetricCard
+            title="Wind & Direction"
+            color="blue"
+            icon={<IconWind size={24} />}
+            value={
+              <Group gap={6} align="center">
+                <Text fw={800} size="xl" lh={1.2}>
+                  {instantDetails?.wind_speed}{' '}
                   <Text span size="md" c="dimmed" fw={500}>
-                    mm
+                    m/s
                   </Text>
                 </Text>
-              </div>
-              <ThemeIcon color="cyan" size="xl" radius="md" variant="light" aria-hidden="true">
-                <IconCloudRain size={24} />
-              </ThemeIcon>
-            </Group>
-          </Card>
-
-          <Card withBorder padding="lg" radius="md" shadow="xs">
-            <Group wrap="nowrap" justify="space-between">
-              <div>
-                <Text
-                  size="14px"
-                  c="dimmed"
-                  tt="uppercase"
-                  fw={700}
-                  style={{ letterSpacing: '0.05em' }}
-                >
-                  Humidity
+                <IconCompass
+                  size={20}
+                  style={{
+                    transform: `rotate(${windDirection}deg)`,
+                    transition: 'transform 0.4s ease',
+                    color: isDark ? '#74c0fc' : 'var(--mantine-color-blue-6)',
+                  }}
+                  aria-label={`Wind direction ${windDirection} degrees`}
+                />
+              </Group>
+            }
+          />
+          <MetricCard
+            title="Precipitation"
+            color="cyan"
+            icon={<IconCloudRain size={24} />}
+            value={
+              <Text fw={800} size="xl" lh={1.2}>
+                {precipitation}{' '}
+                <Text span size="md" c="dimmed" fw={500}>
+                  mm
                 </Text>
-                <Text fw={800} size="xl" lh={1.2} mt={6}>
-                  {instantDetails?.relative_humidity}%
+              </Text>
+            }
+          />
+          <MetricCard
+            title="Humidity"
+            color="teal"
+            icon={<IconDroplet size={24} />}
+            value={
+              <Text fw={800} size="xl" lh={1.2}>
+                {instantDetails?.relative_humidity}%
+              </Text>
+            }
+          />
+          <MetricCard
+            title="Pressure"
+            color="violet"
+            icon={<IconGauge size={24} />}
+            value={
+              <Text fw={800} size="xl" lh={1.2}>
+                {airPressure}{' '}
+                <Text span size="xs" c="dimmed" fw={500}>
+                  hPa
                 </Text>
-              </div>
-              <ThemeIcon color="teal" size="xl" radius="md" variant="light" aria-hidden="true">
-                <IconDroplet size={24} />
-              </ThemeIcon>
-            </Group>
-          </Card>
-
-          <Card withBorder padding="lg" radius="md" shadow="xs">
-            <Group wrap="nowrap" justify="space-between">
-              <div>
-                <Text
-                  size="14px"
-                  c="dimmed"
-                  tt="uppercase"
-                  fw={700}
-                  style={{ letterSpacing: '0.05em' }}
-                >
-                  Pressure
-                </Text>
-                <Text fw={800} size="xl" lh={1.2} mt={6}>
-                  {airPressure}{' '}
-                  <Text span size="xs" c="dimmed" fw={500}>
-                    hPa
-                  </Text>
-                </Text>
-              </div>
-              <ThemeIcon color="violet" size="xl" radius="md" variant="light" aria-hidden="true">
-                <IconGauge size={24} />
-              </ThemeIcon>
-            </Group>
-          </Card>
+              </Text>
+            }
+          />
         </SimpleGrid>
 
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
@@ -421,8 +368,16 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
           </Card>
         </SimpleGrid>
 
-        <Card withBorder padding="lg" radius="md" shadow="xs">
+        <Card
+          withBorder
+          padding="lg"
+          radius="md"
+          shadow="xs"
+          component="section"
+          aria-labelledby="progression-schedule-heading"
+        >
           <Title
+            id="progression-schedule-heading"
             order={2}
             size="lg"
             fw={700}
@@ -441,22 +396,22 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
                     borderBottom: `1px solid ${isDark ? 'var(--mantine-color-dark-4)' : 'var(--mantine-color-gray-3)'}`,
                   }}
                 >
-                  <Table.Th fz="md" fw={700} c="dimmed">
+                  <Table.Th scope="col" fz="md" fw={700} c="dimmed">
                     Time
                   </Table.Th>
-                  <Table.Th fz="md" fw={700} c="dimmed" ta="center">
+                  <Table.Th scope="col" fz="md" fw={700} c="dimmed" ta="center">
                     Condition
                   </Table.Th>
-                  <Table.Th fz="md" fw={700} c="dimmed" ta="right">
+                  <Table.Th scope="col" fz="md" fw={700} c="dimmed" ta="right">
                     Precipitation
                   </Table.Th>
-                  <Table.Th fz="md" fw={700} c="dimmed" ta="right">
+                  <Table.Th scope="col" fz="md" fw={700} c="dimmed" ta="right">
                     Humidity
                   </Table.Th>
-                  <Table.Th fz="md" fw={700} c="dimmed" ta="right">
+                  <Table.Th scope="col" fz="md" fw={700} c="dimmed" ta="right">
                     Wind
                   </Table.Th>
-                  <Table.Th fz="md" fw={700} c="dimmed" ta="right">
+                  <Table.Th scope="col" fz="md" fw={700} c="dimmed" ta="right">
                     Temp
                   </Table.Th>
                 </Table.Tr>
@@ -483,18 +438,23 @@ export function WeatherDashboard({ forecast }: WeatherDashboardProps) {
                         borderRadius: 'var(--mantine-radius-md)',
                       }}
                     >
-                      <Table.Td fw={700}>{timeStr}</Table.Td>
+                      <Table.Td fw={700} component="th" scope="row">
+                        {timeStr}
+                      </Table.Td>
                       <Table.Td tt="capitalize" c="dimmed" fw={600} ta="center">
                         {symbol.replace('_', ' ')}
                       </Table.Td>
                       <Table.Td fz="md" ta="right" c="dimmed">
-                        🌧️ {precip} mm
+                        <span aria-hidden="true">🌧️ </span>
+                        {precip} mm
                       </Table.Td>
                       <Table.Td fz="md" ta="right" c="dimmed">
-                        💧 {hum}%
+                        <span aria-hidden="true">💧 </span>
+                        {hum}%
                       </Table.Td>
                       <Table.Td fz="md" ta="right" c="dimmed">
-                        🌬️ {wind} m/s
+                        <span aria-hidden="true">🌬️ </span>
+                        {wind} m/s
                       </Table.Td>
                       <Table.Td fz="md" ta="right" fw={800}>
                         {temp}°C

@@ -35,6 +35,7 @@ import { RegionSearchBar } from '@/components/RegionSearchBar';
 import type { MetForecastResponse } from '@/types/met';
 import type { GeneratedPlan, ItineraryDay } from '@/types';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export interface LiveWeatherConditions {
   elevationMeters: number;
@@ -278,6 +279,7 @@ export async function generateDynamicPlan(
 export function PlannerPage() {
   const { setLastPlan, lastPlan } = useAppState();
   const { addFavorite } = useFavorites();
+  const { isDark, headingColor, bodyColor, cardBackground, borderColor } = useThemeColors();
 
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
   const [fetchingWeather, setFetchingWeather] = useState(false);
@@ -291,6 +293,19 @@ export function PlannerPage() {
 
   const [currentTone, setCurrentTone] = useState<'standard' | 'cautious' | 'ambitious'>('standard');
   const [emphasizeSafetyLocal, setEmphasizeSafetyLocal] = useState(true);
+
+  const accentCardStyle = {
+    backgroundColor: cardBackground,
+    borderTop: '4px solid #28726B',
+    borderBottom: `1px solid ${borderColor}`,
+    borderLeft: `1px solid ${borderColor}`,
+    borderRight: `1px solid ${borderColor}`,
+  };
+
+  const simpleCardStyle = {
+    backgroundColor: cardBackground,
+    border: `1px solid ${borderColor}`,
+  };
 
   const {
     control,
@@ -418,35 +433,29 @@ export function PlannerPage() {
 
   return (
     <>
-      <style>{`
-        @media screen and (max-width: 768px) {
-          input, select, textarea, .mantine-Input-input, .mantine-Select-input, .mantine-NumberInput-input {
-            font-size: 16px !important;
-          }
-        }
-      `}</style>
       <Container size="lg" py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
         <Stack gap="lg">
           <header>
-            <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }}>
-              Dynamic Route Planner
+            <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={headingColor}>
+              Smart Route Planner
             </Title>
-            <Text mt="sm" size="lg" c="dimmed">
-              Fully dynamic client-side route compiler powered by live MET.no telemetry and
-              Kartverket location search.
+            <Text mt="sm" size="lg" c={bodyColor}>
+              Instantly plans your route and updates you with live weather and location search as
+              you go.
             </Text>
           </header>
 
           <Card
-            withBorder
+            withBorder={false}
             padding="md"
             radius="md"
             role="region"
             aria-label="Planner Configuration Options"
+            style={accentCardStyle}
           >
             <Stack gap="sm">
               <Group justify="space-between">
-                <Text size="lg" fw={600} id="settings-heading">
+                <Text size="lg" fw={600} id="settings-heading" c={headingColor}>
                   Walking Pace &amp; Preferences
                 </Text>
               </Group>
@@ -456,7 +465,6 @@ export function PlannerPage() {
                 label="How fast or far do you want to go?"
                 size="sm"
                 value={currentTone}
-
                 onChange={(val) => {
                   if (val) setCurrentTone(val as 'standard' | 'cautious' | 'ambitious');
                 }}
@@ -468,24 +476,26 @@ export function PlannerPage() {
                 styles={MOBILE_INPUT_STYLES}
               />
 
-              <Divider />
+              <Divider color={borderColor} />
 
               <Checkbox
                 label="Emphasize advanced emergency and alpine safety warnings"
                 checked={emphasizeSafetyLocal}
                 onChange={(e) => setEmphasizeSafetyLocal(e.currentTarget.checked)}
                 size="md"
+                styles={{ label: { color: bodyColor } }}
               />
             </Stack>
           </Card>
 
           <Card
-            withBorder
+            withBorder={false}
             padding="lg"
             component="form"
             onSubmit={handleSubmit(onSubmit)}
             role="region"
             aria-label="Trip Configuration Form"
+            style={simpleCardStyle}
           >
             <Stack gap="md">
               <Controller
@@ -504,7 +514,7 @@ export function PlannerPage() {
                     {searchingDestinations && (
                       <Group gap="xs" role="status" aria-live="polite">
                         <Loader size="xs" aria-label="Searching locations" />
-                        <Text size="xs" c="dimmed">
+                        <Text size="xs" c={bodyColor}>
                           Searching locations...
                         </Text>
                       </Group>
@@ -519,11 +529,20 @@ export function PlannerPage() {
               />
 
               {selectedPlace && (
-                <Card withBorder padding="sm" role="status" aria-live="polite">
-                  <Text size="md" fw={600}>
+                <Card
+                  withBorder={false}
+                  padding="sm"
+                  role="status"
+                  aria-live="polite"
+                  style={{
+                    backgroundColor: isDark ? '#14291f' : '#f0f4f1',
+                    border: `1px solid ${borderColor}`,
+                  }}
+                >
+                  <Text size="md" fw={600} c={headingColor}>
                     Selected: {selectedPlace.name}
                   </Text>
-                  <Text size="md" c="dimmed" mt={4}>
+                  <Text size="md" c={bodyColor} mt={4}>
                     {selectedPlace.municipality} · {selectedPlace.county} · Coordinates:{' '}
                     {selectedPlace.latitude.toFixed(4)}, {selectedPlace.longitude.toFixed(4)}
                   </Text>
@@ -598,6 +617,7 @@ export function PlannerPage() {
                     size="md"
                     checked={field.value}
                     onChange={(event) => field.onChange(event.currentTarget.checked)}
+                    styles={{ label: { color: bodyColor } }}
                   />
                 )}
               />
@@ -607,7 +627,7 @@ export function PlannerPage() {
                 loading={isSubmitting || loadingIndex !== null}
                 loaderProps={{ type: 'dots' }}
                 disabled={searchingDestinations}
-                color="pine"
+                color="teal"
                 aria-busy={loadingIndex !== null}
                 fullWidth
               >
@@ -618,18 +638,20 @@ export function PlannerPage() {
 
           {extendedPlan && (
             <Stack gap="md" component="section" aria-label="Generated Itinerary Results">
-              <Card withBorder padding="lg">
+              <Card withBorder={false} padding="lg" style={accentCardStyle}>
                 <Group justify="space-between" align="flex-start">
                   <div>
-                    <Title order={2}>{extendedPlan.title}</Title>
-                    <Text size="lg" mt="sm">
+                    <Title order={2} c={headingColor}>
+                      {extendedPlan.title}
+                    </Title>
+                    <Text size="lg" mt="sm" c={bodyColor}>
                       {extendedPlan.overview}
                     </Text>
                   </div>
                   <Button
                     variant="filled"
                     radius="md"
-                    color="blue.5"
+                    color="teal"
                     size="md"
                     disabled={isFavorite}
                     onClick={handleSaveFavorite}
@@ -642,19 +664,25 @@ export function PlannerPage() {
 
               <SimpleGrid cols={{ base: 1, md: 2 }}>
                 {extendedPlan.days.map((day) => (
-                  <Card key={day.day} withBorder padding="md" component="article">
+                  <Card
+                    key={day.day}
+                    withBorder={false}
+                    padding="md"
+                    component="article"
+                    style={simpleCardStyle}
+                  >
                     <Stack justify="space-between" h="100%">
                       <div>
-                        <Title fz={{ base: '1.4rem', sm: '1.5rem' }} order={3}>
+                        <Title fz={{ base: '1.4rem', sm: '1.5rem' }} order={3} c={headingColor}>
                           Day {day.day}: {day.title}
                         </Title>
-                        <Text size="lg" mt="sm">
+                        <Text size="md" mt="sm" c={bodyColor}>
                           {day.summary}
                         </Text>
-                        <Text size="lg" mt="sm" fw={500}>
+                        <Text size="lg" mt="sm" fw={500} c={headingColor}>
                           {day.distanceKm} km · {day.elevationGainM} m elevation gain
                         </Text>
-                        <Text size="lg" mt={4}>
+                        <Text size="md" mt={4} c={bodyColor}>
                           {day.overnight}
                         </Text>
                         <Text size="lg" c="dimmed" mt={4}>
@@ -664,7 +692,7 @@ export function PlannerPage() {
 
                       <Button
                         variant="light"
-                        color="pine"
+                        color="teal"
                         size="md"
                         mt="md"
                         radius="md"
@@ -680,18 +708,32 @@ export function PlannerPage() {
                 ))}
               </SimpleGrid>
 
-              <Card withBorder padding="lg">
-                <Title order={3}>Packing List</Title>
-                <List mt="sm" aria-label="Required packing list items">
+              <Card withBorder={false} padding="lg" style={simpleCardStyle}>
+                <Title order={3} c={headingColor}>
+                  Packing List
+                </Title>
+                <List
+                  mt="sm"
+                  fz="lg"
+                  aria-label="Required packing list items"
+                  styles={{ item: { color: bodyColor } }}
+                >
                   {extendedPlan.packingList.map((item) => (
                     <List.Item key={item}>{item}</List.Item>
                   ))}
                 </List>
               </Card>
 
-              <Card withBorder padding="lg">
-                <Title order={3}>Safety Disclaimers</Title>
-                <List mt="sm" aria-label="Important safety and emergency notes">
+              <Card withBorder={false} padding="lg" style={simpleCardStyle}>
+                <Title order={3} c={headingColor}>
+                  Safety Disclaimers
+                </Title>
+                <List
+                  mt="sm"
+                  fz="lg"
+                  aria-label="Important safety and emergency notes"
+                  styles={{ item: { color: bodyColor } }}
+                >
                   {extendedPlan.safetyDisclaimers.map((item) => (
                     <List.Item key={item}>{item}</List.Item>
                   ))}
@@ -712,12 +754,19 @@ export function PlannerPage() {
                 flexDirection: 'column',
                 maxWidth: '100%',
                 width: '100%',
+                backgroundColor: cardBackground,
+                color: headingColor,
               },
-              title: { fontSize: '1.3rem' },
+              header: {
+                backgroundColor: cardBackground,
+                color: headingColor,
+              },
+              title: { fontSize: '1.3rem', fontWeight: 700, color: headingColor },
               body: {
                 overflowY: 'auto',
                 flex: 1,
                 maxHeight: 'calc(92dvh - 60px)',
+                backgroundColor: cardBackground,
               },
             }}
           >

@@ -11,7 +11,6 @@ import {
   Badge,
   List,
   ThemeIcon,
-  useMantineColorScheme,
   Loader,
   Box,
 } from '@mantine/core';
@@ -31,6 +30,7 @@ import { ExploreFilters } from '@/components/explore/ExploreFilters';
 import { TrailGrid } from '@/components/explore/TrailGrid';
 import { TrailTransitBoard } from '@/components/explore/TrailTransitBoard';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface StopPlaceData {
   name: string;
@@ -50,7 +50,6 @@ interface StopPlaceData {
   }>;
 }
 
-// Pure mapping utility to keep component lean and decoupled
 const mapDestinationsToTrails = (destinations: KartverketPlace[]): Trail[] => {
   const difficulties: TrailDifficulty[] = ['easy', 'moderate', 'demanding', 'expert'];
   const durations = [
@@ -93,8 +92,12 @@ const mapDestinationsToTrails = (destinations: KartverketPlace[]): Trail[] => {
 
 export function ExplorePage() {
   const { addFavorite } = useFavorites();
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { isDark, headingColor, bodyColor, cardBackground, borderColor } = useThemeColors();
+
+  const simpleCardStyle = {
+    backgroundColor: cardBackground,
+    border: `1px solid ${borderColor}`,
+  };
 
   const [region, setRegion] = useState<string>('all');
   const [difficulty, setDifficulty] = useState<TrailDifficulty | 'all'>('all');
@@ -292,7 +295,14 @@ export function ExplorePage() {
       styles: {
         root: { backgroundColor: '#28726B' },
         description: { color: '#FFFFFF' },
-        closeButton: { color: '#FFFFFF' },
+        closeButton: {
+          color: '#FFFFFF',
+          backgroundColor: 'transparent',
+          transition: 'background-color 0.2s ease',
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+          },
+        },
       },
     });
   };
@@ -301,10 +311,10 @@ export function ExplorePage() {
     <Container size="lg" py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
       <Stack gap="lg">
         <div>
-          <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={isDark ? '#eef4f1' : 'dark.7'}>
+          <Title order={1} fz={{ base: '1.7rem', sm: '2.5rem' }} c={headingColor}>
             Live Norwegian Explore
           </Title>
-          <Text mt="xs" fz="lg" c={isDark ? 'gray.4' : 'dark.3'}>
+          <Text mt="xs" fz="lg" c={bodyColor}>
             Direct integration with Kartverket maps, MET.no weather stations, and Entur live
             transport networks.
           </Text>
@@ -324,14 +334,14 @@ export function ExplorePage() {
           <Box role="status" aria-live="polite" py="md">
             <Group gap="xs">
               <Loader size="sm" color="teal" />
-              <Text size="md" c="dimmed">
+              <Text size="md" c={bodyColor}>
                 Querying Kartverket database...
               </Text>
             </Group>
           </Box>
         ) : (
           <Stack gap="md" aria-live="polite">
-            <Text size="lg" c="dimmed" id="results-count-announcement">
+            <Text size="lg" c={bodyColor} id="results-count-announcement">
               Showing {displayedTrails.length} of {filteredTrails.length} available trails
             </Text>
 
@@ -356,6 +366,11 @@ export function ExplorePage() {
                   leftSection={<IconChevronDown size={16} />}
                   onClick={() => setVisibleTrailCount((prev) => prev + 10)}
                   aria-label="Load more destination trails"
+                  style={{
+                    backgroundColor: cardBackground,
+                    color: headingColor,
+                    border: `1px solid ${borderColor}`,
+                  }}
                 >
                   Load More Trails ({filteredTrails.length - visibleTrailCount} remaining)
                 </Button>
@@ -371,7 +386,7 @@ export function ExplorePage() {
         position="right"
         size="lg"
         title={
-          <Text fw={700} fz={{ base: '1.1rem', sm: '1.4rem' }} c={isDark ? 'white' : 'dark'}>
+          <Text fw={700} fz={{ base: '1.1rem', sm: '1.4rem' }} c={headingColor}>
             {selectedPlace?.name ?? 'Location'}
           </Text>
         }
@@ -381,17 +396,32 @@ export function ExplorePage() {
             display: 'flex',
             flexDirection: 'column',
             maxHeight: '100dvh',
+            backgroundColor: cardBackground,
+            color: headingColor,
+          },
+          header: {
+            backgroundColor: cardBackground,
+            color: headingColor,
           },
           body: {
             flex: 1,
             overflowY: 'auto',
             paddingBottom: '2.5rem',
+            backgroundColor: cardBackground,
           },
         }}
       >
         {selectedPlace && selectedTrail ? (
           <Stack gap="md" role="region" aria-label="Selected trail information details">
-            <Card padding={0} withBorder style={{ overflow: 'hidden' }}>
+            <Card
+              padding={0}
+              withBorder={false}
+              style={{
+                overflow: 'hidden',
+                backgroundColor: cardBackground,
+                border: `1px solid ${borderColor}`,
+              }}
+            >
               <div style={{ position: 'relative', width: '100%', height: '180px' }}>
                 <iframe
                   title={`Interactive geographic map centered on ${selectedPlace.name}`}
@@ -409,9 +439,11 @@ export function ExplorePage() {
               </div>
             </Card>
 
-            <Card withBorder>
+            <Card withBorder={false} style={simpleCardStyle}>
               <Group justify="space-between" mb="xs">
-                <Title order={4}>Trail Overview</Title>
+                <Title order={4} c={headingColor}>
+                  Trail Overview
+                </Title>
                 <Badge
                   color="teal"
                   tt="capitalize"
@@ -420,7 +452,7 @@ export function ExplorePage() {
                   {selectedTrail.difficulty}
                 </Badge>
               </Group>
-              <Text size="sm" c={isDark ? 'gray.3' : 'dark.3'} mb="md">
+              <Text size="sm" c={bodyColor} mb="md">
                 {selectedTrail.description}
               </Text>
               <Group grow>
@@ -428,7 +460,7 @@ export function ExplorePage() {
                   <Text size="sm" c="dimmed">
                     Distance
                   </Text>
-                  <Text size="sm" fw={600}>
+                  <Text size="sm" fw={600} c={headingColor}>
                     {selectedTrail.distanceKm} km
                   </Text>
                 </div>
@@ -436,7 +468,7 @@ export function ExplorePage() {
                   <Text size="sm" c="dimmed">
                     Duration
                   </Text>
-                  <Text size="sm" fw={600}>
+                  <Text size="sm" fw={600} c={headingColor}>
                     {selectedTrail.durationLabel}
                   </Text>
                 </div>
@@ -444,24 +476,24 @@ export function ExplorePage() {
                   <Text size="sm" c="dimmed">
                     Elevation Gain
                   </Text>
-                  <Text size="sm" fw={600}>
+                  <Text size="sm" fw={600} c={headingColor}>
                     {selectedTrail.elevationGainM} m
                   </Text>
                 </div>
               </Group>
             </Card>
 
-            <Card withBorder radius="md" p="md" shadow="sm">
+            <Card withBorder={false} radius="md" p="md" shadow="sm" style={simpleCardStyle}>
               <Group justify="space-between" mb="sm">
                 <Group gap="xs">
                   <ThemeIcon color="teal" variant="light" size="lg" radius="md">
                     <IconShoppingBag size={18} />
                   </ThemeIcon>
                   <div>
-                    <Title order={5} size="sm">
+                    <Title order={5} size="sm" c={headingColor}>
                       Nearby Supplies & Shops
                     </Title>
-                    <Text size="xs" c="dimmed">
+                    <Text size="xs" c={bodyColor}>
                       Local grocery & convenience stores
                     </Text>
                   </div>
@@ -477,7 +509,7 @@ export function ExplorePage() {
                 <Stack py="sm" gap={4} role="status" aria-live="polite">
                   <Group gap="xs">
                     <Loader size="xs" color="teal" />
-                    <Text size="sm" c="dimmed">
+                    <Text size="sm" c={bodyColor}>
                       Searching for nearby stores...
                     </Text>
                   </Group>
@@ -503,7 +535,7 @@ export function ExplorePage() {
                     {displayedShops.map((shop) => (
                       <List.Item key={shop.id}>
                         <Group justify="space-between" wrap="nowrap" gap="xs">
-                          <Text size="sm" fw={500} lineClamp={1}>
+                          <Text size="sm" fw={500} lineClamp={1} c={headingColor}>
                             {shop.name}
                           </Text>
                           <Badge size="xs" variant="light" color="teal" tt="capitalize">
@@ -529,7 +561,7 @@ export function ExplorePage() {
                   )}
                 </Stack>
               ) : (
-                <Text size="sm" c="dimmed" fs="italic">
+                <Text size="sm" c={bodyColor} fs="italic">
                   No supermarkets or convenience stores found within 15km. This location may be in a
                   remote mountain or wilderness area—consider stocking up in nearby towns before
                   heading out!
@@ -537,28 +569,30 @@ export function ExplorePage() {
               )}
             </Card>
 
-            <Card withBorder>
-              <Title order={4}>MET.no Live Weather Forecast</Title>
+            <Card withBorder={false} style={simpleCardStyle}>
+              <Title order={4} c={headingColor}>
+                MET.no Live Weather Forecast
+              </Title>
               {loadingWeather ? (
-                <Text size="sm" mt="xs" c="dimmed" role="status" aria-live="polite">
+                <Text size="sm" mt="xs" c={bodyColor} role="status" aria-live="polite">
                   Fetching real-time atmospheric data...
                 </Text>
               ) : currentDetails ? (
                 <Stack gap={4} mt="xs" role="region" aria-label="Current weather details">
-                  <Text size="sm" fw={500}>
+                  <Text size="sm" fw={500} c={headingColor}>
                     {currentDetails.air_temperature?.toFixed(1) ?? 'N/A'}°C · Humidity{' '}
                     {currentDetails.relative_humidity ?? 'N/A'}%
                   </Text>
-                  <Text size="sm" c={isDark ? 'gray.4' : 'dimmed'}>
+                  <Text size="sm" c={bodyColor}>
                     Wind: {currentDetails.wind_speed?.toFixed(1) ?? 'N/A'} m/s · Pressure:{' '}
                     {currentDetails.air_pressure_at_sea_level ?? 'N/A'} hPa
                   </Text>
-                  <Text size="sm" c={isDark ? 'gray.4' : 'dimmed'}>
+                  <Text size="sm" c={bodyColor}>
                     Precipitation (next 6h): {nextSixHours?.details?.precipitation_amount ?? 0} mm
                   </Text>
                 </Stack>
               ) : (
-                <Text size="sm" mt="xs" c="dimmed">
+                <Text size="sm" mt="xs" c={bodyColor}>
                   Weather info currently unreachable.
                 </Text>
               )}
@@ -567,6 +601,7 @@ export function ExplorePage() {
             <TrailTransitBoard loadingTransit={loadingTransit} stationData={stationData} />
 
             <Button
+              color="teal"
               aria-label={`Save ${selectedPlace.name} to your favorites list`}
               loading={savingFavorite}
               disabled={savedFavorite}

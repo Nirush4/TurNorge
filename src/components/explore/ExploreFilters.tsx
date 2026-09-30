@@ -2,6 +2,7 @@ import { Card, SegmentedControl, Stack, Text } from '@mantine/core';
 import type { KartverketPlace } from '@/types/schemas';
 import type { TrailDifficulty } from '@/types';
 import { RegionSearchBar } from '../RegionSearchBar';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ExploreFiltersProps {
   destinations: KartverketPlace[];
@@ -37,13 +38,26 @@ export function ExploreFilters({
   duration,
   setDuration,
 }: ExploreFiltersProps) {
+  const { headingColor, cardBackground, borderColor } = useThemeColors();
+
+  const simpleCardStyle = {
+    backgroundColor: cardBackground,
+    border: `1px solid ${borderColor}`,
+  };
+
   return (
-    <Card withBorder padding="md" component="aside" aria-label="Trail Explore Filters">
+    <Card
+      withBorder={false}
+      padding="md"
+      component="aside"
+      aria-label="Trail Explore Filters"
+      style={simpleCardStyle}
+    >
       <Stack gap="md">
         <RegionSearchBar destinations={destinations} region={region} setRegion={setRegion} />
 
         <Stack gap={4}>
-          <Text size="x" fw={500} component="label" id="difficulty-filter-label">
+          <Text size="md" fw={500} component="label" id="difficulty-filter-label" c={headingColor}>
             Filter by Difficulty
           </Text>
           <SegmentedControl
@@ -59,7 +73,7 @@ export function ExploreFilters({
         </Stack>
 
         <Stack gap={4}>
-          <Text size="md" fw={500} component="label" id="duration-filter-label">
+          <Text size="md" fw={500} component="label" id="duration-filter-label" c={headingColor}>
             Filter by Duration
           </Text>
           <SegmentedControl

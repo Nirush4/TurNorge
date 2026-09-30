@@ -11,7 +11,6 @@ import {
   Button,
   Anchor,
   Alert,
-  useMantineColorScheme,
   Box,
   Group,
   Divider,
@@ -21,16 +20,14 @@ import { notifications } from '@mantine/notifications';
 import { useAuth } from '@/context/AuthContext';
 import { useAppState } from '@/context/AppStateContext';
 import { HikingLoader } from '@/components/HikingLoader';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export function Login(): JSX.Element {
   const { signIn } = useAuth();
   const { setSavedRoutes } = useAppState();
   const navigate = useNavigate();
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
 
-  const headingColor = isDark ? '#f1f5f2' : '#112219';
-  const textColor = isDark ? '#cbd5ce' : '#4a5d53';
+  const { isDark, headingColor, bodyColor, cardBackground, borderColor } = useThemeColors();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -83,53 +80,59 @@ export function Login(): JSX.Element {
     navigate('/profile');
   };
 
+  const cardStyle = {
+    backgroundColor: cardBackground,
+    border: `1px solid ${borderColor}`,
+    borderRadius: '16px',
+  };
+
   return (
     <Container size={500} py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
-      <Group justify="center" mb="md">
-        <Box
-          p="md"
-          style={{
-            borderRadius: '50%',
-            backgroundColor: isDark ? 'rgba(40, 114, 107, 0.25)' : 'rgba(40, 114, 107, 0.12)',
-            color: '#28726B',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Mountain size={30} aria-hidden="true" />
-        </Box>
-      </Group>
+      <section aria-labelledby="login-header-title">
+        <Group justify="center" mb="md">
+          <Box
+            p="md"
+            style={{
+              borderRadius: '50%',
+              backgroundColor: isDark ? 'rgba(40, 114, 107, 0.25)' : 'rgba(40, 114, 107, 0.12)',
+              color: '#28726B',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Mountain size={30} aria-hidden="true" />
+          </Box>
+        </Group>
 
-      <Title
-        order={1}
-        fz={{ base: '1.5rem', sm: '2.1rem' }}
-        ta="center"
-        fw={700}
-        mb={8}
-        c={headingColor}
-        style={{ letterSpacing: '-0.02em' }}
-      >
-        Trailhead Login
-      </Title>
-      <Text c={textColor} ta="center" mb="xl" size="md" lh={1.5} maw={420} mx="auto">
-        Sign in to track your hikes, sync routes, and access offline maps.
-      </Text>
+        <Title
+          order={1}
+          fz={{ base: '1.5rem', sm: '2.1rem' }}
+          ta="center"
+          fw={700}
+          mb={8}
+          c={headingColor}
+          id="login-header-title"
+          style={{ letterSpacing: '-0.02em' }}
+        >
+          Trailhead Login
+        </Title>
+        <Text c={bodyColor} ta="center" mb="xl" size="lg" lh={1.5} maw={420} mx="auto">
+          Sign in to track your hikes, sync routes, and access offline maps.
+        </Text>
+      </section>
 
       <Card
         p={{ base: 'lg', sm: 'xl' }}
-        radius="lg"
-        withBorder={false}
-        style={{
-          backgroundColor: isDark ? '#112219' : '#ffffff',
-          borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
-          borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
-          borderLeft: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
-          borderRight: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
-        }}
+        withBorder
+        style={cardStyle}
+        component="section"
+        aria-label="Login form card"
       >
         {loading ? (
-          <HikingLoader text="Lacing up your boots and fetching trails..." />
+          <div role="status" aria-live="polite">
+            <HikingLoader text="Lacing up your boots and fetching trails..." />
+          </div>
         ) : (
           <form onSubmit={handleSubmit} noValidate>
             <Stack gap="md">
@@ -153,6 +156,7 @@ export function Login(): JSX.Element {
                 onChange={(e) => setEmail(e.currentTarget.value)}
                 required
                 aria-required="true"
+                aria-invalid={!!error}
                 styles={{
                   label: {
                     fontSize: '0.9rem',
@@ -171,6 +175,7 @@ export function Login(): JSX.Element {
                 onChange={(e) => setPassword(e.currentTarget.value)}
                 required
                 aria-required="true"
+                aria-invalid={!!error}
                 styles={{
                   label: {
                     fontSize: '0.9rem',
@@ -203,11 +208,11 @@ export function Login(): JSX.Element {
         label="New to the trails?"
         labelPosition="center"
         styles={{
-          label: { fontSize: '0.9rem', fontWeight: 500, color: textColor },
+          label: { fontSize: '0.9rem', fontWeight: 500, color: bodyColor },
         }}
       />
 
-      <Text ta="center" size="sm" c={textColor}>
+      <Text ta="center" size="sm" c={bodyColor}>
         Don&apos;t have an account?{' '}
         <Anchor
           component={Link}

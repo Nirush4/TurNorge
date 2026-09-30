@@ -1,5 +1,6 @@
 import { formatDepartureCountdown } from '@/utils/formatDepartureCountdown';
 import { Badge, Card, Group, Stack, Text, Title } from '@mantine/core';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface StopPlaceData {
   name: string;
@@ -29,55 +30,81 @@ import { IconBus, IconTrain, IconShip, IconMapPin } from '@tabler/icons-react';
 function getTransportModeBadge(mode: string) {
   switch (mode.toLowerCase()) {
     case 'metro':
-      return { label: 'Metro', color: 'blue', icon: <IconTrain size={14} /> };
+      return { label: 'Metro', color: 'blue', icon: <IconTrain size={14} aria-hidden="true" /> };
     case 'rail':
     case 'train':
-      return { label: 'Train', color: 'grape', icon: <IconTrain size={14} /> };
+      return { label: 'Train', color: 'grape', icon: <IconTrain size={14} aria-hidden="true" /> };
     case 'bus':
-      return { label: 'Bus', color: 'orange', icon: <IconBus size={14} /> };
+      return { label: 'Bus', color: 'orange', icon: <IconBus size={14} aria-hidden="true" /> };
     case 'tram':
-      return { label: 'Tram', color: 'cyan', icon: <IconTrain size={14} /> };
+      return { label: 'Tram', color: 'cyan', icon: <IconTrain size={14} aria-hidden="true" /> };
     case 'water':
     case 'ferry':
-      return { label: 'Ferry', color: 'teal', icon: <IconShip size={14} /> };
+      return { label: 'Ferry', color: 'teal', icon: <IconShip size={14} aria-hidden="true" /> };
     default:
       return {
         label: mode.charAt(0).toUpperCase() + mode.slice(1),
         color: 'gray',
-        icon: <IconMapPin size={14} />,
+        icon: <IconMapPin size={14} aria-hidden="true" />,
       };
   }
 }
 
 export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitBoardProps) {
+  const { isDark, headingColor, bodyColor, cardBackground, borderColor } = useThemeColors();
+
+  const urgentColor = isDark ? '#ff8787' : '#c92a2a';
+  const activeColor = isDark ? '#69db7c' : '#2b8a3e';
+
+  const simpleCardStyle = {
+    backgroundColor: cardBackground,
+    border: `1px solid ${borderColor}`,
+  };
+
   return (
-    <Card withBorder>
-      <Title order={4} mb="xs">
+    <Card
+      withBorder={false}
+      style={simpleCardStyle}
+      component="section"
+      aria-labelledby="transit-board-title"
+    >
+      <Title order={4} mb="xs" c={headingColor} id="transit-board-title">
         Public Transport & Platform Board (Entur)
       </Title>
+
       {loadingTransit ? (
-        <Text size="sm" mt="xs" c="dimmed">
-          Locating nearby station departures and platform feeds...
-        </Text>
+        <div role="status" aria-live="polite">
+          <Text size="sm" mt="xs" c={bodyColor}>
+            Locating nearby station departures and platform feeds...
+          </Text>
+        </div>
       ) : stationData ? (
-        <Stack gap="md" mt="xs">
+        <Stack gap="md" mt="xs" role="region" aria-label={`Departures for ${stationData.name}`}>
           <Group justify="space-between">
-            <Text size="md" c="lime" fw={600}>
+            <Text size="md" c={headingColor} fw={600}>
               Station: {stationData.name}
             </Text>
           </Group>
+
           {stationData.estimatedCalls.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div
+              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+              role="list"
+              aria-label="Live departure list"
+            >
               {stationData.estimatedCalls.map((call, index) => {
                 const { timeStr, countdownStr, isUrgent, isPast } = formatDepartureCountdown(
                   call.expectedDepartureTime,
                 );
                 const modeInfo = getTransportModeBadge(call.serviceJourney.line.transportMode);
-                const destinationText = call.serviceJourney.line.name || '';
+                const destinationText = call.serviceJourney.line.name || 'Unknown destination';
                 const isLong = destinationText.length > 22;
 
+                const countdownColor = isPast ? bodyColor : isUrgent ? urgentColor : activeColor;
+
                 return (
-                  <div key={index}>
+                  <div key={index} role="listitem">
+                    {/* Desktop View */}
                     <div
                       style={{
                         display: 'grid',
@@ -115,6 +142,7 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                             size="sm"
                             className={`destination-marquee-text ${isLong ? 'is-scrolling' : ''}`}
                             fw={500}
+                            c={headingColor}
                           >
                             {destinationText}
                           </Text>
@@ -129,11 +157,16 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                         }}
                       >
                         {call.quay?.publicCode ? (
-                          <Badge size="md" variant="outline" color="gray">
+                          <Badge
+                            size="md"
+                            variant="outline"
+                            color="gray"
+                            aria-label={`Platform ${call.quay.publicCode}`}
+                          >
                             Pl. {call.quay.publicCode}
                           </Badge>
                         ) : (
-                          <Text size="xs" c="dimmed">
+                          <Text size="xs" c={bodyColor}>
                             -
                           </Text>
                         )}
@@ -146,20 +179,27 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                           textAlign: 'left',
                         }}
                       >
-                        <Text fw={600} size="md" style={{ whiteSpace: 'nowrap', lineHeight: 1.2 }}>
+                        <Text
+                          fw={600}
+                          size="md"
+                          c={headingColor}
+                          style={{ whiteSpace: 'nowrap', lineHeight: 1.2 }}
+                        >
                           {timeStr}
                         </Text>
                         <Text
                           size="xs"
-                          c={isPast ? 'dimmed' : isUrgent ? 'red' : 'green'}
+                          c={countdownColor}
                           fw={isUrgent || !isPast ? 600 : 400}
                           style={{ whiteSpace: 'nowrap', lineHeight: 1.2 }}
+                          aria-live="polite"
                         >
                           {countdownStr}
                         </Text>
                       </Stack>
                     </div>
 
+                    {/* Mobile View */}
                     <Stack gap={4} hiddenFrom="sm" style={{ width: '100%', textAlign: 'left' }}>
                       <Group gap="xs" wrap="nowrap" justify="space-between">
                         <Group gap="xs" wrap="nowrap">
@@ -176,7 +216,12 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                           </Badge>
                         </Group>
                         {call.quay?.publicCode && (
-                          <Badge size="md" variant="outline" color="gray">
+                          <Badge
+                            size="md"
+                            variant="outline"
+                            color="gray"
+                            aria-label={`Platform ${call.quay.publicCode}`}
+                          >
                             Pl. {call.quay.publicCode}
                           </Badge>
                         )}
@@ -187,6 +232,7 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                           size="sm"
                           className={`destination-marquee-text ${isLong ? 'is-scrolling' : ''}`}
                           fw={500}
+                          c={headingColor}
                         >
                           {destinationText}
                         </Text>
@@ -198,13 +244,14 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                         wrap="wrap"
                         style={{ width: '100%' }}
                       >
-                        <Text fw={600} size="md">
+                        <Text fw={600} size="md" c={headingColor}>
                           {timeStr}
                         </Text>
                         <Text
                           size="sm"
-                          c={isPast ? 'dimmed' : isUrgent ? 'red' : 'green'}
+                          c={countdownColor}
                           fw={isUrgent || !isPast ? 600 : 500}
+                          aria-live="polite"
                         >
                           {countdownStr}
                         </Text>
@@ -215,13 +262,13 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
               })}
             </div>
           ) : (
-            <Text size="md" c="dimmed">
+            <Text size="md" c={bodyColor}>
               No upcoming departures available for this station right now.
             </Text>
           )}
         </Stack>
       ) : (
-        <Text size="md" mt="xs" c="dimmed">
+        <Text size="md" mt="xs" c={bodyColor}>
           No public transport station found within range of this trail.
         </Text>
       )}
