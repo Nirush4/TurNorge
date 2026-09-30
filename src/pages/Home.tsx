@@ -243,7 +243,7 @@ export function HomePage() {
                     <Button
                       component={Link}
                       to="/planner"
-                      size="lg"
+                      size="md"
                       color="teal"
                       radius="md"
                       rightSection={<ArrowRight size={18} aria-hidden="true" />}
@@ -260,7 +260,7 @@ export function HomePage() {
                     <Button
                       component={Link}
                       to="/explore"
-                      size="lg"
+                      size="md"
                       variant="outline"
                       color="white"
                       radius="md"
