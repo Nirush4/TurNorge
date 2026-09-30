@@ -1,7 +1,8 @@
-import { Card, SegmentedControl, Stack, Text, useMantineColorScheme } from '@mantine/core';
+import { Card, SegmentedControl, Stack, Text } from '@mantine/core';
 import type { KartverketPlace } from '@/types/schemas';
 import type { TrailDifficulty } from '@/types';
 import { RegionSearchBar } from '../RegionSearchBar';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ExploreFiltersProps {
   destinations: KartverketPlace[];
@@ -37,12 +38,12 @@ export function ExploreFilters({
   duration,
   setDuration,
 }: ExploreFiltersProps) {
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { headingColor, cardBackground, borderColor } = useThemeColors();
 
-  const headingColor = isDark ? '#ffffff' : '#112219';
-  const cardBackground = isDark ? '#0d1c14' : '#ffffff';
-  const borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)';
+  const simpleCardStyle = {
+    backgroundColor: cardBackground,
+    border: `1px solid ${borderColor}`,
+  };
 
   return (
     <Card
@@ -50,10 +51,7 @@ export function ExploreFilters({
       padding="md"
       component="aside"
       aria-label="Trail Explore Filters"
-      style={{
-        backgroundColor: cardBackground,
-        border: `1px solid ${borderColor}`,
-      }}
+      style={simpleCardStyle}
     >
       <Stack gap="md">
         <RegionSearchBar destinations={destinations} region={region} setRegion={setRegion} />
