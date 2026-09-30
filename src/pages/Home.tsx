@@ -11,7 +11,6 @@ import {
   Text,
   ThemeIcon,
   Title,
-  useMantineColorScheme,
 } from '@mantine/core';
 import {
   ArrowRight,
@@ -31,6 +30,7 @@ import { HikingArticlesSection } from '@/components/home/HikingArticlesSection';
 import { useAppState } from '@/context/AppStateContext';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 const FEATURES = [
   {
@@ -105,17 +105,31 @@ export function HomePage() {
   const { savedRoutes } = useAppState();
   const { user } = useAuth();
   const { favorites } = useFavorites();
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { isDark, headingColor, bodyColor, cardBackground, borderColor } = useThemeColors();
 
-  const headingColor = isDark ? '#ffffff' : '#112219';
-  const bodyColor = isDark ? '#cbd5ce' : '#4a5d53';
-  const cardBackground = isDark ? '#0d1c14' : '#ffffff';
-  const borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)';
-
-  const pageBg = isDark ? '#07120d' : '#ffffff';
-
+  // Consistent background tint for light mode instead of harsh pure white (#ffffff)
+  const pageBg = isDark ? '#07120d' : '#f4f7f5';
+  const sectionBg = isDark ? 'rgba(11, 28, 20, 0.5)' : 'rgba(255, 255, 255, 0.7)';
   const activeCount = user ? favorites.length : savedRoutes.length;
+
+  const cardStyle = {
+    backgroundColor: cardBackground,
+    borderTop: '4px solid #28726B',
+    borderBottom: `1px solid ${borderColor}`,
+    borderLeft: `1px solid ${borderColor}`,
+    borderRight: `1px solid ${borderColor}`,
+  };
+
+  const simpleCardStyle = {
+    backgroundColor: cardBackground,
+    border: `1px solid ${borderColor}`,
+  };
+
+  const sectionBoxStyle = {
+    backgroundColor: sectionBg,
+    borderRadius: '24px',
+    border: `1px solid ${borderColor}`,
+  };
 
   return (
     <Box
@@ -128,6 +142,7 @@ export function HomePage() {
         backgroundColor: pageBg,
       }}
     >
+      {/* Hero Section with Optimized LCP Image Handling */}
       <Box
         component="section"
         aria-labelledby="hero-title"
@@ -135,14 +150,43 @@ export function HomePage() {
           width: '100%',
           minHeight: '100vh',
           position: 'relative',
-          backgroundImage: `linear-gradient(to bottom, rgba(7,18,13,0.2) 0%, rgba(7,18,13,0.65) 60%, ${pageBg} 100%), url('https://images.unsplash.com/photo-1752350180629-89eedb2f31cd?q=80&w=1470&auto=format&fit=crop')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundColor: '#07120d',
           display: 'flex',
           alignItems: 'center',
           marginBottom: '4rem',
+          overflow: 'hidden',
         }}
       >
+        <img
+          src="https://images.unsplash.com/photo-1752350180629-89eedb2f31cd?q=80&w=1470&auto=format&fit=crop"
+          alt=""
+          fetchPriority="high"
+          loading="eager"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            zIndex: 0,
+          }}
+        />
+
+        {/* Gradient Overlay */}
+        <Box
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundImage: `linear-gradient(to bottom, rgba(7,18,13,0.3) 50%, ${pageBg} 95%)`,
+            zIndex: 1,
+            pointerEvents: 'none',
+          }}
+        />
+
         <Container
           size="lg"
           style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', zIndex: 2 }}
@@ -202,8 +246,12 @@ export function HomePage() {
                       size="lg"
                       color="teal"
                       radius="md"
-                      rightSection={<ArrowRight size={18} />}
-                      style={{ fontWeight: 600, boxShadow: '0 8px 25px rgba(0, 150, 130, 0.3)' }}
+                      rightSection={<ArrowRight size={18} aria-hidden="true" />}
+                      style={{
+                        fontWeight: 600,
+                        boxShadow: '0 8px 25px rgba(0, 150, 130, 0.3)',
+                        minHeight: '48px',
+                      }}
                       aria-label="Plan your custom trip with TurNorge"
                     >
                       Plan Your Trip
@@ -216,13 +264,14 @@ export function HomePage() {
                       variant="outline"
                       color="white"
                       radius="md"
-                      leftSection={<Compass size={18} />}
+                      leftSection={<Compass size={18} aria-hidden="true" />}
                       aria-label="Explore Norwegian hiking trails and transport"
                       style={{
                         color: '#ffffff',
                         borderColor: 'rgba(255, 255, 255, 0.4)',
                         backgroundColor: 'rgba(0, 0, 0, 0.2)',
                         backdropFilter: 'blur(12px)',
+                        minHeight: '48px',
                       }}
                     >
                       Explore Trails
@@ -266,11 +315,7 @@ export function HomePage() {
                   withBorder={false}
                   component="article"
                   style={{
-                    backgroundColor: cardBackground,
-                    borderTop: '4px solid #28726B',
-                    borderBottom: `1px solid ${borderColor}`,
-                    borderLeft: `1px solid ${borderColor}`,
-                    borderRight: `1px solid ${borderColor}`,
+                    ...cardStyle,
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
@@ -320,7 +365,7 @@ export function HomePage() {
                   size="md"
                   radius="sm"
                   mb="xs"
-                  leftSection={<Sparkles size={14} />}
+                  leftSection={<Sparkles size={14} aria-hidden="true" />}
                 >
                   Destinations
                 </Badge>
@@ -344,7 +389,7 @@ export function HomePage() {
                 variant="subtle"
                 color="teal"
                 size="lg"
-                rightSection={<ArrowRight size={16} />}
+                rightSection={<ArrowRight size={16} aria-hidden="true" />}
                 visibleFrom="sm"
                 style={{ fontWeight: 600 }}
               >
@@ -361,6 +406,7 @@ export function HomePage() {
                   component={Link}
                   to="/explore"
                   withBorder={false}
+                  aria-label={`Explore region: ${region.title}`}
                   style={{
                     backgroundColor: 'transparent',
                     height: '400px',
@@ -393,7 +439,7 @@ export function HomePage() {
                         backdropFilter: 'blur(8px)',
                       }}
                     >
-                      <MapPin size={13} color="#38bdf8" />
+                      <MapPin size={13} color="#38bdf8" aria-hidden="true" />
                       <Text size="xs" c="white" fw={600}>
                         {region.routesCount}
                       </Text>
@@ -436,8 +482,8 @@ export function HomePage() {
               fullWidth
               mt="xl"
               hiddenFrom="sm"
-              rightSection={<ArrowRight size={16} />}
-              style={{ fontWeight: 600 }}
+              rightSection={<ArrowRight size={16} aria-hidden="true" />}
+              style={{ fontWeight: 600, minHeight: '44px' }}
             >
               View all trails
             </Button>
@@ -446,14 +492,7 @@ export function HomePage() {
           <Box
             component="section"
             aria-labelledby="logistics-heading"
-            style={{
-              backgroundColor: isDark ? 'rgba(11, 28, 20, 0.5)' : 'rgba(235, 245, 239, 0.5)',
-              borderRadius: '24px',
-              borderTop: `1px solid ${borderColor}`,
-              borderBottom: `1px solid ${borderColor}`,
-              borderLeft: `1px solid ${borderColor}`,
-              borderRight: `1px solid ${borderColor}`,
-            }}
+            style={sectionBoxStyle}
             p="lg"
           >
             <Stack gap="xl">
@@ -478,22 +517,11 @@ export function HomePage() {
               </Box>
 
               <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
-                <Card
-                  p="lg"
-                  radius="lg"
-                  withBorder={false}
-                  style={{
-                    backgroundColor: cardBackground,
-                    borderTop: '4px solid #28726B',
-                    borderBottom: `1px solid ${borderColor}`,
-                    borderLeft: `1px solid ${borderColor}`,
-                    borderRight: `1px solid ${borderColor}`,
-                  }}
-                >
+                <Card p="lg" radius="lg" withBorder={false} style={cardStyle}>
                   <Stack gap="md">
                     <Group justify="space-between" align="center">
                       <ThemeIcon size={46} radius="md" variant="light" color="teal">
-                        <Store size={22} />
+                        <Store size={22} aria-hidden="true" />
                       </ThemeIcon>
                       <Badge variant="outline" color="teal" size="sm">
                         Provisions & Gear
@@ -516,22 +544,11 @@ export function HomePage() {
                   </Stack>
                 </Card>
 
-                <Card
-                  padding="xl"
-                  radius="lg"
-                  withBorder={false}
-                  style={{
-                    backgroundColor: cardBackground,
-                    borderTop: '4px solid #28726B',
-                    borderBottom: `1px solid ${borderColor}`,
-                    borderLeft: `1px solid ${borderColor}`,
-                    borderRight: `1px solid ${borderColor}`,
-                  }}
-                >
+                <Card padding="xl" radius="lg" withBorder={false} style={cardStyle}>
                   <Stack gap="md">
                     <Group justify="space-between" align="center">
                       <ThemeIcon size={46} radius="md" variant="light" color="teal">
-                        <Bus size={22} />
+                        <Bus size={22} aria-hidden="true" />
                       </ThemeIcon>
                       <Badge variant="outline" color="teal" size="sm">
                         Entur Real-Time API
@@ -565,19 +582,7 @@ export function HomePage() {
             />
           </Box>
 
-          <Box
-            component="section"
-            aria-labelledby="safety-heading"
-            style={{
-              backgroundColor: isDark ? 'rgba(11, 28, 20, 0.5)' : 'rgba(235, 245, 239, 0.5)',
-              borderRadius: '24px',
-              borderTop: `1px solid ${borderColor}`,
-              borderBottom: `1px solid ${borderColor}`,
-              borderLeft: `1px solid ${borderColor}`,
-              borderRight: `1px solid ${borderColor}`,
-            }}
-            p="lg"
-          >
+          <Box component="section" aria-labelledby="safety-heading" style={sectionBoxStyle} p="lg">
             <Stack gap="xl">
               <Box ta="center" maw={700} mx="auto">
                 <Badge variant="light" color="teal" size="md" radius="sm" mb="sm">
@@ -606,17 +611,11 @@ export function HomePage() {
                     p="lg"
                     radius="lg"
                     withBorder={false}
-                    style={{
-                      backgroundColor: cardBackground,
-                      borderTop: `1px solid ${borderColor}`,
-                      borderBottom: `1px solid ${borderColor}`,
-                      borderLeft: `1px solid ${borderColor}`,
-                      borderRight: `1px solid ${borderColor}`,
-                    }}
+                    style={simpleCardStyle}
                   >
                     <Group gap="sm" mb="lg">
                       <ThemeIcon size={40} radius="md" variant="light" color="teal">
-                        <CheckCircle2 size={22} />
+                        <CheckCircle2 size={22} aria-hidden="true" />
                       </ThemeIcon>
                       <Text fw={700} size="md" c={headingColor}>
                         Rule 0{idx + 1}
@@ -648,11 +647,7 @@ export function HomePage() {
             component="section"
             aria-labelledby="favorites-status-heading"
             style={{
-              backgroundColor: cardBackground,
-              borderTop: `1px solid ${borderColor}`,
-              borderBottom: `1px solid ${borderColor}`,
-              borderLeft: `1px solid ${borderColor}`,
-              borderRight: `1px solid ${borderColor}`,
+              ...cardStyle,
               position: 'relative',
               overflow: 'hidden',
             }}
@@ -665,9 +660,6 @@ export function HomePage() {
                 right: 0,
                 height: '4px',
                 borderTop: '4px solid #28726B',
-                borderBottom: `1px solid ${borderColor}`,
-                borderLeft: `1px solid ${borderColor}`,
-                borderRight: `1px solid ${borderColor}`,
               }}
             />
 
@@ -719,8 +711,8 @@ export function HomePage() {
                   color={user ? 'teal' : 'blue'}
                   size="md"
                   radius="md"
-                  style={{ fontWeight: 600 }}
-                  rightSection={<ArrowRight size={16} />}
+                  style={{ fontWeight: 600, minHeight: '44px' }}
+                  rightSection={<ArrowRight size={16} aria-hidden="true" />}
                 >
                   {user ? 'View Saved Trips' : 'Log In Now'}
                 </Button>
