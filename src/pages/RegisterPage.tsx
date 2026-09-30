@@ -11,7 +11,6 @@ import {
   Button,
   Anchor,
   Alert,
-  useMantineColorScheme,
   Box,
   Group,
   Divider,
@@ -21,15 +20,13 @@ import { UserPlus, AlertCircle, Mountain, Link2, AtSign } from 'lucide-react';
 import { notifications } from '@mantine/notifications';
 import { useAuth } from '@/context/AuthContext';
 import { HikingLoader } from '@/components/HikingLoader';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export function Register(): JSX.Element {
   const { signUp } = useAuth();
   const navigate = useNavigate();
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
 
-  const headingColor = isDark ? '#f1f5f2' : '#112219';
-  const textColor = isDark ? '#cbd5ce' : '#4a5d53';
+  const { isDark, headingColor, bodyColor, cardBackground, borderColor } = useThemeColors();
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -86,53 +83,59 @@ export function Register(): JSX.Element {
     setTimeout(() => navigate('/login'), 2500);
   };
 
+  const cardStyle = {
+    backgroundColor: cardBackground,
+    border: `1px solid ${borderColor}`,
+    borderRadius: '16px',
+  };
+
   return (
     <Container size={500} py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
-      <Group justify="center" mb="md">
-        <Box
-          p="md"
-          style={{
-            borderRadius: '50%',
-            backgroundColor: isDark ? 'rgba(40, 114, 107, 0.25)' : 'rgba(40, 114, 107, 0.12)',
-            color: '#28726B',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Mountain size={30} aria-hidden="true" />
-        </Box>
-      </Group>
+      <section aria-labelledby="register-header-title">
+        <Group justify="center" mb="md">
+          <Box
+            p="md"
+            style={{
+              borderRadius: '50%',
+              backgroundColor: isDark ? 'rgba(40, 114, 107, 0.25)' : 'rgba(40, 114, 107, 0.12)',
+              color: '#28726B',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Mountain size={30} aria-hidden="true" />
+          </Box>
+        </Group>
 
-      <Title
-        order={1}
-        fz={{ base: '1.5rem', sm: '2.1rem' }}
-        ta="center"
-        fw={700}
-        mb={8}
-        c={headingColor}
-        style={{ letterSpacing: '-0.02em' }}
-      >
-        Join TurNorge
-      </Title>
-      <Text c={textColor} ta="center" mb="xl" size="md" lh={1.5} maw={420} mx="auto">
-        Create an account to save custom routes, sync your hiking preferences, and explore safely.
-      </Text>
+        <Title
+          order={1}
+          fz={{ base: '1.5rem', sm: '2.1rem' }}
+          ta="center"
+          fw={700}
+          mb={8}
+          c={headingColor}
+          id="register-header-title"
+          style={{ letterSpacing: '-0.02em' }}
+        >
+          Join TurNorge
+        </Title>
+        <Text c={bodyColor} ta="center" mb="xl" size="lg" lh={1.5} maw={420} mx="auto">
+          Create an account to save custom routes, sync your hiking preferences, and explore safely.
+        </Text>
+      </section>
 
       <Card
         p={{ base: 'lg', sm: 'xl' }}
-        radius="lg"
-        withBorder={false}
-        style={{
-          backgroundColor: isDark ? '#112219' : '#ffffff',
-          borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
-          borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
-          borderLeft: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
-          borderRight: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(17,34,25,0.08)'}`,
-        }}
+        withBorder
+        style={cardStyle}
+        component="section"
+        aria-label="Registration form card"
       >
         {loading ? (
-          <HikingLoader text="Registering your account..." />
+          <div role="status" aria-live="polite">
+            <HikingLoader text="Registering your account..." />
+          </div>
         ) : (
           <form onSubmit={handleSubmit} noValidate>
             <Stack gap="md">
@@ -154,7 +157,7 @@ export function Register(): JSX.Element {
                   size={88}
                   radius={88}
                   alt={username ? `${username}'s avatar preview` : 'User avatar placeholder'}
-                  style={{ border: '2px solid white' }}
+                  style={{ border: `2px solid ${borderColor}` }}
                 >
                   {!avatarUrl &&
                     (username?.[0]?.toUpperCase() ?? <Link2 size={24} color="#82aca0" />)}
@@ -164,11 +167,12 @@ export function Register(): JSX.Element {
               <TextInput
                 label="Username"
                 placeholder="trollstigen_trekker"
-                leftSection={<AtSign size={16} />}
+                leftSection={<AtSign size={16} aria-hidden="true" />}
                 value={username}
                 onChange={(e) => setUsername(e.currentTarget.value)}
                 required
                 aria-required="true"
+                aria-invalid={!!error}
                 styles={{
                   label: {
                     fontSize: '0.9rem',
@@ -188,6 +192,7 @@ export function Register(): JSX.Element {
                 onChange={(e) => setEmail(e.currentTarget.value)}
                 required
                 aria-required="true"
+                aria-invalid={!!error}
                 styles={{
                   label: {
                     fontSize: '0.9rem',
@@ -202,7 +207,7 @@ export function Register(): JSX.Element {
               <TextInput
                 label="Avatar URL"
                 placeholder="https://example.com/your-photo.jpg"
-                leftSection={<Link2 size={16} />}
+                leftSection={<Link2 size={16} aria-hidden="true" />}
                 value={avatarUrl}
                 onChange={(e) => setAvatarUrl(e.currentTarget.value)}
                 description="Optional — paste a link to your profile picture."
@@ -214,7 +219,7 @@ export function Register(): JSX.Element {
                     color: headingColor,
                   },
                   input: { fontSize: '15px', minHeight: '44px' },
-                  description: { fontSize: '0.85rem', color: textColor },
+                  description: { fontSize: '0.85rem', color: bodyColor },
                 }}
               />
 
@@ -225,6 +230,7 @@ export function Register(): JSX.Element {
                 onChange={(e) => setPassword(e.currentTarget.value)}
                 required
                 aria-required="true"
+                aria-invalid={!!error}
                 styles={{
                   label: {
                     fontSize: '0.9rem',
@@ -243,6 +249,7 @@ export function Register(): JSX.Element {
                 onChange={(e) => setConfirmPassword(e.currentTarget.value)}
                 required
                 aria-required="true"
+                aria-invalid={!!error}
                 styles={{
                   label: {
                     fontSize: '0.9rem',
@@ -275,11 +282,11 @@ export function Register(): JSX.Element {
         label="Already have an account?"
         labelPosition="center"
         styles={{
-          label: { fontSize: '0.9rem', fontWeight: 500, color: textColor },
+          label: { fontSize: '0.9rem', fontWeight: 500, color: bodyColor },
         }}
       />
 
-      <Text ta="center" size="sm" c={textColor}>
+      <Text ta="center" size="sm" c={bodyColor}>
         Ready to get back on the path?{' '}
         <Anchor
           component={Link}
