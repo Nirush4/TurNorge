@@ -4,7 +4,6 @@ import {
   Button,
   Card,
   Container,
-  Grid,
   Group,
   SimpleGrid,
   Stack,
@@ -15,7 +14,6 @@ import {
 import {
   ArrowRight,
   Bookmark,
-  Compass,
   Database,
   Landmark,
   ShieldCheck,
@@ -31,6 +29,7 @@ import { useAppState } from '@/context/AppStateContext';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { HeroSection } from '@/components/home/HeroSection';
 
 const FEATURES = [
   {
@@ -66,8 +65,7 @@ const POPULAR_REGIONS = [
   {
     title: 'Lofoten Islands',
     subtitle: 'Dramatic peaks rising straight from the Arctic sea',
-    image:
-      'https://images.unsplash.com/photo-1601823984263-b87b59798b70?q=80&w=1000&auto=format&fit=crop',
+    image: 'https://images.pexels.com/photos/33782734/pexels-photo-33782734.jpeg',
     tag: 'Coastal Peaks',
     elevation: 'Sea to Summit',
     routesCount: '28 trails',
@@ -107,7 +105,6 @@ export function HomePage() {
   const { favorites } = useFavorites();
   const { isDark, headingColor, bodyColor, cardBackground, borderColor } = useThemeColors();
 
-  // Consistent background tint for light mode instead of harsh pure white (#ffffff)
   const pageBg = isDark ? '#07120d' : '#f4f7f5';
   const sectionBg = isDark ? 'rgba(11, 28, 20, 0.5)' : 'rgba(255, 255, 255, 0.7)';
   const activeCount = user ? favorites.length : savedRoutes.length;
@@ -142,147 +139,7 @@ export function HomePage() {
         backgroundColor: pageBg,
       }}
     >
-      {/* Hero Section with Optimized LCP Image Handling */}
-      <Box
-        component="section"
-        aria-labelledby="hero-title"
-        style={{
-          width: '100%',
-          minHeight: '100vh',
-          position: 'relative',
-          backgroundColor: '#07120d',
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: '4rem',
-          overflow: 'hidden',
-        }}
-      >
-        <img
-          src="https://images.unsplash.com/photo-1752350180629-89eedb2f31cd?q=80&w=1470&auto=format&fit=crop"
-          alt=""
-          fetchPriority="high"
-          loading="eager"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            zIndex: 0,
-          }}
-        />
-
-        {/* Gradient Overlay */}
-        <Box
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundImage: `linear-gradient(to bottom, rgba(7,18,13,0.3) 50%, ${pageBg} 95%)`,
-            zIndex: 1,
-            pointerEvents: 'none',
-          }}
-        />
-
-        <Container
-          size="lg"
-          style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', zIndex: 2 }}
-        >
-          <Box p={{ base: 'md', md: 'xl' }}>
-            <Grid gutter={{ base: 'xl', md: '2xl' }} align="center">
-              <Grid.Col span={{ base: 12, md: 9 }} p="sm">
-                <Stack gap="xl">
-                  <Badge
-                    variant="light"
-                    color="teal"
-                    size="lg"
-                    radius="sm"
-                    w="fit-content"
-                    style={{
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      color: '#ffffff',
-                      backgroundColor: 'rgba(17, 34, 25, 0.65)',
-                      backdropFilter: 'blur(12px)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                    }}
-                  >
-                    <Box component="span" mr={6} aria-hidden="true">
-                      🇳🇴
-                    </Box>{' '}
-                    TurNorge · Norway hiking guide
-                  </Badge>
-
-                  <Title
-                    id="hero-title"
-                    order={1}
-                    c="#ffffff"
-                    fz={{ base: '2rem', sm: '2.8rem', md: '3.4rem' }}
-                    lh={1.15}
-                    fw={700}
-                    style={{ textShadow: '0 2px 6px rgba(0,0,0,0.4)' }}
-                  >
-                    Explore Norway’s mountains and trails safely.
-                  </Title>
-
-                  <Text
-                    size="xl"
-                    c="rgba(255,255,255,0.9)"
-                    maw={650}
-                    lh={1.6}
-                    style={{ textShadow: '0 2px 10px rgba(0,0,0,0.3)' }}
-                  >
-                    TurNorge combines open data, weather forecasts, and outdoor guidelines to help
-                    you plan routes, packing lists, and responsible camping trips.
-                  </Text>
-
-                  <Group mt="md" gap="md" wrap="wrap">
-                    <Button
-                      component={Link}
-                      to="/planner"
-                      size="md"
-                      color="teal"
-                      radius="md"
-                      rightSection={<ArrowRight size={18} aria-hidden="true" />}
-                      style={{
-                        fontWeight: 600,
-                        boxShadow: '0 8px 25px rgba(0, 150, 130, 0.3)',
-                        minHeight: '48px',
-                      }}
-                      aria-label="Plan your custom trip with TurNorge"
-                    >
-                      Plan Your Trip
-                    </Button>
-
-                    <Button
-                      component={Link}
-                      to="/explore"
-                      size="md"
-                      variant="outline"
-                      color="white"
-                      radius="md"
-                      leftSection={<Compass size={18} aria-hidden="true" />}
-                      aria-label="Explore Norwegian hiking trails and transport"
-                      style={{
-                        color: '#ffffff',
-                        borderColor: 'rgba(255, 255, 255, 0.4)',
-                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                        backdropFilter: 'blur(12px)',
-                        minHeight: '48px',
-                      }}
-                    >
-                      Explore Trails
-                    </Button>
-                  </Group>
-                </Stack>
-              </Grid.Col>
-            </Grid>
-          </Box>
-        </Container>
-      </Box>
+      <HeroSection />
 
       <Container size="lg" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
         <Stack gap={100} pb={100}>
