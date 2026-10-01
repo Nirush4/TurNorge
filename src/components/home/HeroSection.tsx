@@ -2,9 +2,12 @@ import { Box, Container, Grid, Stack, Badge, Title, Text, Group, Button } from '
 import { useMediaQuery } from '@mantine/hooks';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Compass } from 'lucide-react';
+import { useState } from 'react';
 import type { ReactNode, CSSProperties } from 'react';
 import desktopHeroVideo from '@/assets/hero_video.mp4';
 import mobileHeroVideo from '@/assets/hero_video_mobile.mp4';
+import desktopHeroBanner from '@/assets/hero_banner.png';
+import mobileHeroBanner from '@/assets/hero_banner_mobile.png';
 
 interface HeroSectionProps {
   pageBg?: string;
@@ -50,8 +53,11 @@ function HeroActionButton({
 }
 
 export function HeroSection({ pageBg = '#07120d' }: HeroSectionProps) {
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const isMobile = useMediaQuery('(max-width: 767px)');
+
   const videoSource = isMobile ? mobileHeroVideo : desktopHeroVideo;
+  const bannerSource = isMobile ? mobileHeroBanner : desktopHeroBanner;
 
   return (
     <Box
@@ -68,12 +74,10 @@ export function HeroSection({ pageBg = '#07120d' }: HeroSectionProps) {
         overflow: 'hidden',
       }}
     >
-      <video
-        key={videoSource}
-        autoPlay
-        muted
-        loop
-        playsInline
+      <img
+        key={bannerSource}
+        src={bannerSource}
+        alt=""
         aria-hidden="true"
         style={{
           position: 'absolute',
@@ -83,6 +87,29 @@ export function HeroSection({ pageBg = '#07120d' }: HeroSectionProps) {
           height: '100%',
           objectFit: 'cover',
           zIndex: 0,
+          opacity: isVideoLoaded ? 0 : 1,
+          transition: 'opacity 0.6s ease-in-out',
+        }}
+      />
+
+      <video
+        key={videoSource}
+        autoPlay
+        muted
+        loop
+        playsInline
+        aria-hidden="true"
+        onLoadedData={() => setIsVideoLoaded(true)}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          zIndex: 0,
+          opacity: isVideoLoaded ? 1 : 0,
+          transition: 'opacity 0.6s ease-in-out',
         }}
       >
         <source src={videoSource} type="video/mp4" />
