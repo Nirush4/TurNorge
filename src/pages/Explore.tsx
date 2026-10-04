@@ -446,37 +446,38 @@ export function ExplorePage() {
                 </Title>
                 <Badge
                   color="teal"
+                  size="md"
                   tt="capitalize"
                   aria-label={`Difficulty rating: ${selectedTrail.difficulty}`}
                 >
                   {selectedTrail.difficulty}
                 </Badge>
               </Group>
-              <Text size="sm" c={bodyColor} mb="md">
+              <Text size="md" c={bodyColor} mb="md">
                 {selectedTrail.description}
               </Text>
               <Group grow>
                 <div>
-                  <Text size="sm" c="dimmed">
+                  <Text size="md" c="dimmed">
                     Distance
                   </Text>
-                  <Text size="sm" fw={600} c={headingColor}>
+                  <Text size="md" fw={600} c={headingColor}>
                     {selectedTrail.distanceKm} km
                   </Text>
                 </div>
                 <div>
-                  <Text size="sm" c="dimmed">
+                  <Text size="md" c="dimmed">
                     Duration
                   </Text>
-                  <Text size="sm" fw={600} c={headingColor}>
+                  <Text size="md" fw={600} c={headingColor}>
                     {selectedTrail.durationLabel}
                   </Text>
                 </div>
                 <div>
-                  <Text size="sm" c="dimmed">
+                  <Text size="md" c="dimmed">
                     Elevation Gain
                   </Text>
-                  <Text size="sm" fw={600} c={headingColor}>
+                  <Text size="md" fw={600} c={headingColor}>
                     {selectedTrail.elevationGainM} m
                   </Text>
                 </div>
@@ -490,16 +491,16 @@ export function ExplorePage() {
                     <IconShoppingBag size={18} />
                   </ThemeIcon>
                   <div>
-                    <Title order={5} size="sm" c={headingColor}>
+                    <Title order={5} size="md" c={headingColor}>
                       Nearby Supplies & Shops
                     </Title>
-                    <Text size="xs" c={bodyColor}>
+                    <Text size="sm" c={bodyColor}>
                       Local grocery & convenience stores
                     </Text>
                   </div>
                 </Group>
                 {!loadingShops && shops.length > 0 && (
-                  <Badge color="teal" variant="dot" size="sm">
+                  <Badge color="teal" variant="dot" size="md">
                     {shops.length} found
                   </Badge>
                 )}
@@ -508,8 +509,8 @@ export function ExplorePage() {
               {loadingShops ? (
                 <Stack py="sm" gap={4} role="status" aria-live="polite">
                   <Group gap="xs">
-                    <Loader size="xs" color="teal" />
-                    <Text size="sm" c={bodyColor}>
+                    <Loader size="md" color="teal" />
+                    <Text size="md" c={bodyColor}>
                       Searching for nearby stores...
                     </Text>
                   </Group>
@@ -518,7 +519,7 @@ export function ExplorePage() {
                 <Stack gap="sm">
                   <List
                     spacing="sm"
-                    size="sm"
+                    size="md"
                     center
                     icon={
                       <ThemeIcon
@@ -535,10 +536,10 @@ export function ExplorePage() {
                     {displayedShops.map((shop) => (
                       <List.Item key={shop.id}>
                         <Group justify="space-between" wrap="nowrap" gap="xs">
-                          <Text size="sm" fw={500} lineClamp={1} c={headingColor}>
+                          <Text size="md" fw={500} lineClamp={1} c={headingColor}>
                             {shop.name}
                           </Text>
-                          <Badge size="xs" variant="light" color="teal" tt="capitalize">
+                          <Badge size="md" variant="light" color="teal" tt="capitalize">
                             {shop.shopType}
                           </Badge>
                         </Group>
@@ -550,7 +551,7 @@ export function ExplorePage() {
                     <Button
                       variant="light"
                       color="teal"
-                      size="xs"
+                      size="md"
                       fullWidth
                       mt="xs"
                       onClick={() => setVisibleShopCount((prev) => prev + 5)}
@@ -561,7 +562,7 @@ export function ExplorePage() {
                   )}
                 </Stack>
               ) : (
-                <Text size="sm" c={bodyColor} fs="italic">
+                <Text size="md" c={bodyColor} fs="italic">
                   No supermarkets or convenience stores found within 15km. This location may be in a
                   remote mountain or wilderness area—consider stocking up in nearby towns before
                   heading out!
@@ -574,25 +575,25 @@ export function ExplorePage() {
                 MET.no Live Weather Forecast
               </Title>
               {loadingWeather ? (
-                <Text size="sm" mt="xs" c={bodyColor} role="status" aria-live="polite">
+                <Text size="md" mt="xs" c={bodyColor} role="status" aria-live="polite">
                   Fetching real-time atmospheric data...
                 </Text>
               ) : currentDetails ? (
                 <Stack gap={4} mt="xs" role="region" aria-label="Current weather details">
-                  <Text size="sm" fw={500} c={headingColor}>
+                  <Text size="md" fw={500} c={headingColor}>
                     {currentDetails.air_temperature?.toFixed(1) ?? 'N/A'}°C · Humidity{' '}
                     {currentDetails.relative_humidity ?? 'N/A'}%
                   </Text>
-                  <Text size="sm" c={bodyColor}>
+                  <Text size="md" c={bodyColor}>
                     Wind: {currentDetails.wind_speed?.toFixed(1) ?? 'N/A'} m/s · Pressure:{' '}
                     {currentDetails.air_pressure_at_sea_level ?? 'N/A'} hPa
                   </Text>
-                  <Text size="sm" c={bodyColor}>
+                  <Text size="md" c={bodyColor}>
                     Precipitation (next 6h): {nextSixHours?.details?.precipitation_amount ?? 0} mm
                   </Text>
                 </Stack>
               ) : (
-                <Text size="sm" mt="xs" c={bodyColor}>
+                <Text size="md" mt="xs" c={bodyColor}>
                   Weather info currently unreachable.
                 </Text>
               )}
@@ -602,6 +603,7 @@ export function ExplorePage() {
 
             <Button
               color="teal"
+              fz="md"
               aria-label={`Save ${selectedPlace.name} to your favorites list`}
               loading={savingFavorite}
               disabled={savedFavorite}

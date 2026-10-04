@@ -45,6 +45,44 @@ export interface LiveWeatherConditions {
   symbolCode: string;
 }
 
+export interface MetTimeseriesEntry {
+  time?: string;
+  data?: {
+    instant?: {
+      details?: {
+        air_pressure_at_sea_level?: number;
+        air_temperature?: number;
+        cloud_area_fraction?: number;
+        relative_humidity?: number;
+        wind_from_direction?: number;
+        wind_speed?: number;
+      };
+    };
+    next_1_hours?: {
+      summary?: {
+        symbol_code?: string;
+      };
+      details?: {
+        precipitation_amount?: number;
+      };
+    };
+    next_6_hours?: {
+      summary?: {
+        symbol_code?: string;
+      };
+      details?: {
+        precipitation_amount?: number;
+      };
+    };
+    next_12_hours?: {
+      summary?: {
+        symbol_code?: string;
+      };
+      details?: Record<string, unknown>;
+    };
+  };
+}
+
 export interface ExtendedGeneratedPlan extends GeneratedPlan {
   resolvedPlace?: KartverketPlace;
   weather?: LiveWeatherConditions;
@@ -96,13 +134,7 @@ export function parseLiveWeather(metApiResponse: unknown): LiveWeatherConditions
   const response = metApiResponse as {
     geometry?: { coordinates?: number[] };
     properties?: {
-      timeseries?: Array<{
-        data?: {
-          instant?: { details?: { air_temperature?: number; wind_speed?: number } };
-          next_6_hours?: { details?: { precipitation_amount?: number } };
-          next_1_hours?: { summary?: { symbol_code?: string } };
-        };
-      }>;
+      timeseries?: MetTimeseriesEntry[];
     };
   };
 
@@ -110,14 +142,17 @@ export function parseLiveWeather(metApiResponse: unknown): LiveWeatherConditions
   const elevationMeters = coordinates[2] ?? 0;
   const currentSeries = response.properties?.timeseries?.[0]?.data;
   const instantDetails = currentSeries?.instant?.details || {};
-  const next6Hours = currentSeries?.next_6_hours?.details || {};
-  const symbol = currentSeries?.next_1_hours?.summary?.symbol_code || 'clearsky';
+  const next6HoursDetails = currentSeries?.next_6_hours?.details || {};
+  const symbol =
+    currentSeries?.next_1_hours?.summary?.symbol_code ||
+    currentSeries?.next_6_hours?.summary?.symbol_code ||
+    'clearsky';
 
   return {
     elevationMeters,
     temperature: instantDetails.air_temperature ?? 0,
     windSpeed: instantDetails.wind_speed ?? 0,
-    precipitation6h: next6Hours.precipitation_amount ?? 0,
+    precipitation6h: next6HoursDetails.precipitation_amount ?? 0,
     symbolCode: symbol,
   };
 }
@@ -143,7 +178,8 @@ function generateDynamicWeatherAdvice(weather: LiveWeatherConditions): string {
 function buildDynamicDays(
   values: PlannerFormValues,
   placeName: string,
-  weather: LiveWeatherConditions,
+  baseWeather: LiveWeatherConditions,
+  timeseries: MetTimeseriesEntry[],
   tone: 'standard' | 'cautious' | 'ambitious',
 ): ItineraryDay[] {
   const baseDistance =
@@ -155,21 +191,40 @@ function buildDynamicDays(
           ? 8
           : 12;
 
-  const baseGain = Math.round(
-    weather.elevationMeters * 0.2 + (tone === 'ambitious' ? 800 : tone === 'cautious' ? 250 : 500),
-  );
-
   return Array.from({ length: values.durationDays }, (_, index) => {
     const day = index + 1;
     const isFirst = day === 1;
     const isLast = day === values.durationDays;
 
+    const forecastIndex = Math.min(index * 12, timeseries.length - 1);
+    const targetData = timeseries[forecastIndex]?.data;
+
+    const dayTemp = targetData?.instant?.details?.air_temperature ?? baseWeather.temperature;
+    const dayWind = targetData?.instant?.details?.wind_speed ?? baseWeather.windSpeed;
+    const daySymbol =
+      targetData?.next_1_hours?.summary?.symbol_code ??
+      targetData?.next_6_hours?.summary?.symbol_code ??
+      baseWeather.symbolCode;
+    const dayPrecip =
+      targetData?.next_6_hours?.details?.precipitation_amount ?? baseWeather.precipitation6h;
+
+    let distance = baseDistance;
+    if (isFirst) distance = Math.max(4, baseDistance * 0.7);
+    if (isLast) distance = Math.max(4, baseDistance * 0.8);
+    if (!isFirst && !isLast && day % 2 === 0) distance += 2;
+
+    const elevationGain = Math.round(
+      baseWeather.elevationMeters * 0.2 +
+        (tone === 'ambitious' ? 800 : tone === 'cautious' ? 250 : 500) +
+        index * 40,
+    );
+
     let title = `Stage ${day}: Traversing ${placeName}`;
-    let summary = `Maintain pacing at elevation ${weather.elevationMeters}m. Weather code: ${weather.symbolCode}.`;
+    let summary = `Maintain pacing at elevation ${baseWeather.elevationMeters}m. Weather code: ${daySymbol}.`;
 
     if (isFirst) {
       title = `Arrival and initial leg near ${placeName}`;
-      summary = `Establish baseline rhythm at ${weather.elevationMeters}m. Ambient temperature: ${weather.temperature}°C.`;
+      summary = `Establish baseline rhythm at ${baseWeather.elevationMeters}m. Ambient temperature: ${dayTemp.toFixed(1)}°C.`;
     } else if (isLast) {
       title = `Final return journey from ${placeName}`;
       summary =
@@ -180,12 +235,12 @@ function buildDynamicDays(
       day,
       title,
       summary,
-      distanceKm: Math.round(baseDistance * 10) / 10,
-      elevationGainM: baseGain,
+      distanceKm: Math.round(distance * 10) / 10,
+      elevationGainM: elevationGain,
       overnight: values.includeCabinStay
         ? 'DNT Cabin network (Verify opening status and booking requirements).'
         : 'Wild camping compliant with Allemannsretten (Maintain 150m clearance from buildings).',
-      weatherNote: `Elevation: ${weather.elevationMeters}m | Temp: ${weather.temperature}°C | Wind: ${weather.windSpeed} m/s`,
+      weatherNote: `Elevation: ${baseWeather.elevationMeters}m | Temp: ${dayTemp.toFixed(1)}°C | Wind: ${dayWind.toFixed(1)} m/s | Precip: ${dayPrecip}mm`,
     };
   });
 }
@@ -196,14 +251,16 @@ export async function generateDynamicPlan(
   emphasizeSafety: boolean = true,
 ): Promise<ExtendedGeneratedPlan> {
   let place: KartverketPlace | undefined;
-  let forecast;
+  let forecast:
+    | MetForecastResponse
+    | { geometry: { coordinates: number[] }; properties: { timeseries: MetTimeseriesEntry[] } };
 
   try {
     const places = await searchKartverketPlace(values.destination);
     place = places[0];
     const latitude = place?.latitude ?? 61.4933;
     const longitude = place?.longitude ?? 8.3597;
-    forecast = await fetchMetForecast(latitude, longitude);
+    forecast = (await fetchMetForecast(latitude, longitude)) as MetForecastResponse;
   } catch (error) {
     console.warn('Network request failed, falling back to offline telemetry:', error);
     forecast = {
@@ -211,10 +268,14 @@ export async function generateDynamicPlan(
       properties: {
         timeseries: [
           {
+            time: '2026-10-04T15:00:00Z',
             data: {
-              instant: { details: { air_temperature: 10, wind_speed: 4 } },
-              next_6_hours: { details: { precipitation_amount: 0 } },
-              next_1_hours: { summary: { symbol_code: 'clearsky' } },
+              instant: { details: { air_temperature: 2.1, wind_speed: 5.8 } },
+              next_6_hours: {
+                details: { precipitation_amount: 6.2 },
+                summary: { symbol_code: 'heavyrain' },
+              },
+              next_1_hours: { summary: { symbol_code: 'rain' } },
             },
           },
         ],
@@ -225,6 +286,7 @@ export async function generateDynamicPlan(
   const weather = parseLiveWeather(forecast);
   const placeName = place?.name ?? values.destination;
   const weatherNote = generateDynamicWeatherAdvice(weather);
+  const timeseries = forecast?.properties?.timeseries || [];
 
   const overview = `Plan for ${placeName} (${place?.municipality || 'Norway'}) across ${values.durationDays} days at ${weather.elevationMeters}m elevation. Mode: ${presetTone.toUpperCase()}. Weather: ${weatherNote}`;
 
@@ -251,7 +313,7 @@ export async function generateDynamicPlan(
     durationDays: values.durationDays,
     includeCabinStay: values.includeCabinStay,
     overview,
-    days: buildDynamicDays(values, placeName, weather, presetTone),
+    days: buildDynamicDays(values, placeName, weather, timeseries, presetTone),
     packingList: [
       weather.temperature <= 5
         ? 'Sub-zero thermal base layers & insulated jacket'
@@ -282,7 +344,7 @@ export function PlannerPage() {
   const { isDark, headingColor, bodyColor, cardBackground, borderColor } = useThemeColors();
 
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
-  const [fetchingWeather, setFetchingWeather] = useState(false);
+  const [loadingDayId, setLoadingDayId] = useState<number | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
   const [selectedDayWeather, setSelectedDayWeather] = useState<MetForecastResponse | null>(null);
 
@@ -372,8 +434,8 @@ export function PlannerPage() {
     }
   };
 
-  const handleOpenWeatherDashboard = async (regionName: string) => {
-    setFetchingWeather(true);
+  const handleOpenWeatherDashboard = async (regionName: string, dayIndex: number) => {
+    setLoadingDayId(dayIndex);
     try {
       let latitude = selectedPlace?.latitude;
       let longitude = selectedPlace?.longitude;
@@ -386,8 +448,18 @@ export function PlannerPage() {
         }
       }
 
-      const liveData = await fetchMetForecast(latitude ?? 61.4933, longitude ?? 8.3597);
-      setSelectedDayWeather(liveData as unknown as MetForecastResponse);
+      const liveData = (await fetchMetForecast(
+        latitude ?? 61.4933,
+        longitude ?? 8.3597,
+      )) as MetForecastResponse;
+
+      // Shift or slice timeseries array to center on the selected day index (offset by 12 steps per day)
+      if (liveData?.properties?.timeseries) {
+        const offset = Math.min(dayIndex * 12, liveData.properties.timeseries.length - 1);
+        liveData.properties.timeseries = liveData.properties.timeseries.slice(offset);
+      }
+
+      setSelectedDayWeather(liveData);
       open();
     } catch (error) {
       console.error('Weather error:', error);
@@ -397,7 +469,7 @@ export function PlannerPage() {
         true,
       );
     } finally {
-      setFetchingWeather(false);
+      setLoadingDayId(null);
     }
   };
 
@@ -696,10 +768,10 @@ export function PlannerPage() {
                         size="md"
                         mt="md"
                         radius="md"
-                        loading={fetchingWeather}
+                        loading={loadingDayId === day.day - 1}
                         leftSection={<IconCloudRain size={16} aria-hidden="true" />}
-                        onClick={() => handleOpenWeatherDashboard(extendedPlan.region)}
-                        aria-label={`Open live meteorological dashboard for ${extendedPlan.region}`}
+                        onClick={() => handleOpenWeatherDashboard(extendedPlan.region, day.day - 1)}
+                        aria-label={`Open live meteorological dashboard for Day ${day.day}`}
                       >
                         Live Weather Dashboard
                       </Button>
