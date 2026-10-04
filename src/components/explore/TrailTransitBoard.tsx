@@ -74,7 +74,7 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
 
       {loadingTransit ? (
         <div role="status" aria-live="polite">
-          <Text size="sm" mt="xs" c={bodyColor}>
+          <Text size="md" mt="xs" c={bodyColor}>
             Locating nearby station departures and platform feeds...
           </Text>
         </div>
@@ -104,7 +104,6 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
 
                 return (
                   <div key={index} role="listitem">
-                    {/* Desktop View */}
                     <div
                       style={{
                         display: 'grid',
@@ -139,7 +138,7 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                         </Group>
                         <div className="destination-marquee-container" style={{ width: '100%' }}>
                           <Text
-                            size="sm"
+                            size="md"
                             className={`destination-marquee-text ${isLong ? 'is-scrolling' : ''}`}
                             fw={500}
                             c={headingColor}
@@ -166,7 +165,7 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                             Pl. {call.quay.publicCode}
                           </Badge>
                         ) : (
-                          <Text size="xs" c={bodyColor}>
+                          <Text size="md" c={bodyColor}>
                             -
                           </Text>
                         )}
@@ -188,7 +187,7 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                           {timeStr}
                         </Text>
                         <Text
-                          size="xs"
+                          size="sm"
                           c={countdownColor}
                           fw={isUrgent || !isPast ? 600 : 400}
                           style={{ whiteSpace: 'nowrap', lineHeight: 1.2 }}
@@ -199,7 +198,6 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                       </Stack>
                     </div>
 
-                    {/* Mobile View */}
                     <Stack gap={4} hiddenFrom="sm" style={{ width: '100%', textAlign: 'left' }}>
                       <Group gap="xs" wrap="nowrap" justify="space-between">
                         <Group gap="xs" wrap="nowrap">
@@ -211,7 +209,7 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                           >
                             {modeInfo.label}
                           </Badge>
-                          <Badge size="sm" variant="filled">
+                          <Badge size="md" variant="filled">
                             Line {call.serviceJourney.line.publicCode}
                           </Badge>
                         </Group>
@@ -229,7 +227,7 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
 
                       <div className="destination-marquee-container" style={{ width: '100%' }}>
                         <Text
-                          size="sm"
+                          size="md"
                           className={`destination-marquee-text ${isLong ? 'is-scrolling' : ''}`}
                           fw={500}
                           c={headingColor}
@@ -248,7 +246,7 @@ export function TrailTransitBoard({ loadingTransit, stationData }: TrailTransitB
                           {timeStr}
                         </Text>
                         <Text
-                          size="sm"
+                          size="md"
                           c={countdownColor}
                           fw={isUrgent || !isPast ? 600 : 500}
                           aria-live="polite"

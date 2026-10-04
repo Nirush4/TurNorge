@@ -28,16 +28,17 @@ export function TrailGrid({ trails, onSelect }: TrailGridProps) {
           <Title order={3} mt="sm" c={headingColor} fz="h4">
             {trail.name}
           </Title>
-          <Text size="sm" mt="xs" c={bodyColor} lineClamp={2}>
+          <Text size="md" mt="xs" c={bodyColor} lineClamp={2}>
             {trail.description}
           </Text>
-          <Text size="sm" mt="md" c={bodyColor}>
+          <Text size="md" mt="md" c={bodyColor}>
             {trail.distanceKm} km · {trail.durationLabel} · {trail.elevationGainM} m gain
           </Text>
           <Button
             mt="md"
             color="teal"
             variant="light"
+            fz="md"
             onClick={() => onSelect(trail)}
             aria-label={`View trail details for ${trail.name}`}
           >
