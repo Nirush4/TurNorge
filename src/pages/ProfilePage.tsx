@@ -18,13 +18,10 @@ import {
   Center,
   ThemeIcon,
   SimpleGrid,
-  Menu,
 } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
 import {
   Camera,
   Save,
-  LogOut,
   Mail,
   User as UserIcon,
   MapPin,
@@ -40,6 +37,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useFavorites } from '@/hooks/useFavorites';
 import { HikingLoader } from '@/components/HikingLoader';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { showAppNotification } from '@/utils/notifications';
 
 const COVER_HEIGHT = 300;
 const AVATAR_SIZE = 120;
@@ -57,7 +55,7 @@ interface FavoriteRoute {
 }
 
 export function Profile(): JSX.Element {
-  const { user, profile, refreshProfile, signOut } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { favorites, loading: favoritesLoading, removeFavorite } = useFavorites();
 
   const { isDark, headingColor, bodyColor, cardBackground, borderColor } = useThemeColors();
@@ -106,7 +104,7 @@ export function Profile(): JSX.Element {
       .upload(path, file, { upsert: true });
 
     if (uploadError) {
-      notifications.show({ color: 'red', title: 'Upload failed', message: uploadError.message });
+      showAppNotification({ message: `Upload failed: ${uploadError.message}`, isError: true });
       return null;
     }
 
@@ -139,17 +137,13 @@ export function Profile(): JSX.Element {
   };
 
   const handleRemoveFavorite = async (id: string, name: string) => {
-    const { error } = await removeFavorite(id);
-    if (error) {
-      notifications.show({ color: 'red', title: 'Could not remove', message: error });
+    const { error: removeError } = await removeFavorite(id);
+    if (removeError) {
+      showAppNotification({ message: `Could not remove: ${removeError}`, isError: true });
     } else {
-      notifications.show({
-        styles: {
-          root: { backgroundColor: '#28726B' },
-          description: { color: '#FFFFFF' },
-          closeButton: { color: '#FFFFFF' },
-        },
+      showAppNotification({
         message: `${name} removed from favorites.`,
+        isError: false,
       });
     }
   };
@@ -158,7 +152,7 @@ export function Profile(): JSX.Element {
     setSaving(true);
     setError(null);
 
-    const { error } = await supabase
+    const { error: updateError } = await supabase
       .from('profiles')
       .update({
         username,
@@ -169,20 +163,19 @@ export function Profile(): JSX.Element {
 
     setSaving(false);
 
-    if (error) {
+    if (updateError) {
       setError(
-        error.message.includes('duplicate key') || error.message.includes('unique')
+        updateError.message.includes('duplicate key') || updateError.message.includes('unique')
           ? 'That username is already taken.'
-          : error.message,
+          : updateError.message,
       );
       return;
     }
 
     await refreshProfile();
-    notifications.show({
-      color: 'forest',
-      title: 'Profile updated',
-      message: 'Your changes were saved.',
+    showAppNotification({
+      message: 'Profile updated: Your changes were saved.',
+      isError: false,
     });
     setEditOpen(false);
   };
@@ -232,48 +225,23 @@ export function Profile(): JSX.Element {
           )}
         </FileButton>
 
-        {/* Avatar overlapping bottom of cover with Dropdown Menu */}
         <Box pos="absolute" bottom={-AVATAR_SIZE / 2} left={24}>
-          <Menu shadow="md" width={200} position="bottom-start" withArrow>
-            <Menu.Target>
-              <Box pos="relative" style={{ cursor: 'pointer' }}>
-                <Avatar
-                  src={profile.avatar_url}
-                  size={AVATAR_SIZE}
-                  bg="white"
-                  radius={AVATAR_SIZE}
-                  alt={
-                    profile.username
-                      ? `${profile.username}'s profile avatar`
-                      : 'User profile avatar'
-                  }
-                  style={{ border: `3px solid ${cardBackground}` }}
-                >
-                  {!profile.avatar_url && (profile.username?.[0] ?? user.email?.[0])}
-                </Avatar>
-              </Box>
-            </Menu.Target>
+          <Box pos="relative">
+            <Avatar
+              src={profile.avatar_url}
+              size={AVATAR_SIZE}
+              bg="white"
+              radius={AVATAR_SIZE}
+              alt={
+                profile.username ? `${profile.username}'s profile avatar` : 'User profile avatar'
+              }
+              style={{ border: `3px solid ${cardBackground}` }}
+            >
+              {!profile.avatar_url && (profile.username?.[0] ?? user.email?.[0])}
+            </Avatar>
+          </Box>
 
-            <Menu.Dropdown>
-              <Menu.Label>Account</Menu.Label>
-              <Menu.Item
-                leftSection={<Pencil size={14} aria-hidden="true" />}
-                onClick={() => setEditOpen(true)}
-              >
-                Edit Profile
-              </Menu.Item>
-              <Menu.Divider />
-              <Menu.Item
-                color="red"
-                leftSection={<LogOut size={14} aria-hidden="true" />}
-                onClick={() => signOut()}
-              >
-                Log Out
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-
-          {/* Separate Avatar Camera Button for quick uploads */}
+          {/* Avatar Camera Button for quick uploads */}
           <FileButton onChange={handleAvatarChange} accept="image/png,image/jpeg,image/webp">
             {(props) => (
               <Button
@@ -297,7 +265,6 @@ export function Profile(): JSX.Element {
         </Box>
       </Box>
 
-      {/* Spacer for the overlapping avatar */}
       <Box h={AVATAR_SIZE / 2 + 16} />
 
       <Stack gap="lg" px="md">
@@ -344,7 +311,6 @@ export function Profile(): JSX.Element {
           </Button>
         </Group>
 
-        {/* Saved favorites section */}
         <section aria-labelledby="saved-favorites-heading">
           <Group justify="space-between" my="lg">
             <Title
@@ -445,7 +411,6 @@ export function Profile(): JSX.Element {
                     )}
                   </div>
 
-                  {/* Metrics Footer Grid */}
                   <SimpleGrid
                     cols={{ base: 2, sm: 4 }}
                     spacing="sm"
@@ -521,7 +486,6 @@ export function Profile(): JSX.Element {
         </section>
       </Stack>
 
-      {/* Edit Profile modal */}
       <Modal
         opened={editOpen}
         onClose={() => setEditOpen(false)}
