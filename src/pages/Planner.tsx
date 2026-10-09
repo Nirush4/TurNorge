@@ -18,7 +18,6 @@ import {
   Divider,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { notifications } from '@mantine/notifications';
 import { Controller, useForm } from 'react-hook-form';
 import { IconCloudRain } from '@tabler/icons-react';
 
@@ -36,6 +35,7 @@ import type { MetForecastResponse } from '@/types/met';
 import type { GeneratedPlan, ItineraryDay } from '@/types';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { showAppNotification } from '@/utils/notifications';
 
 export interface LiveWeatherConditions {
   elevationMeters: number;
@@ -115,20 +115,6 @@ const MOBILE_INPUT_STYLES = {
     marginBottom: '6px',
   },
 } as const;
-
-function showAppNotification(title: string, message: string, isError = false) {
-  notifications.show({
-    title,
-    message,
-    color: '#FFFFFF',
-    styles: {
-      root: { backgroundColor: isError ? '#E03131' : '#28726B' },
-      title: { color: '#FFFFFF' },
-      description: { color: '#FFFFFF' },
-      closeButton: { color: '#FFFFFF' },
-    },
-  });
-}
 
 export function parseLiveWeather(metApiResponse: unknown): LiveWeatherConditions {
   const response = metApiResponse as {
@@ -424,11 +410,10 @@ export function PlannerPage() {
       setLastPlan(plan);
     } catch (error) {
       console.error('Failed to generate:', error);
-      showAppNotification(
-        'Could not generate itinerary',
-        'Something went wrong while generating your route.',
-        true,
-      );
+      showAppNotification({
+        message: 'Could not generate itinerary: Something went wrong while generating your route.',
+        isError: true,
+      });
     } finally {
       setLoadingIndex(null);
     }
@@ -453,7 +438,6 @@ export function PlannerPage() {
         longitude ?? 8.3597,
       )) as MetForecastResponse;
 
-      // Shift or slice timeseries array to center on the selected day index (offset by 12 steps per day)
       if (liveData?.properties?.timeseries) {
         const offset = Math.min(dayIndex * 12, liveData.properties.timeseries.length - 1);
         liveData.properties.timeseries = liveData.properties.timeseries.slice(offset);
@@ -463,11 +447,11 @@ export function PlannerPage() {
       open();
     } catch (error) {
       console.error('Weather error:', error);
-      showAppNotification(
-        'Weather Unavailable',
-        'Could not load live meteorological telemetry for this region.',
-        true,
-      );
+      showAppNotification({
+        message:
+          'Weather Unavailable: Could not load live meteorological telemetry for this region.',
+        isError: true,
+      });
     } finally {
       setLoadingDayId(null);
     }
@@ -494,10 +478,16 @@ export function PlannerPage() {
     });
 
     if (error) {
-      showAppNotification('Could not save favorite', error, true);
+      showAppNotification({
+        message: `Could not save favorite: ${error}`,
+        isError: true,
+      });
     } else {
       setIsFavorite(true);
-      showAppNotification('Success', `${extendedPlan.title} saved in your favorites.`);
+      showAppNotification({
+        message: `${extendedPlan.title} saved in your favorites.`,
+        isError: false,
+      });
     }
   };
 

@@ -14,7 +14,6 @@ import {
   Loader,
   Box,
 } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
 import { IconShoppingBag, IconChevronDown } from '@tabler/icons-react';
 
 import { fetchDynamicNorwegianAreas } from '@/lib/api/kartverket';
@@ -31,6 +30,7 @@ import { TrailGrid } from '@/components/explore/TrailGrid';
 import { TrailTransitBoard } from '@/components/explore/TrailTransitBoard';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { showAppNotification } from '@/utils/notifications';
 
 interface StopPlaceData {
   name: string;
@@ -278,32 +278,17 @@ export function ExplorePage() {
     setSavingFavorite(false);
 
     if (error) {
-      notifications.show({
+      showAppNotification({
         message: `Could not save favorite: ${error}`,
-        styles: {
-          root: { backgroundColor: '#E03131' },
-          description: { color: '#FFFFFF' },
-          closeButton: { color: '#FFFFFF' },
-        },
+        isError: true,
       });
       return;
     }
 
     setSavedFavorite(true);
-    notifications.show({
+    showAppNotification({
       message: `${selectedPlace.name} saved in your favorites`,
-      styles: {
-        root: { backgroundColor: '#28726B' },
-        description: { color: '#FFFFFF' },
-        closeButton: {
-          color: '#FFFFFF',
-          backgroundColor: 'transparent',
-          transition: 'background-color 0.2s ease',
-          '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-          },
-        },
-      },
+      isError: false,
     });
   };
 

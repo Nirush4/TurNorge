@@ -32,6 +32,7 @@ import { BrandLogo } from '@/components/BrandLogo';
 import { ColorSchemeToggle } from '@/components/ColorSchemeToggle';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/hooks/useFavorites';
+import { showAppNotification } from '@/utils/notifications';
 
 const BASE_NAV_ITEMS = [
   { to: '/', label: 'Home', icon: Home, end: true },
@@ -55,6 +56,31 @@ export function AppLayout() {
       : []),
   ];
 
+  const handleSignOut = async () => {
+    try {
+      const { error } = await signOut();
+      if (error) {
+        showAppNotification({
+          message: `Log out failed: ${error}`,
+          isError: true,
+        });
+        return;
+      }
+
+      showAppNotification({
+        message: 'Successfully logged out! See you on the trails.',
+        isError: false,
+      });
+      navigate('/');
+    } catch (err) {
+      showAppNotification({
+        message: 'An unexpected error occurred during logout.',
+        isError: true,
+      });
+      console.error(err);
+    }
+  };
+
   return (
     <AccessibilityWrapper>
       <AppShell
@@ -75,7 +101,7 @@ export function AppLayout() {
                   onClick={() => setMobileOpened((open) => !open)}
                   hiddenFrom="lg"
                   size="sm"
-                  aria-label="Toggle navigation"
+                  aria-label="Toggle navigation menu"
                 />
                 <Box
                   style={{
@@ -93,7 +119,7 @@ export function AppLayout() {
                 gap="xs"
                 visibleFrom="lg"
                 component="nav"
-                aria-label="Primary"
+                aria-label="Main Navigation"
                 wrap="nowrap"
                 style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
               >
@@ -132,7 +158,7 @@ export function AppLayout() {
                     <Menu.Dropdown>
                       <Menu.Label style={{ fontSize: '1rem' }}>Account</Menu.Label>
                       <Menu.Item
-                        leftSection={<Pencil size={16} />}
+                        leftSection={<Pencil size={16} aria-hidden="true" />}
                         onClick={() => navigate('/profile')}
                         style={{ fontSize: '1rem', padding: '8px 12px' }}
                       >
@@ -141,8 +167,8 @@ export function AppLayout() {
                       <Menu.Divider />
                       <Menu.Item
                         color="red"
-                        leftSection={<LogOut size={16} />}
-                        onClick={() => signOut()}
+                        leftSection={<LogOut size={16} aria-hidden="true" />}
+                        onClick={handleSignOut}
                         style={{ fontSize: '1rem', padding: '8px 12px' }}
                       >
                         Log Out
@@ -157,7 +183,7 @@ export function AppLayout() {
                       variant="subtle"
                       color="teal"
                       size="sm"
-                      leftSection={<LogIn size={16} />}
+                      leftSection={<LogIn size={16} aria-hidden="true" />}
                       visibleFrom="xs"
                       style={{ fontSize: '1rem', fontWeight: 500, height: '36px' }}
                     >
@@ -169,7 +195,7 @@ export function AppLayout() {
                       variant="filled"
                       color="teal"
                       size="sm"
-                      leftSection={<UserPlus size={16} />}
+                      leftSection={<UserPlus size={16} aria-hidden="true" />}
                       visibleFrom="xs"
                       style={{ fontSize: '1rem', fontWeight: 500, height: '36px' }}
                     >
@@ -184,8 +210,7 @@ export function AppLayout() {
           </Container>
         </AppShell.Header>
 
-        {/* Mobile Navigation Drawer */}
-        <AppShell.Navbar p="sm">
+        <AppShell.Navbar p="sm" aria-label="Mobile Navigation Drawer">
           <Stack gap="xs" component="nav" aria-label="Mobile">
             {navItems.map((item) => (
               <NavLink
@@ -212,7 +237,7 @@ export function AppLayout() {
                   label={profile?.username || 'My Profile'}
                   leftSection={
                     <Avatar src={profile?.avatar_url} radius="xl" size={42}>
-                      {!profile?.avatar_url && <User size={12} />}
+                      {!profile?.avatar_url && <User size={12} aria-hidden="true" />}
                     </Avatar>
                   }
                   styles={{
@@ -222,14 +247,14 @@ export function AppLayout() {
                 />
                 <NavLink
                   label="Log Out"
-                  content="red"
+                  color="red"
                   leftSection={<LogOut size={16} aria-hidden="true" />}
                   styles={{
                     label: { fontSize: '1.05rem', fontWeight: 500 },
                   }}
                   onClick={() => {
                     setMobileOpened(false);
-                    signOut();
+                    handleSignOut();
                   }}
                 />
               </Stack>

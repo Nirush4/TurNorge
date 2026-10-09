@@ -16,11 +16,11 @@ import {
   Divider,
 } from '@mantine/core';
 import { LogIn, AlertCircle, Mountain } from 'lucide-react';
-import { notifications } from '@mantine/notifications';
 import { useAuth } from '@/context/AuthContext';
 import { useAppState } from '@/context/AppStateContext';
 import { HikingLoader } from '@/components/HikingLoader';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { showAppNotification } from '@/utils/notifications';
 
 export function Login(): JSX.Element {
   const { signIn } = useAuth();
@@ -39,19 +39,15 @@ export function Login(): JSX.Element {
     setError(null);
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    const { error: authError } = await signIn(email, password);
 
     setLoading(false);
 
-    if (error) {
-      setError(error);
-      notifications.show({
-        message: `Login failed: ${error}`,
-        styles: {
-          root: { backgroundColor: '#E03131' },
-          description: { color: '#FFFFFF' },
-          closeButton: { color: '#FFFFFF' },
-        },
+    if (authError) {
+      setError(authError);
+      showAppNotification({
+        message: `Login failed: ${authError}`,
+        isError: true,
       });
       return;
     }
@@ -68,13 +64,9 @@ export function Login(): JSX.Element {
       console.error('Failed to load saved routes from storage:', err);
     }
 
-    notifications.show({
+    showAppNotification({
       message: 'Successfully logged in! Trail map loaded.',
-      styles: {
-        root: { backgroundColor: '#28726B' },
-        description: { color: '#FFFFFF' },
-        closeButton: { color: '#FFFFFF' },
-      },
+      isError: false,
     });
 
     navigate('/profile');
@@ -88,7 +80,7 @@ export function Login(): JSX.Element {
 
   return (
     <Container size={500} py={{ base: 'xl', sm: 70 }} component="main" mih="100dvh">
-      <section aria-labelledby="login-header-title">
+      <header>
         <Group justify="center" mb="md">
           <Box
             p="md"
@@ -120,17 +112,17 @@ export function Login(): JSX.Element {
         <Text c={bodyColor} ta="center" mb="xl" size="lg" lh={1.5} maw={420} mx="auto">
           Sign in to track your hikes, sync routes, and access offline maps.
         </Text>
-      </section>
+      </header>
 
       <Card
         p={{ base: 'lg', sm: 'xl' }}
         withBorder
         style={cardStyle}
         component="section"
-        aria-label="Login form card"
+        aria-labelledby="login-header-title"
       >
         {loading ? (
-          <div role="status" aria-live="polite">
+          <div role="status" aria-live="polite" aria-label="Loading authentication process">
             <HikingLoader text="Lacing up your boots and fetching trails..." />
           </div>
         ) : (
@@ -143,6 +135,7 @@ export function Login(): JSX.Element {
                   variant="light"
                   role="alert"
                   aria-live="assertive"
+                  id="login-error-message"
                 >
                   {error}
                 </Alert>
@@ -150,6 +143,7 @@ export function Login(): JSX.Element {
 
               <TextInput
                 label="Email Address"
+                id="email-input"
                 type="email"
                 placeholder="hiker@example.com"
                 value={email}
@@ -157,6 +151,7 @@ export function Login(): JSX.Element {
                 required
                 aria-required="true"
                 aria-invalid={!!error}
+                aria-describedby={error ? 'login-error-message' : undefined}
                 styles={{
                   label: {
                     fontSize: '0.9rem',
@@ -164,18 +159,20 @@ export function Login(): JSX.Element {
                     marginBottom: '6px',
                     color: headingColor,
                   },
-                  input: { fontSize: '15px', minHeight: '44px' },
+                  input: { fontSize: '16px', minHeight: '44px' },
                 }}
               />
 
               <PasswordInput
                 label="Password"
+                id="password-input"
                 placeholder="Your secure password"
                 value={password}
                 onChange={(e) => setPassword(e.currentTarget.value)}
                 required
                 aria-required="true"
                 aria-invalid={!!error}
+                aria-describedby={error ? 'login-error-message' : undefined}
                 styles={{
                   label: {
                     fontSize: '0.9rem',
@@ -183,7 +180,7 @@ export function Login(): JSX.Element {
                     marginBottom: '6px',
                     color: headingColor,
                   },
-                  input: { fontSize: '15px', minHeight: '44px' },
+                  input: { fontSize: '16px', minHeight: '44px' },
                 }}
               />
 
