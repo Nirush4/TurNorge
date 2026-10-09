@@ -16,7 +16,7 @@ interface AuthContextType {
     avatarUrl?: string,
   ) => Promise<{ error: string | null; userId: string | null; sessionActive: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signOut: () => Promise<void>;
+  signOut: () => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,9 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
       email,
       password,
       options: {
-        // The handle_new_user() trigger reads username and avatar_url out of
-        // this metadata (and takes email straight off the auth.users row)
-        // and writes them into the new profiles row — no separate update call needed.
         data: { username, avatar_url: avatarUrl || null },
       },
     });
@@ -86,7 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }): JSX.Element
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    return { error: error?.message ?? null };
   };
 
   const value: AuthContextType = {
