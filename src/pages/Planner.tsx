@@ -1,25 +1,8 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, type JSX } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Button,
-  Card,
-  Checkbox,
-  Container,
-  Group,
-  List,
-  Loader,
-  Modal,
-  NumberInput,
-  Select,
-  SimpleGrid,
-  Stack,
-  Text,
-  Title,
-  Divider,
-} from '@mantine/core';
+import { Container, Modal, Stack, Text, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { Controller, useForm } from 'react-hook-form';
-import { IconCloudRain } from '@tabler/icons-react';
+import { useForm } from 'react-hook-form';
 
 import {
   searchKartverketPlace,
@@ -30,301 +13,19 @@ import { fetchMetForecast } from '@/lib/api/metNo';
 import { useAppState } from '@/context/AppStateContext';
 import { plannerSchema, type PlannerFormValues, type KartverketPlace } from '@/types/schemas';
 import { WeatherDashboard } from '@/components/WeatherDashboard';
-import { RegionSearchBar } from '@/components/RegionSearchBar';
 import type { MetForecastResponse } from '@/types/met';
-import type { GeneratedPlan, ItineraryDay } from '@/types';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { showAppNotification } from '@/utils/notifications';
+import {
+  generateDynamicPlan,
+  PLANNER_LOADING_STEPS,
+  type ExtendedGeneratedPlan,
+} from '@/components/planner/plannerUtils';
+import { PlannerForm } from '@/components/planner/PlannerForm';
+import { ItineraryResults } from '@/components/planner/ItineraryResults';
 
-export interface LiveWeatherConditions {
-  elevationMeters: number;
-  temperature: number;
-  windSpeed: number;
-  precipitation6h: number;
-  symbolCode: string;
-}
-
-export interface MetTimeseriesEntry {
-  time?: string;
-  data?: {
-    instant?: {
-      details?: {
-        air_pressure_at_sea_level?: number;
-        air_temperature?: number;
-        cloud_area_fraction?: number;
-        relative_humidity?: number;
-        wind_from_direction?: number;
-        wind_speed?: number;
-      };
-    };
-    next_1_hours?: {
-      summary?: {
-        symbol_code?: string;
-      };
-      details?: {
-        precipitation_amount?: number;
-      };
-    };
-    next_6_hours?: {
-      summary?: {
-        symbol_code?: string;
-      };
-      details?: {
-        precipitation_amount?: number;
-      };
-    };
-    next_12_hours?: {
-      summary?: {
-        symbol_code?: string;
-      };
-      details?: Record<string, unknown>;
-    };
-  };
-}
-
-export interface ExtendedGeneratedPlan extends GeneratedPlan {
-  resolvedPlace?: KartverketPlace;
-  weather?: LiveWeatherConditions;
-}
-
-const PLANNER_LOADING_STEPS = [
-  'Resolving location coordinates via Kartverket...',
-  'Fetching live meteorological telemetry from MET.no...',
-  'Evaluating real-time weather risks and altitude thresholds...',
-  'Synthesizing fully dynamic WCAG-compliant itinerary structure...',
-] as const;
-
-const EXPERIENCE_OPTIONS = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'expert', label: 'Expert' },
-] as const;
-
-const SEASON_OPTIONS = [
-  { value: 'summer_autumn', label: 'Summer / Autumn hiking' },
-  { value: 'winter', label: 'Winter skiing' },
-] as const;
-
-const MOBILE_INPUT_STYLES = {
-  input: { fontSize: '16px' },
-  dropdown: { fontSize: '16px' },
-  label: {
-    fontSize: '1.05rem',
-    fontWeight: 600,
-    marginBottom: '6px',
-  },
-} as const;
-
-export function parseLiveWeather(metApiResponse: unknown): LiveWeatherConditions {
-  const response = metApiResponse as {
-    geometry?: { coordinates?: number[] };
-    properties?: {
-      timeseries?: MetTimeseriesEntry[];
-    };
-  };
-
-  const coordinates = response.geometry?.coordinates || [0, 0, 0];
-  const elevationMeters = coordinates[2] ?? 0;
-  const currentSeries = response.properties?.timeseries?.[0]?.data;
-  const instantDetails = currentSeries?.instant?.details || {};
-  const next6HoursDetails = currentSeries?.next_6_hours?.details || {};
-  const symbol =
-    currentSeries?.next_1_hours?.summary?.symbol_code ||
-    currentSeries?.next_6_hours?.summary?.symbol_code ||
-    'clearsky';
-
-  return {
-    elevationMeters,
-    temperature: instantDetails.air_temperature ?? 0,
-    windSpeed: instantDetails.wind_speed ?? 0,
-    precipitation6h: next6HoursDetails.precipitation_amount ?? 0,
-    symbolCode: symbol,
-  };
-}
-
-function generateDynamicWeatherAdvice(weather: LiveWeatherConditions): string {
-  let narrative = `Telemetry at ${weather.elevationMeters}m: ${weather.temperature.toFixed(1)}°C, wind ${weather.windSpeed.toFixed(1)} m/s. `;
-
-  if (weather.windSpeed > 10) {
-    narrative += '⚠️ High wind advisory: Avoid exposed ridges. ';
-  } else if (weather.temperature < 0) {
-    narrative += '❄️ Freezing conditions: Thermal insulation layers required. ';
-  } else {
-    narrative += 'Conditions stable for travel. ';
-  }
-
-  if (weather.precipitation6h > 1.5) {
-    narrative += `Precipitation expected (~${weather.precipitation6h.toFixed(1)}mm/6h); waterproof shells mandatory.`;
-  }
-
-  return narrative;
-}
-
-function buildDynamicDays(
-  values: PlannerFormValues,
-  placeName: string,
-  baseWeather: LiveWeatherConditions,
-  timeseries: MetTimeseriesEntry[],
-  tone: 'standard' | 'cautious' | 'ambitious',
-): ItineraryDay[] {
-  const baseDistance =
-    tone === 'ambitious'
-      ? 16
-      : tone === 'cautious'
-        ? 6
-        : values.experienceLevel === 'beginner'
-          ? 8
-          : 12;
-
-  return Array.from({ length: values.durationDays }, (_, index) => {
-    const day = index + 1;
-    const isFirst = day === 1;
-    const isLast = day === values.durationDays;
-
-    const forecastIndex = Math.min(index * 12, timeseries.length - 1);
-    const targetData = timeseries[forecastIndex]?.data;
-
-    const dayTemp = targetData?.instant?.details?.air_temperature ?? baseWeather.temperature;
-    const dayWind = targetData?.instant?.details?.wind_speed ?? baseWeather.windSpeed;
-    const daySymbol =
-      targetData?.next_1_hours?.summary?.symbol_code ??
-      targetData?.next_6_hours?.summary?.symbol_code ??
-      baseWeather.symbolCode;
-    const dayPrecip =
-      targetData?.next_6_hours?.details?.precipitation_amount ?? baseWeather.precipitation6h;
-
-    let distance = baseDistance;
-    if (isFirst) distance = Math.max(4, baseDistance * 0.7);
-    if (isLast) distance = Math.max(4, baseDistance * 0.8);
-    if (!isFirst && !isLast && day % 2 === 0) distance += 2;
-
-    const elevationGain = Math.round(
-      baseWeather.elevationMeters * 0.2 +
-        (tone === 'ambitious' ? 800 : tone === 'cautious' ? 250 : 500) +
-        index * 40,
-    );
-
-    let title = `Stage ${day}: Traversing ${placeName}`;
-    let summary = `Maintain pacing at elevation ${baseWeather.elevationMeters}m. Weather code: ${daySymbol}.`;
-
-    if (isFirst) {
-      title = `Arrival and initial leg near ${placeName}`;
-      summary = `Establish baseline rhythm at ${baseWeather.elevationMeters}m. Ambient temperature: ${dayTemp.toFixed(1)}°C.`;
-    } else if (isLast) {
-      title = `Final return journey from ${placeName}`;
-      summary =
-        'Keep adequate time buffers for return transit and check local transport schedules.';
-    }
-
-    return {
-      day,
-      title,
-      summary,
-      distanceKm: Math.round(distance * 10) / 10,
-      elevationGainM: elevationGain,
-      overnight: values.includeCabinStay
-        ? 'DNT Cabin network (Verify opening status and booking requirements).'
-        : 'Wild camping compliant with Allemannsretten (Maintain 150m clearance from buildings).',
-      weatherNote: `Elevation: ${baseWeather.elevationMeters}m | Temp: ${dayTemp.toFixed(1)}°C | Wind: ${dayWind.toFixed(1)} m/s | Precip: ${dayPrecip}mm`,
-    };
-  });
-}
-
-export async function generateDynamicPlan(
-  values: PlannerFormValues,
-  presetTone: 'standard' | 'cautious' | 'ambitious' = 'standard',
-  emphasizeSafety: boolean = true,
-): Promise<ExtendedGeneratedPlan> {
-  let place: KartverketPlace | undefined;
-  let forecast:
-    | MetForecastResponse
-    | { geometry: { coordinates: number[] }; properties: { timeseries: MetTimeseriesEntry[] } };
-
-  try {
-    const places = await searchKartverketPlace(values.destination);
-    place = places[0];
-    const latitude = place?.latitude ?? 61.4933;
-    const longitude = place?.longitude ?? 8.3597;
-    forecast = (await fetchMetForecast(latitude, longitude)) as MetForecastResponse;
-  } catch (error) {
-    console.warn('Network request failed, falling back to offline telemetry:', error);
-    forecast = {
-      geometry: { coordinates: [8.3597, 61.4933, 500] },
-      properties: {
-        timeseries: [
-          {
-            time: '2026-10-04T15:00:00Z',
-            data: {
-              instant: { details: { air_temperature: 2.1, wind_speed: 5.8 } },
-              next_6_hours: {
-                details: { precipitation_amount: 6.2 },
-                summary: { symbol_code: 'heavyrain' },
-              },
-              next_1_hours: { summary: { symbol_code: 'rain' } },
-            },
-          },
-        ],
-      },
-    };
-  }
-
-  const weather = parseLiveWeather(forecast);
-  const placeName = place?.name ?? values.destination;
-  const weatherNote = generateDynamicWeatherAdvice(weather);
-  const timeseries = forecast?.properties?.timeseries || [];
-
-  const overview = `Plan for ${placeName} (${place?.municipality || 'Norway'}) across ${values.durationDays} days at ${weather.elevationMeters}m elevation. Mode: ${presetTone.toUpperCase()}. Weather: ${weatherNote}`;
-
-  const safetyDisclaimers = [
-    `Observation point elevation: ${weather.elevationMeters} meters above sea level.`,
-    'This system provides algorithmic trip planning assistance, not certified professional mountain guiding.',
-    'Verify live MET.no bulletins and local avalanche warnings immediately before departure.',
-    'Emergency Numbers: Call 112 for police/rescue and 113 for medical emergencies.',
-  ];
-
-  if (emphasizeSafety) {
-    safetyDisclaimers.push(
-      'Exercise extreme caution when crossing alpine snow bridges or swollen watercourses.',
-      'Maintain an active communication schedule with an external contact when venturing off-grid.',
-    );
-  }
-
-  return {
-    id: `dynamic-plan-${values.destination}-${Date.now()}`,
-    title: `${values.destination} · ${values.durationDays} ${values.durationDays === 1 ? 'Day' : 'Days'}`,
-    region: values.destination,
-    season: values.season,
-    experienceLevel: values.experienceLevel,
-    durationDays: values.durationDays,
-    includeCabinStay: values.includeCabinStay,
-    overview,
-    days: buildDynamicDays(values, placeName, weather, timeseries, presetTone),
-    packingList: [
-      weather.temperature <= 5
-        ? 'Sub-zero thermal base layers & insulated jacket'
-        : 'Moisture-wicking layers',
-      weather.precipitation6h > 0
-        ? 'Waterproof hardshell jacket and rain trousers'
-        : 'Wind shell jacket',
-      'Paper topographical map and offline GPX dataset',
-      'Certified high-lumen headlamp and first-aid kit',
-      values.includeCabinStay
-        ? 'Official DNT cabin key & indoor footwear'
-        : '3-season tent & insulated sleeping pad',
-    ],
-    safetyDisclaimers,
-    allemannsrettenNotes: [
-      'Respect the Norwegian Right to Roam (Allemannsretten).',
-      'Keep a minimum distance of 150 meters from inhabited houses and active farms.',
-    ],
-    generatedAt: new Date().toISOString(),
-    resolvedPlace: place,
-    weather,
-  };
-}
-
-export function PlannerPage() {
+export function PlannerPage(): JSX.Element {
   const { setLastPlan, lastPlan } = useAppState();
   const { addFavorite } = useFavorites();
   const { isDark, headingColor, bodyColor, cardBackground, borderColor } = useThemeColors();
@@ -507,301 +208,42 @@ export function PlannerPage() {
             </Text>
           </header>
 
-          <Card
-            withBorder={false}
-            padding="md"
-            radius="md"
-            role="region"
-            aria-label="Planner Configuration Options"
-            style={accentCardStyle}
-          >
-            <Stack gap="sm">
-              <Group justify="space-between">
-                <Text size="lg" fw={600} id="settings-heading" c={headingColor}>
-                  Walking Pace &amp; Preferences
-                </Text>
-              </Group>
-
-              <Select
-                aria-labelledby="settings-heading"
-                label="How fast or far do you want to go?"
-                size="sm"
-                value={currentTone}
-                onChange={(val) => {
-                  if (val) setCurrentTone(val as 'standard' | 'cautious' | 'ambitious');
-                }}
-                data={[
-                  { label: 'Standard Mode', value: 'standard' },
-                  { label: 'Cautious / Easy Mode', value: 'cautious' },
-                  { label: 'Ambitious / Long Distance', value: 'ambitious' },
-                ]}
-                styles={MOBILE_INPUT_STYLES}
-              />
-
-              <Divider color={borderColor} />
-
-              <Checkbox
-                label="Emphasize advanced emergency and alpine safety warnings"
-                checked={emphasizeSafetyLocal}
-                onChange={(e) => setEmphasizeSafetyLocal(e.currentTarget.checked)}
-                size="md"
-                styles={{ label: { color: bodyColor } }}
-              />
-            </Stack>
-          </Card>
-
-          <Card
-            withBorder={false}
-            padding="lg"
-            component="form"
-            onSubmit={handleSubmit(onSubmit)}
-            role="region"
-            aria-label="Trip Configuration Form"
-            style={simpleCardStyle}
-          >
-            <Stack gap="md">
-              <Controller
-                name="destination"
-                control={control}
-                render={({ field }) => (
-                  <Stack gap={4}>
-                    <RegionSearchBar
-                      destinations={destinations}
-                      region={field.value || 'all'}
-                      setRegion={(val) => handleDestinationChange(val, field.onChange)}
-                      label="Destination"
-                      description="Choose a popular destination or search Kartverket for any location."
-                      placeholder="Choose a Norwegian destination"
-                    />
-                    {searchingDestinations && (
-                      <Group gap="xs" role="status" aria-live="polite">
-                        <Loader size="xs" aria-label="Searching locations" />
-                        <Text size="xs" c={bodyColor}>
-                          Searching locations...
-                        </Text>
-                      </Group>
-                    )}
-                    {errors.destination?.message && (
-                      <Text size="xs" c="red" role="alert">
-                        {errors.destination.message}
-                      </Text>
-                    )}
-                  </Stack>
-                )}
-              />
-
-              {selectedPlace && (
-                <Card
-                  withBorder={false}
-                  padding="sm"
-                  role="status"
-                  aria-live="polite"
-                  style={{
-                    backgroundColor: isDark ? '#14291f' : '#f0f4f1',
-                    border: `1px solid ${borderColor}`,
-                  }}
-                >
-                  <Text size="md" fw={600} c={headingColor}>
-                    Selected: {selectedPlace.name}
-                  </Text>
-                  <Text size="md" c={bodyColor} mt={4}>
-                    {selectedPlace.municipality} · {selectedPlace.county} · Coordinates:{' '}
-                    {selectedPlace.latitude.toFixed(4)}, {selectedPlace.longitude.toFixed(4)}
-                  </Text>
-                </Card>
-              )}
-
-              <Controller
-                name="experienceLevel"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    label="Experience level"
-                    data={EXPERIENCE_OPTIONS}
-                    value={field.value}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                    styles={MOBILE_INPUT_STYLES}
-                    error={errors.experienceLevel?.message}
-                    required
-                  />
-                )}
-              />
-
-              <Controller
-                name="durationDays"
-                control={control}
-                render={({ field }) => (
-                  <NumberInput
-                    label="Duration (days)"
-                    min={1}
-                    max={14}
-                    value={field.value}
-                    onChange={(val) => field.onChange(typeof val === 'number' ? val : 1)}
-                    onBlur={field.onBlur}
-                    styles={{
-                      input: { fontSize: '16px' },
-                      label: {
-                        fontSize: '1.05rem',
-                        fontWeight: 600,
-                        marginBottom: '6px',
-                      },
-                    }}
-                    error={errors.durationDays?.message}
-                    required
-                  />
-                )}
-              />
-
-              <Controller
-                name="season"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    label="Season"
-                    data={SEASON_OPTIONS}
-                    value={field.value}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                    styles={MOBILE_INPUT_STYLES}
-                    error={errors.season?.message}
-                    required
-                  />
-                )}
-              />
-
-              <Controller
-                name="includeCabinStay"
-                control={control}
-                render={({ field }) => (
-                  <Checkbox
-                    label="Include DNT / self-service cabin options"
-                    size="md"
-                    checked={field.value}
-                    onChange={(event) => field.onChange(event.currentTarget.checked)}
-                    styles={{ label: { color: bodyColor } }}
-                  />
-                )}
-              />
-
-              <Button
-                type="submit"
-                loading={isSubmitting || loadingIndex !== null}
-                loaderProps={{ type: 'dots' }}
-                disabled={searchingDestinations}
-                color="teal"
-                aria-busy={loadingIndex !== null}
-                fullWidth
-              >
-                {loadingIndex !== null ? PLANNER_LOADING_STEPS[loadingIndex] : 'Generate Itinerary'}
-              </Button>
-            </Stack>
-          </Card>
+          <PlannerForm
+            control={control}
+            errors={errors}
+            isSubmitting={isSubmitting}
+            loadingIndex={loadingIndex}
+            searchingDestinations={searchingDestinations}
+            destinations={destinations}
+            selectedPlace={selectedPlace}
+            currentTone={currentTone}
+            setCurrentTone={setCurrentTone}
+            emphasizeSafetyLocal={emphasizeSafetyLocal}
+            setEmphasizeSafetyLocal={setEmphasizeSafetyLocal}
+            handleDestinationChange={handleDestinationChange}
+            onSubmit={onSubmit}
+            handleSubmit={handleSubmit}
+            isDark={isDark}
+            headingColor={headingColor}
+            bodyColor={bodyColor}
+            cardBackground={cardBackground}
+            borderColor={borderColor}
+            accentCardStyle={accentCardStyle}
+            simpleCardStyle={simpleCardStyle}
+          />
 
           {extendedPlan && (
-            <Stack gap="md" component="section" aria-label="Generated Itinerary Results">
-              <Card withBorder={false} padding="lg" style={accentCardStyle}>
-                <Group justify="space-between" align="flex-start">
-                  <div>
-                    <Title order={2} c={headingColor}>
-                      {extendedPlan.title}
-                    </Title>
-                    <Text size="lg" mt="sm" c={bodyColor}>
-                      {extendedPlan.overview}
-                    </Text>
-                  </div>
-                  <Button
-                    variant="filled"
-                    radius="md"
-                    color="teal"
-                    size="md"
-                    disabled={isFavorite}
-                    onClick={handleSaveFavorite}
-                    aria-label={isFavorite ? 'Route saved to favorites' : 'Save route to favorites'}
-                  >
-                    {isFavorite ? 'Saved' : 'Save to Favorites'}
-                  </Button>
-                </Group>
-              </Card>
-
-              <SimpleGrid cols={{ base: 1, md: 2 }}>
-                {extendedPlan.days.map((day) => (
-                  <Card
-                    key={day.day}
-                    withBorder={false}
-                    padding="md"
-                    component="article"
-                    style={simpleCardStyle}
-                  >
-                    <Stack justify="space-between" h="100%">
-                      <div>
-                        <Title fz={{ base: '1.4rem', sm: '1.5rem' }} order={3} c={headingColor}>
-                          Day {day.day}: {day.title}
-                        </Title>
-                        <Text size="md" mt="sm" c={bodyColor}>
-                          {day.summary}
-                        </Text>
-                        <Text size="lg" mt="sm" fw={500} c={headingColor}>
-                          {day.distanceKm} km · {day.elevationGainM} m elevation gain
-                        </Text>
-                        <Text size="md" mt={4} c={bodyColor}>
-                          {day.overnight}
-                        </Text>
-                        <Text size="lg" c="dimmed" mt={4}>
-                          {day.weatherNote}
-                        </Text>
-                      </div>
-
-                      <Button
-                        variant="light"
-                        color="teal"
-                        size="md"
-                        mt="md"
-                        radius="md"
-                        loading={loadingDayId === day.day - 1}
-                        leftSection={<IconCloudRain size={16} aria-hidden="true" />}
-                        onClick={() => handleOpenWeatherDashboard(extendedPlan.region, day.day - 1)}
-                        aria-label={`Open live meteorological dashboard for Day ${day.day}`}
-                      >
-                        Live Weather Dashboard
-                      </Button>
-                    </Stack>
-                  </Card>
-                ))}
-              </SimpleGrid>
-
-              <Card withBorder={false} padding="lg" style={simpleCardStyle}>
-                <Title order={3} c={headingColor}>
-                  Packing List
-                </Title>
-                <List
-                  mt="sm"
-                  fz="lg"
-                  aria-label="Required packing list items"
-                  styles={{ item: { color: bodyColor } }}
-                >
-                  {extendedPlan.packingList.map((item) => (
-                    <List.Item key={item}>{item}</List.Item>
-                  ))}
-                </List>
-              </Card>
-
-              <Card withBorder={false} padding="lg" style={simpleCardStyle}>
-                <Title order={3} c={headingColor}>
-                  Safety Disclaimers
-                </Title>
-                <List
-                  mt="sm"
-                  fz="lg"
-                  aria-label="Important safety and emergency notes"
-                  styles={{ item: { color: bodyColor } }}
-                >
-                  {extendedPlan.safetyDisclaimers.map((item) => (
-                    <List.Item key={item}>{item}</List.Item>
-                  ))}
-                </List>
-              </Card>
-            </Stack>
+            <ItineraryResults
+              extendedPlan={extendedPlan}
+              isFavorite={isFavorite}
+              loadingDayId={loadingDayId}
+              handleSaveFavorite={handleSaveFavorite}
+              handleOpenWeatherDashboard={handleOpenWeatherDashboard}
+              headingColor={headingColor}
+              bodyColor={bodyColor}
+              accentCardStyle={accentCardStyle}
+              simpleCardStyle={simpleCardStyle}
+            />
           )}
 
           <Modal
