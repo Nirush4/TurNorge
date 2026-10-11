@@ -1,4 +1,4 @@
-import { Card, SegmentedControl, Stack, Text } from '@mantine/core';
+import { Card, SegmentedControl, Stack, Text, Box } from '@mantine/core';
 import type { KartverketPlace } from '@/types/schemas';
 import type { TrailDifficulty } from '@/types';
 import { RegionSearchBar } from '../RegionSearchBar';
@@ -60,32 +60,36 @@ export function ExploreFilters({
           <Text size="md" fw={500} component="label" id="difficulty-filter-label" c={headingColor}>
             Filter by Difficulty
           </Text>
-          <SegmentedControl
-            fullWidth
-            size="md"
-            aria-labelledby="difficulty-filter-label"
-            value={difficulty}
-            onChange={(value) => {
-              setDifficulty(value as TrailDifficulty | 'all');
-            }}
-            data={DIFFICULTY_OPTIONS}
-          />
+          <Box style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 4 }}>
+            <SegmentedControl
+              size="sm"
+              aria-labelledby="difficulty-filter-label"
+              value={difficulty}
+              onChange={(value) => {
+                setDifficulty(value as TrailDifficulty | 'all');
+              }}
+              data={DIFFICULTY_OPTIONS}
+              style={{ minWidth: '100%' }}
+            />
+          </Box>
         </Stack>
 
         <Stack gap={4}>
           <Text size="md" fw={500} component="label" id="duration-filter-label" c={headingColor}>
             Filter by Duration
           </Text>
-          <SegmentedControl
-            fullWidth
-            size="md"
-            aria-labelledby="duration-filter-label"
-            value={duration}
-            onChange={(value) => {
-              setDuration(value as 'all' | 'half' | 'full' | 'long');
-            }}
-            data={DURATION_OPTIONS}
-          />
+          <Box style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 4 }}>
+            <SegmentedControl
+              size="sm"
+              aria-labelledby="duration-filter-label"
+              value={duration}
+              onChange={(value) => {
+                setDuration(value as 'all' | 'half' | 'full' | 'long');
+              }}
+              data={DURATION_OPTIONS}
+              style={{ minWidth: '100%' }}
+            />
+          </Box>
         </Stack>
       </Stack>
     </Card>

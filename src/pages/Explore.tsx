@@ -1,20 +1,6 @@
-import { useEffect, useState, useMemo } from 'react';
-import {
-  Button,
-  Card,
-  Container,
-  Drawer,
-  Group,
-  Stack,
-  Text,
-  Title,
-  Badge,
-  List,
-  ThemeIcon,
-  Loader,
-  Box,
-} from '@mantine/core';
-import { IconShoppingBag, IconChevronDown } from '@tabler/icons-react';
+import { useEffect, useState, useMemo, type JSX } from 'react';
+import { Button, Container, Group, Stack, Text, Title, Loader, Box } from '@mantine/core';
+import { IconChevronDown } from '@tabler/icons-react';
 
 import { fetchDynamicNorwegianAreas } from '@/lib/api/kartverket';
 import { fetchMetForecast } from '@/lib/api/metNo';
@@ -22,75 +8,19 @@ import { fetchNearestStationDepartures } from '@/lib/api/enturDepartures';
 import { fetchNorwegianShops } from '@/lib/api/shops';
 
 import type { KartverketPlace, MetLocationForecast } from '@/types/schemas';
-import type { TrailDifficulty, Trail } from '@/types';
+import type { TrailDifficulty } from '@/types';
 import type { ShopItem } from '@/types/shopItemSchema';
 
 import { ExploreFilters } from '@/components/explore/ExploreFilters';
 import { TrailGrid } from '@/components/explore/TrailGrid';
-import { TrailTransitBoard } from '@/components/explore/TrailTransitBoard';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { showAppNotification } from '@/utils/notifications';
 
-interface StopPlaceData {
-  name: string;
-  id: string;
-  estimatedCalls: Array<{
-    expectedDepartureTime: string;
-    aimedDepartureTime: string;
-    realtime: boolean;
-    quay: { publicCode: string | null } | null;
-    serviceJourney: {
-      line: {
-        publicCode: string;
-        name: string | null;
-        transportMode: string;
-      };
-    };
-  }>;
-}
+import { mapDestinationsToTrails, type StopPlaceData } from '@/components/explore/exploreUtils';
+import { TrailDetailDrawer } from '@/components/explore/TrailDetailDrawer';
 
-const mapDestinationsToTrails = (destinations: KartverketPlace[]): Trail[] => {
-  const difficulties: TrailDifficulty[] = ['easy', 'moderate', 'demanding', 'expert'];
-  const durations = [
-    { hours: 3, label: 'Half day' },
-    { hours: 6, label: 'Full day' },
-    { hours: 10, label: 'Long day' },
-  ];
-  const highlightSets = [
-    ['Fjord Vista', 'Summit Ridge', 'Alpine Flora'],
-    ['Glacial Valley', 'Waterfall Cascade', 'Historic Cairn'],
-    ['Coastal Panorama', 'Sheltered Cove', 'Ridge Crossing'],
-    ['High Plateau', 'Crystal Tarn', 'Reindeer Grazing Area'],
-  ];
-
-  return destinations.map((place, index) => {
-    const hash = Math.abs(Math.sin(place.latitude + place.longitude) * 10000);
-    const assignedDifficulty = difficulties[Math.floor(hash % difficulties.length)];
-    const assignedDuration = durations[Math.floor(hash % durations.length)];
-    const assignedHighlights = highlightSets[Math.floor(hash % highlightSets.length)];
-
-    return {
-      id: place.ssrId ?? String(index),
-      name: place.name,
-      region: place.municipality || place.county || 'Norway',
-      difficulty: assignedDifficulty,
-      description: `Official Kartverket registry object (Map Sheet: ${place.mapSheet || 'N/A'}). Located at coordinates (${place.latitude.toFixed(4)}°N, ${place.longitude.toFixed(4)}°E) within ${place.municipality || 'Norwegian backcountry'}.`,
-      distanceKm: Number((6 + (hash % 14)).toFixed(1)),
-      durationHours: assignedDuration.hours,
-      durationLabel: assignedDuration.label,
-      elevationGainM: Math.round(180 + (hash % 850)),
-      latitude: place.latitude,
-      longitude: place.longitude,
-      highlights: assignedHighlights,
-      waterSources: [],
-      elevationProfile: [],
-      kartverketSsrId: place.ssrId,
-    };
-  });
-};
-
-export function ExplorePage() {
+export function ExplorePage(): JSX.Element {
   const { addFavorite } = useFavorites();
   const { isDark, headingColor, bodyColor, cardBackground, borderColor } = useThemeColors();
 
@@ -182,7 +112,10 @@ export function ExplorePage() {
 
   const selectedTrail = useMemo(() => {
     if (!selectedPlace) return null;
-    return mappedTrails.find((t) => t.id === selectedPlace.ssrId || t.name === selectedPlace.name);
+    return (
+      mappedTrails.find((t) => t.id === selectedPlace.ssrId || t.name === selectedPlace.name) ??
+      null
+    );
   }, [selectedPlace, mappedTrails]);
 
   useEffect(() => {
@@ -251,7 +184,6 @@ export function ExplorePage() {
   }, [selectedPlace]);
 
   const currentDetails = forecast?.properties.timeseries[0]?.data.instant.details;
-  const nextSixHours = forecast?.properties.timeseries[0]?.data.next_6_hours;
 
   const displayedShops = useMemo(() => shops.slice(0, visibleShopCount), [shops, visibleShopCount]);
   const hasMoreShops = visibleShopCount < shops.length;
@@ -365,240 +297,29 @@ export function ExplorePage() {
         )}
       </Stack>
 
-      <Drawer
-        opened={selectedPlace !== null}
+      <TrailDetailDrawer
+        selectedPlace={selectedPlace}
+        selectedTrail={selectedTrail}
+        forecast={forecast}
+        loadingWeather={loadingWeather}
+        stationData={stationData}
+        loadingTransit={loadingTransit}
+        shops={shops}
+        displayedShops={displayedShops}
+        loadingShops={loadingShops}
+        hasMoreShops={hasMoreShops}
+        savingFavorite={savingFavorite}
+        savedFavorite={savedFavorite}
+        isDark={isDark}
+        headingColor={headingColor}
+        bodyColor={bodyColor}
+        cardBackground={cardBackground}
+        borderColor={borderColor}
+        simpleCardStyle={simpleCardStyle}
         onClose={() => setSelectedPlace(null)}
-        position="right"
-        size="lg"
-        title={
-          <Text fw={700} fz={{ base: '1.1rem', sm: '1.4rem' }} c={headingColor}>
-            {selectedPlace?.name ?? 'Location'}
-          </Text>
-        }
-        aria-label={`Details drawer for ${selectedPlace?.name ?? 'selected location'}`}
-        styles={{
-          content: {
-            display: 'flex',
-            flexDirection: 'column',
-            maxHeight: '100dvh',
-            backgroundColor: cardBackground,
-            color: headingColor,
-          },
-          header: {
-            backgroundColor: cardBackground,
-            color: headingColor,
-          },
-          body: {
-            flex: 1,
-            overflowY: 'auto',
-            paddingBottom: '2.5rem',
-            backgroundColor: cardBackground,
-          },
-        }}
-      >
-        {selectedPlace && selectedTrail ? (
-          <Stack gap="md" role="region" aria-label="Selected trail information details">
-            <Card
-              padding={0}
-              withBorder={false}
-              style={{
-                overflow: 'hidden',
-                backgroundColor: cardBackground,
-                border: `1px solid ${borderColor}`,
-              }}
-            >
-              <div style={{ position: 'relative', width: '100%', height: '180px' }}>
-                <iframe
-                  title={`Interactive geographic map centered on ${selectedPlace.name}`}
-                  width="100%"
-                  height="100%"
-                  style={{
-                    border: 0,
-                    filter: isDark
-                      ? 'invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%)'
-                      : 'none',
-                  }}
-                  loading="lazy"
-                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${selectedPlace.longitude - 0.05}%2C${selectedPlace.latitude - 0.03}%2C${selectedPlace.longitude + 0.05}%2C${selectedPlace.latitude + 0.03}&layer=mapnik&marker=${selectedPlace.latitude}%2C${selectedPlace.longitude}`}
-                />
-              </div>
-            </Card>
-
-            <Card withBorder={false} style={simpleCardStyle}>
-              <Group justify="space-between" mb="xs">
-                <Title order={4} c={headingColor}>
-                  Trail Overview
-                </Title>
-                <Badge
-                  color="teal"
-                  size="md"
-                  tt="capitalize"
-                  aria-label={`Difficulty rating: ${selectedTrail.difficulty}`}
-                >
-                  {selectedTrail.difficulty}
-                </Badge>
-              </Group>
-              <Text size="md" c={bodyColor} mb="md">
-                {selectedTrail.description}
-              </Text>
-              <Group grow>
-                <div>
-                  <Text size="md" c="dimmed">
-                    Distance
-                  </Text>
-                  <Text size="md" fw={600} c={headingColor}>
-                    {selectedTrail.distanceKm} km
-                  </Text>
-                </div>
-                <div>
-                  <Text size="md" c="dimmed">
-                    Duration
-                  </Text>
-                  <Text size="md" fw={600} c={headingColor}>
-                    {selectedTrail.durationLabel}
-                  </Text>
-                </div>
-                <div>
-                  <Text size="md" c="dimmed">
-                    Elevation Gain
-                  </Text>
-                  <Text size="md" fw={600} c={headingColor}>
-                    {selectedTrail.elevationGainM} m
-                  </Text>
-                </div>
-              </Group>
-            </Card>
-
-            <Card withBorder={false} radius="md" p="md" shadow="sm" style={simpleCardStyle}>
-              <Group justify="space-between" mb="sm">
-                <Group gap="xs">
-                  <ThemeIcon color="teal" variant="light" size="lg" radius="md">
-                    <IconShoppingBag size={18} />
-                  </ThemeIcon>
-                  <div>
-                    <Title order={5} size="md" c={headingColor}>
-                      Nearby Supplies & Shops
-                    </Title>
-                    <Text size="sm" c={bodyColor}>
-                      Local grocery & convenience stores
-                    </Text>
-                  </div>
-                </Group>
-                {!loadingShops && shops.length > 0 && (
-                  <Badge color="teal" variant="dot" size="md">
-                    {shops.length} found
-                  </Badge>
-                )}
-              </Group>
-
-              {loadingShops ? (
-                <Stack py="sm" gap={4} role="status" aria-live="polite">
-                  <Group gap="xs">
-                    <Loader size="md" color="teal" />
-                    <Text size="md" c={bodyColor}>
-                      Searching for nearby stores...
-                    </Text>
-                  </Group>
-                </Stack>
-              ) : displayedShops.length > 0 ? (
-                <Stack gap="sm">
-                  <List
-                    spacing="sm"
-                    size="md"
-                    center
-                    icon={
-                      <ThemeIcon
-                        color="teal"
-                        size={26}
-                        radius="xl"
-                        variant="filled"
-                        aria-hidden="true"
-                      >
-                        <IconShoppingBag size={15} />
-                      </ThemeIcon>
-                    }
-                  >
-                    {displayedShops.map((shop) => (
-                      <List.Item key={shop.id}>
-                        <Group justify="space-between" wrap="nowrap" gap="xs">
-                          <Text size="md" fw={500} lineClamp={1} c={headingColor}>
-                            {shop.name}
-                          </Text>
-                          <Badge size="md" variant="light" color="teal" tt="capitalize">
-                            {shop.shopType}
-                          </Badge>
-                        </Group>
-                      </List.Item>
-                    ))}
-                  </List>
-
-                  {hasMoreShops && (
-                    <Button
-                      variant="light"
-                      color="teal"
-                      size="md"
-                      fullWidth
-                      mt="xs"
-                      onClick={() => setVisibleShopCount((prev) => prev + 5)}
-                      aria-label="Load more nearby shops"
-                    >
-                      View more shops ({shops.length - visibleShopCount} remaining)
-                    </Button>
-                  )}
-                </Stack>
-              ) : (
-                <Text size="md" c={bodyColor} fs="italic">
-                  No supermarkets or convenience stores found within 15km. This location may be in a
-                  remote mountain or wilderness area—consider stocking up in nearby towns before
-                  heading out!
-                </Text>
-              )}
-            </Card>
-
-            <Card withBorder={false} style={simpleCardStyle}>
-              <Title order={4} c={headingColor}>
-                MET.no Live Weather Forecast
-              </Title>
-              {loadingWeather ? (
-                <Text size="md" mt="xs" c={bodyColor} role="status" aria-live="polite">
-                  Fetching real-time atmospheric data...
-                </Text>
-              ) : currentDetails ? (
-                <Stack gap={4} mt="xs" role="region" aria-label="Current weather details">
-                  <Text size="md" fw={500} c={headingColor}>
-                    {currentDetails.air_temperature?.toFixed(1) ?? 'N/A'}°C · Humidity{' '}
-                    {currentDetails.relative_humidity ?? 'N/A'}%
-                  </Text>
-                  <Text size="md" c={bodyColor}>
-                    Wind: {currentDetails.wind_speed?.toFixed(1) ?? 'N/A'} m/s · Pressure:{' '}
-                    {currentDetails.air_pressure_at_sea_level ?? 'N/A'} hPa
-                  </Text>
-                  <Text size="md" c={bodyColor}>
-                    Precipitation (next 6h): {nextSixHours?.details?.precipitation_amount ?? 0} mm
-                  </Text>
-                </Stack>
-              ) : (
-                <Text size="md" mt="xs" c={bodyColor}>
-                  Weather info currently unreachable.
-                </Text>
-              )}
-            </Card>
-
-            <TrailTransitBoard loadingTransit={loadingTransit} stationData={stationData} />
-
-            <Button
-              color="teal"
-              fz="md"
-              aria-label={`Save ${selectedPlace.name} to your favorites list`}
-              loading={savingFavorite}
-              disabled={savedFavorite}
-              onClick={handleSaveDestination}
-            >
-              {savedFavorite ? 'Saved to Favorites' : 'Save Destination to Favorites'}
-            </Button>
-          </Stack>
-        ) : null}
-      </Drawer>
+        onLoadMoreShops={() => setVisibleShopCount((prev) => prev + 5)}
+        onSaveFavorite={handleSaveDestination}
+      />
     </Container>
   );
 }
